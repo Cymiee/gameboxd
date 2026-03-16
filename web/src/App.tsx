@@ -4,11 +4,12 @@ import { supabase } from "./lib/supabase";
 import { useAuthStore } from "./store/auth";
 import { getProfile } from "@gameboxd/lib";
 
-// Pages (placeholders — UI phase)
+import Layout from "./components/Layout";
+import AuthPage from "./pages/AuthPage";
 import FeedPage from "./pages/FeedPage";
 import SearchPage from "./pages/SearchPage";
 import ProfilePage from "./pages/ProfilePage";
-import AuthPage from "./pages/AuthPage";
+import FriendsPage from "./pages/FriendsPage";
 
 export default function App() {
   const { userId, setUserId, setProfile } = useAuthStore();
@@ -49,17 +50,13 @@ export default function App() {
       <Routes>
         <Route path="/auth" element={<AuthPage />} />
         <Route
-          path="/"
-          element={userId ? <FeedPage /> : <Navigate to="/auth" replace />}
-        />
-        <Route
-          path="/search"
-          element={userId ? <SearchPage /> : <Navigate to="/auth" replace />}
-        />
-        <Route
-          path="/profile/:userId"
-          element={userId ? <ProfilePage /> : <Navigate to="/auth" replace />}
-        />
+          element={userId ? <Layout /> : <Navigate to="/auth" replace />}
+        >
+          <Route path="/" element={<FeedPage />} />
+          <Route path="/search" element={<SearchPage />} />
+          <Route path="/profile/:userId" element={<ProfilePage />} />
+          <Route path="/friends" element={<FriendsPage />} />
+        </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
