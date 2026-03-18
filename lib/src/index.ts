@@ -15,6 +15,7 @@ export {
   getTopGames,
   setTopGame,
   removeTopGame,
+  toggleFavourite,
 } from "./supabase/games.js";
 
 // Friends helpers

@@ -10,6 +10,7 @@ import FeedPage from "./pages/FeedPage";
 import SearchPage from "./pages/SearchPage";
 import ProfilePage from "./pages/ProfilePage";
 import FriendsPage from "./pages/FriendsPage";
+import GamePage from "./pages/GamePage";
 
 export default function App() {
   const { userId, setUserId, setProfile } = useAuthStore();
@@ -54,6 +55,7 @@ export default function App() {
         >
           <Route path="/" element={<FeedPage />} />
           <Route path="/search" element={<SearchPage />} />
+          <Route path="/game/:id" element={<GamePage />} />
           <Route path="/profile/:userId" element={<ProfilePage />} />
           <Route path="/friends" element={<FriendsPage />} />
         </Route>

@@ -23,6 +23,7 @@ export interface GameLogRow {
   status: GameStatus;
   rating: number | null; // 1–10
   review: string | null;
+  is_favourite: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -50,6 +51,12 @@ export interface ActivityRow {
 
 // ── IGDB types ──────────────────────────────────────────────────────────────
 
+export interface IGDBInvolvedCompany {
+  id: number;
+  company: { id: number; name: string };
+  developer: boolean;
+}
+
 export interface IGDBGame {
   id: number;
   name: string;
@@ -57,6 +64,7 @@ export interface IGDBGame {
   cover: IGDBCover | null;
   genres: IGDBGenre[] | null;
   platforms: IGDBPlatform[] | null;
+  involved_companies: IGDBInvolvedCompany[] | null;
   first_release_date: number | null; // Unix timestamp
   rating: number | null;
   rating_count: number | null;

@@ -7,7 +7,8 @@ const PROXY_URL = `${SUPABASE_URL}/functions/v1/igdb-proxy`;
 
 const GAME_FIELDS =
   "fields id,name,summary,first_release_date,rating,rating_count," +
-  "cover.id,cover.image_id,cover.url,genres.id,genres.name,platforms.id,platforms.name;";
+  "cover.id,cover.image_id,cover.url,genres.id,genres.name,platforms.id,platforms.name," +
+  "involved_companies.company.id,involved_companies.company.name,involved_companies.developer;";
 
 async function callProxy(endpoint: string, body: string): Promise<IGDBGame[]> {
   const res = await fetch(PROXY_URL, {
@@ -23,7 +24,8 @@ async function callProxy(endpoint: string, body: string): Promise<IGDBGame[]> {
 }
 
 export async function searchGames(query: string): Promise<IGDBGame[]> {
-  const body = `${GAME_FIELDS} search "${query.replace(/"/g, '\\"')}"; limit 20;`;
+  const escaped = query.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  const body = `${GAME_FIELDS} where name ~ *"${escaped}"* & rating_count != null; sort rating_count desc; limit 20;`;
   return callProxy("/games", body);
 }
 

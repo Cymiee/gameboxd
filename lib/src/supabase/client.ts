@@ -56,6 +56,7 @@ export interface Database {
           status: GameStatus;
           rating: number | null;
           review: string | null;
+          is_favourite: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -66,6 +67,7 @@ export interface Database {
           status: GameStatus;
           rating?: number | null;
           review?: string | null;
+          is_favourite?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -73,6 +75,7 @@ export interface Database {
           status?: GameStatus;
           rating?: number | null;
           review?: string | null;
+          is_favourite?: boolean;
           updated_at?: string;
         };
         Relationships: [];
@@ -139,12 +142,17 @@ export function getSupabaseClient(
 ): SupabaseClient<Database> {
   if (_client) return _client;
 
+  // Bypass navigator.locks which can deadlock when a previous tab's
+  // session lock is never released (e.g. after a hard refresh).
+  const noLock = <R>(_n: string, _t: number, fn: () => Promise<R>): Promise<R> => fn();
+
   _client = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     auth: {
       persistSession: true,
       autoRefreshToken: true,
+      lock: noLock,
     },
-  });
+  }) as SupabaseClient<Database>;
 
   return _client;
 }

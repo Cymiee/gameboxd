@@ -45,7 +45,9 @@ export default function FeedPage() {
         for (const u of userRows ?? []) userMap.set(u.id, u);
         setUsers(userMap);
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed to load feed");
+        console.error("Feed load error:", e);
+        const msg = e instanceof Error ? e.message : (e as { message?: string })?.message ?? JSON.stringify(e);
+        setError(msg || "Failed to load feed");
       } finally {
         setLoading(false);
       }

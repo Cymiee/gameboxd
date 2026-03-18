@@ -96,6 +96,20 @@ export async function setTopGame(
   });
 }
 
+export async function toggleFavourite(
+  client: SupabaseClient<Database>,
+  userId: string,
+  gameIgdbId: number,
+  isFavourite: boolean
+): Promise<void> {
+  const { error } = await client
+    .from("game_logs")
+    .update({ is_favourite: isFavourite })
+    .eq("user_id", userId)
+    .eq("game_igdb_id", gameIgdbId);
+  if (error) throw error;
+}
+
 export async function removeTopGame(
   client: SupabaseClient<Database>,
   userId: string,
