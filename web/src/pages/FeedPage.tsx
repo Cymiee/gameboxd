@@ -5,6 +5,7 @@ import { supabase } from "../lib/supabase";
 import { useAuthStore } from "../store/auth";
 import { getGames } from "../lib/igdb";
 import ActivityCard from "../components/ActivityCard";
+import { PageSpinner } from "../components/Spinner";
 
 export default function FeedPage() {
   const { userId } = useAuthStore();
@@ -56,11 +57,7 @@ export default function FeedPage() {
     load();
   }, [userId]);
 
-  if (loading) {
-    return (
-      <div style={{ padding: "2rem", color: "var(--muted)" }}>Loading feed...</div>
-    );
-  }
+  if (loading) return <PageSpinner />;
 
   if (error) {
     return <div style={{ padding: "2rem", color: "#f55" }}>{error}</div>;

@@ -51,10 +51,6 @@ export default function Navbar() {
   return (
     <nav
       style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "1.5rem",
-        padding: "0.75rem 2rem",
         background: "var(--surface)",
         borderBottom: "1px solid var(--border)",
         position: "sticky",
@@ -62,42 +58,46 @@ export default function Navbar() {
         zIndex: 100,
       }}
     >
-      {/* Logo */}
+      {/* Inner container — max-width keeps everything centered and compact */}
+      <div
+        style={{
+          maxWidth: 1000,
+          margin: "0 auto",
+          padding: "0.7rem 1.5rem",
+          display: "flex",
+          alignItems: "center",
+          gap: "1.25rem",
+        }}
+      >
+      {/* Left: Logo + Feed */}
       <span style={{ fontWeight: 700, fontSize: "1.1rem", color: "var(--accent)", flexShrink: 0 }}>
         Gameboxd
       </span>
+      <NavLink to="/" end style={navLinkStyle}>Feed</NavLink>
 
-      {/* Nav links */}
-      <div style={{ display: "flex", gap: "1.75rem", flexShrink: 0 }}>
-        <NavLink to="/" end style={navLinkStyle}>Feed</NavLink>
-        <NavLink to="/games" style={navLinkStyle}>Games</NavLink>
-      </div>
+      {/* Push right group to the right */}
+      <div style={{ flex: 1 }} />
 
-      {/* Search bar — always visible, fills remaining space */}
-      <form
-        onSubmit={handleSearchSubmit}
-        style={{ flex: 1, maxWidth: 420 }}
-      >
+      {/* Right group: Games + search bar (close together) */}
+      <NavLink to="/games" style={navLinkStyle}>Games</NavLink>
+
+      <form onSubmit={handleSearchSubmit} style={{ flexShrink: 0 }}>
         <input
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search games..."
           style={{
-            width: "100%",
-            padding: "0.4rem 0.85rem",
+            width: 220,
+            padding: "0.38rem 0.85rem",
             background: "var(--bg)",
             border: "1px solid var(--border)",
             color: "var(--text)",
             borderRadius: 20,
             fontSize: "0.875rem",
             outline: "none",
-            boxSizing: "border-box",
           }}
         />
       </form>
-
-      {/* Spacer */}
-      <div style={{ flex: 1 }} />
 
       {/* User dropdown */}
       {profile && (
@@ -208,6 +208,7 @@ export default function Navbar() {
           )}
         </div>
       )}
+      </div>{/* end inner container */}
     </nav>
   );
 }

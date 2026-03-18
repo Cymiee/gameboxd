@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import type { IGDBGame } from "@gameboxd/lib";
 import { searchGames, getTrendingGames } from "../lib/igdb";
 import GameCard from "../components/GameCard";
+import { PageSpinner } from "../components/Spinner";
 
 export default function GamesPage() {
   const [searchParams] = useSearchParams();
@@ -16,11 +17,10 @@ export default function GamesPage() {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
+    setResults([]);   // clear immediately — never show stale results
     setError(null);
 
-    const load = q
-      ? searchGames(q)
-      : getTrendingGames();
+    const load = q ? searchGames(q) : getTrendingGames();
 
     load
       .then((games) => { if (!cancelled) setResults(games); })
@@ -36,7 +36,7 @@ export default function GamesPage() {
         {q ? `Results for "${q}"` : "Trending Games"}
       </h1>
 
-      {loading && <p style={{ color: "var(--muted)" }}>Loading...</p>}
+      {loading && <PageSpinner />}
       {error && <p style={{ color: "#f55" }}>{error}</p>}
 
       {!loading && !error && results.length === 0 && (

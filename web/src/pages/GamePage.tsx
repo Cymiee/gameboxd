@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { PageSpinner } from "../components/Spinner";
 import type { IGDBGame, GameLogRow, GameStatus } from "@gameboxd/lib";
 import { getCoverUrl, getUserGameLogs, toggleFavourite } from "@gameboxd/lib";
 import { getGame } from "../lib/igdb";
@@ -93,7 +94,7 @@ export default function GamePage() {
     }
   };
 
-  if (loading) return <div style={{ padding: "2rem", color: "var(--muted)" }}>Loading...</div>;
+  if (loading) return <PageSpinner />;
   if (error) return <div style={{ padding: "2rem", color: "#f55" }}>{error}</div>;
   if (!game) return null;
 
