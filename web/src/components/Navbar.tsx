@@ -69,17 +69,27 @@ export default function Navbar() {
           gap: "1.25rem",
         }}
       >
-      {/* Left: Logo only */}
-      <span style={{ fontWeight: 700, fontSize: "1.1rem", color: "var(--accent)", flexShrink: 0 }}>
+      {/* Left: Logo */}
+      <Link
+        to="/"
+        style={{
+          fontFamily: "Audiowide, sans-serif",
+          fontSize: "1.05rem",
+          color: "var(--accent)",
+          textDecoration: "none",
+          flexShrink: 0,
+          letterSpacing: "0.02em",
+        }}
+      >
         Gameboxd
-      </span>
+      </Link>
 
       {/* Push right group to the right */}
       <div style={{ flex: 1 }} />
 
       {/* Right group: Games + Feed + search bar (close together) */}
       <NavLink to="/games" style={navLinkStyle}>Games</NavLink>
-      <NavLink to="/" end style={navLinkStyle}>Feed</NavLink>
+      <NavLink to="/feed" style={navLinkStyle}>Feed</NavLink>
 
       <form onSubmit={handleSearchSubmit} style={{ flexShrink: 0 }}>
         <input

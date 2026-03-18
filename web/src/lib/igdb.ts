@@ -48,3 +48,9 @@ export async function getTrendingGames(): Promise<IGDBGame[]> {
   const body = `${GAME_FIELDS} where rating_count > 50 & first_release_date > ${oneYearAgo}; sort rating_count desc; limit 24;`;
   return callProxy("/games", body);
 }
+
+export async function getGamesByGenre(genreId: number, excludeIds: number[]): Promise<IGDBGame[]> {
+  const exclude = excludeIds.length > 0 ? ` & id != (${excludeIds.join(",")})` : "";
+  const body = `${GAME_FIELDS} where genres = ${genreId}${exclude} & rating_count > 30; sort rating_count desc; limit 15;`;
+  return callProxy("/games", body);
+}

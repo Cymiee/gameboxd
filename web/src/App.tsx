@@ -7,6 +7,7 @@ import Spinner from "./components/Spinner";
 
 import Layout from "./components/Layout";
 import AuthPage from "./pages/AuthPage";
+import HomePage from "./pages/HomePage";
 import FeedPage from "./pages/FeedPage";
 import SearchPage from "./pages/SearchPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -67,7 +68,8 @@ export default function App() {
         <Route
           element={userId ? <Layout /> : <Navigate to="/auth" replace />}
         >
-          <Route path="/" element={<FeedPage />} />
+          <Route path="/" element={<HomePage />} />
+          <Route path="/feed" element={<FeedPage />} />
           <Route path="/games" element={<GamesPage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/game/:id" element={<GamePage />} />
