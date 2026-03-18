@@ -1,11 +1,14 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useAuthStore } from "../store/auth";
 
 export default function Navbar() {
   const { profile, logout } = useAuthStore();
   const navigate = useNavigate();
   const [loggingOut, setLoggingOut] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -15,6 +18,25 @@ export default function Navbar() {
     } finally {
       setLoggingOut(false);
     }
+  };
+
+  const openSearch = () => {
+    setSearchOpen(true);
+    // Focus after the element renders
+    requestAnimationFrame(() => inputRef.current?.focus());
+  };
+
+  const closeSearch = () => {
+    setSearchOpen(false);
+    setSearchQuery("");
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = searchQuery.trim();
+    if (!q) return;
+    navigate(`/games?q=${encodeURIComponent(q)}`);
+    closeSearch();
   };
 
   const navLinkStyle = ({ isActive }: { isActive: boolean }): React.CSSProperties => ({
@@ -39,25 +61,99 @@ export default function Navbar() {
         position: "sticky",
         top: 0,
         zIndex: 100,
+        gap: "1rem",
       }}
     >
-      <span style={{ fontWeight: 700, fontSize: "1.1rem", color: "var(--accent)" }}>
+      <span style={{ fontWeight: 700, fontSize: "1.1rem", color: "var(--accent)", flexShrink: 0 }}>
         Gameboxd
       </span>
 
-      <div style={{ display: "flex", gap: "2rem" }}>
-        <NavLink to="/" end style={navLinkStyle}>
-          Feed
-        </NavLink>
-        <NavLink to="/search" style={navLinkStyle}>
-          Search
-        </NavLink>
-        <NavLink to="/friends" style={navLinkStyle}>
-          Friends
-        </NavLink>
-      </div>
+      {/* Center nav links — hidden when search is open */}
+      {!searchOpen && (
+        <div style={{ display: "flex", gap: "2rem" }}>
+          <NavLink to="/" end style={navLinkStyle}>Feed</NavLink>
+          <NavLink to="/games" style={navLinkStyle}>Games</NavLink>
+          <NavLink to="/friends" style={navLinkStyle}>Friends</NavLink>
+        </div>
+      )}
 
-      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+      {/* Expanded search bar */}
+      {searchOpen && (
+        <form
+          onSubmit={handleSearchSubmit}
+          style={{ flex: 1, display: "flex", gap: "0.5rem", maxWidth: 480 }}
+        >
+          <input
+            ref={inputRef}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search games..."
+            onKeyDown={(e) => e.key === "Escape" && closeSearch()}
+            style={{
+              flex: 1,
+              padding: "0.4rem 0.75rem",
+              background: "var(--bg)",
+              border: "1px solid var(--border)",
+              color: "var(--text)",
+              borderRadius: 6,
+              fontSize: "0.9rem",
+              outline: "none",
+            }}
+          />
+          <button
+            type="submit"
+            style={{
+              padding: "0.4rem 0.9rem",
+              background: "var(--accent)",
+              border: "none",
+              color: "#fff",
+              borderRadius: 6,
+              cursor: "pointer",
+              fontSize: "0.85rem",
+              fontWeight: 600,
+            }}
+          >
+            Go
+          </button>
+          <button
+            type="button"
+            onClick={closeSearch}
+            style={{
+              background: "none",
+              border: "none",
+              color: "var(--muted)",
+              cursor: "pointer",
+              fontSize: "1rem",
+              padding: "0 0.25rem",
+            }}
+          >
+            ✕
+          </button>
+        </form>
+      )}
+
+      {/* Right: search icon + user */}
+      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexShrink: 0 }}>
+        {/* Search icon */}
+        {!searchOpen && (
+          <button
+            onClick={openSearch}
+            title="Search games"
+            style={{
+              background: "none",
+              border: "1px solid var(--border)",
+              color: "var(--muted)",
+              borderRadius: 6,
+              padding: "0.3rem 0.55rem",
+              cursor: "pointer",
+              fontSize: "0.95rem",
+              lineHeight: 1,
+            }}
+          >
+            🔍
+          </button>
+        )}
+
         {profile && (
           <>
             <NavLink

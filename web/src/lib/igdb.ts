@@ -42,3 +42,9 @@ export async function getGames(ids: number[]): Promise<IGDBGame[]> {
   const body = `${GAME_FIELDS} where id = (${ids.join(",")}); limit ${ids.length};`;
   return callProxy("/games", body);
 }
+
+export async function getTrendingGames(): Promise<IGDBGame[]> {
+  const oneYearAgo = Math.floor(Date.now() / 1000) - 365 * 24 * 3600;
+  const body = `${GAME_FIELDS} where rating_count > 50 & first_release_date > ${oneYearAgo}; sort rating_count desc; limit 24;`;
+  return callProxy("/games", body);
+}
