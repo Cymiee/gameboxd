@@ -199,7 +199,7 @@ export default function GamesPage() {
     : "Trending Games";
 
   return (
-    <div style={{ maxWidth: 1100, margin: "0 auto", padding: "2rem" }}>
+    <div style={{ maxWidth: 1500, margin: "0 auto", padding: "2rem" }}>
       <div style={{ display: "flex", gap: "2rem", alignItems: "flex-start" }}>
 
         {/* ── Sidebar ── */}

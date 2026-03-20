@@ -23,17 +23,13 @@ function GameRow({ games, loading }: { games: IGDBGame[]; loading: boolean }) {
   return (
     <div
       style={{
-        display: "flex",
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))",
         gap: "0.75rem",
-        overflowX: "auto",
-        paddingBottom: "0.75rem",
-        scrollbarWidth: "none",
       }}
     >
       {games.map((g) => (
-        <div key={g.id} style={{ flexShrink: 0, width: 130 }}>
-          <GameCard game={g} onSelect={(game) => navigate(`/game/${game.id}`)} />
-        </div>
+        <GameCard key={g.id} game={g} onSelect={(game) => navigate(`/game/${game.id}`)} />
       ))}
     </div>
   );
@@ -260,7 +256,7 @@ export default function HomePage() {
         </p>
       </div>
 
-      <div style={{ maxWidth: 1000, margin: "0 auto", padding: "2.5rem 2rem 0" }}>
+      <div style={{ maxWidth: 1500, margin: "0 auto", padding: "2.5rem 2rem 0" }}>
 
         {/* ── Trending Now ── */}
         <section style={{ marginBottom: "2.5rem" }}>
@@ -288,7 +284,7 @@ export default function HomePage() {
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
                   gap: "0.75rem",
                 }}
               >
