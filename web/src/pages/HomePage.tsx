@@ -7,6 +7,7 @@ import { useAuthStore } from "../store/auth";
 import { getTrendingGames, getGames, getGamesByGenre } from "../lib/igdb";
 import GameCard from "../components/GameCard";
 import Spinner from "../components/Spinner";
+import backgroundImg from "../assets/background.png";
 
 // ── Horizontal scrollable row ───────────────────────────────────────────────
 
@@ -234,7 +235,9 @@ export default function HomePage() {
       {/* ── Hero ── */}
       <div
         style={{
-          background: "linear-gradient(135deg, #1a1a2e 0%, #0f0f0f 60%)",
+          backgroundImage: `linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.65)), url(${backgroundImg})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
           borderBottom: "1px solid var(--border)",
           padding: "3.5rem 2rem 3rem",
           textAlign: "center",
