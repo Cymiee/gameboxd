@@ -253,7 +253,7 @@ export default function HomePage() {
             letterSpacing: "0.04em",
           }}
         >
-          PlayLog
+          Shelved
         </h1>
         <p style={{ color: "var(--muted)", marginTop: "0.75rem", fontSize: "1rem" }}>
           Track, rate, and discover games with your friends.

@@ -1,6 +1,7 @@
 import { NavLink, useNavigate, Link } from "react-router-dom";
 import { useState, useRef } from "react";
 import { useAuthStore } from "../store/auth";
+import joystickIcon from "../assets/joystick-icon.png";
 
 export default function Navbar() {
   const { profile, logout } = useAuthStore();
@@ -58,12 +59,12 @@ export default function Navbar() {
         zIndex: 100,
       }}
     >
-      {/* Inner container — max-width keeps everything centered and compact */}
+      {/* Inner container */}
       <div
         style={{
-          maxWidth: 1000,
+          maxWidth: 1100,
           margin: "0 auto",
-          padding: "0.7rem 1.5rem",
+          padding: "0.55rem 1.5rem",
           display: "flex",
           alignItems: "center",
           gap: "1.25rem",
@@ -73,41 +74,49 @@ export default function Navbar() {
       <Link
         to="/"
         style={{
-          fontFamily: "Audiowide, sans-serif",
-          fontSize: "1.05rem",
-          color: "var(--accent)",
+          display: "flex",
+          alignItems: "center",
+          gap: "0.5rem",
           textDecoration: "none",
           flexShrink: 0,
-          letterSpacing: "0.02em",
         }}
       >
-        PlayLog
+        <img src={joystickIcon} alt="Shelved" style={{ width: 28, height: 28, objectFit: "contain" }} />
+        <span
+          style={{
+            fontFamily: "Audiowide, sans-serif",
+            fontSize: "1.35rem",
+            color: "var(--accent)",
+            letterSpacing: "0.02em",
+          }}
+        >
+          Shelved
+        </span>
       </Link>
 
-      {/* Push right group to the right */}
-      <div style={{ flex: 1 }} />
-
-      {/* Right group: Games + Feed + search bar (close together) */}
-      <NavLink to="/games" style={navLinkStyle}>Games</NavLink>
-      <NavLink to="/feed" style={navLinkStyle}>Feed</NavLink>
-
-      <form onSubmit={handleSearchSubmit} style={{ flexShrink: 0 }}>
+      {/* Center: wide search bar */}
+      <form onSubmit={handleSearchSubmit} style={{ flex: 1, maxWidth: 520, margin: "0 auto" }}>
         <input
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search games..."
           style={{
-            width: 220,
-            padding: "0.38rem 0.85rem",
+            width: "100%",
+            padding: "0.5rem 1.1rem",
             background: "var(--bg)",
             border: "1px solid var(--border)",
             color: "var(--text)",
-            borderRadius: 20,
-            fontSize: "0.875rem",
+            borderRadius: 8,
+            fontSize: "0.925rem",
             outline: "none",
+            boxSizing: "border-box",
           }}
         />
       </form>
+
+      {/* Right group: Games + Feed */}
+      <NavLink to="/games" style={navLinkStyle}>Games</NavLink>
+      <NavLink to="/feed" style={navLinkStyle}>Feed</NavLink>
 
       {/* User dropdown */}
       {profile && (
