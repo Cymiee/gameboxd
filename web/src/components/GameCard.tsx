@@ -34,7 +34,14 @@ export default function GameCard({ game, onSelect, onQuickLog }: Props) {
           <img
             src={getCoverUrl(game.cover.image_id, "cover_big")}
             alt={game.name}
-            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              display: "block",
+            }}
           />
         ) : (
           <div

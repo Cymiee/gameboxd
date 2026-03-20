@@ -231,7 +231,11 @@ export default function ProfilePage() {
     }
   };
 
-  if (loading) return <div style={{ padding: "3rem 24px", color: "var(--muted)" }}><Spinner /></div>;
+  if (loading) return (
+    <div style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <Spinner />
+    </div>
+  );
   if (error) return <div style={{ padding: "2rem", color: "var(--danger)" }}>{error}</div>;
   if (!profile) return null;
 
