@@ -5,20 +5,25 @@
 }
 
 :root {
-  --bg: #0f0f0f;
-  --surface: #1a1a1a;
-  --border: #2a2a2a;
-  --accent: #6c63ff;
-  --text: #f0f0f0;
-  --muted: #888;
+  --bg: #0e0e10;
+  --surface: #18181b;
+  --border: #27272a;
+  --accent: #e4ff1a;
+  --text: #fafafa;
+  --muted: #71717a;
+  --danger: #ef4444;
 }
 
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: "Orbitron", system-ui, -apple-system, sans-serif;
+  font-family: Inter, system-ui, sans-serif;
   font-size: 16px;
-  line-height: 1.5;
+  line-height: 1.6;
+}
+
+.syne {
+  font-family: Syne, sans-serif;
 }
 
 a {

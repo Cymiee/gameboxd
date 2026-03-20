@@ -68,6 +68,8 @@ export interface IGDBGame {
   first_release_date: number | null; // Unix timestamp
   rating: number | null;
   rating_count: number | null;
+  similar_games?: number[];
+  hypes?: number;
 }
 
 export interface IGDBCover {

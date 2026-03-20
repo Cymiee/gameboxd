@@ -95,18 +95,29 @@ export default function FriendsPage() {
 
   const tabStyle = (t: Tab): React.CSSProperties => ({
     padding: "0.5rem 1.25rem",
-    background: tab === t ? "var(--accent)" : "none",
+    background: tab === t ? "rgba(228,255,26,0.1)" : "none",
     border: `1px solid ${tab === t ? "var(--accent)" : "var(--border)"}`,
-    color: tab === t ? "#fff" : "var(--muted)",
-    borderRadius: 6,
+    color: tab === t ? "var(--accent)" : "var(--muted)",
+    borderRadius: 8,
     cursor: "pointer",
     fontWeight: tab === t ? 600 : 400,
-    fontSize: "0.9rem",
+    fontSize: "0.875rem",
+    transition: "all 0.12s",
   });
 
   return (
-    <div style={{ padding: "2rem", maxWidth: 1200, margin: "0 auto" }}>
-      <h1 style={{ marginBottom: "1.5rem" }}>Friends</h1>
+    <div style={{ maxWidth: 1280, margin: "0 auto", padding: "2rem 24px" }}>
+      <h1
+        style={{
+          fontFamily: "Syne, sans-serif",
+          fontSize: "1.5rem",
+          fontWeight: 700,
+          marginBottom: "1.5rem",
+          color: "var(--text)",
+        }}
+      >
+        Friends
+      </h1>
 
       {/* Add friend */}
       <form
@@ -118,7 +129,7 @@ export default function FriendsPage() {
           padding: "1rem",
           background: "var(--surface)",
           border: "1px solid var(--border)",
-          borderRadius: 8,
+          borderRadius: 10,
         }}
       >
         <input
@@ -131,33 +142,36 @@ export default function FriendsPage() {
             background: "var(--bg)",
             border: "1px solid var(--border)",
             color: "var(--text)",
-            borderRadius: 6,
+            borderRadius: 8,
             fontSize: "0.9rem",
+            outline: "none",
           }}
         />
         <button
           type="submit"
           disabled={adding}
           style={{
-            padding: "0.5rem 1rem",
+            padding: "0.5rem 1.25rem",
             background: "var(--accent)",
             border: "none",
-            color: "#fff",
-            borderRadius: 6,
+            color: "#0e0e10",
+            borderRadius: 8,
             cursor: adding ? "not-allowed" : "pointer",
-            fontWeight: 600,
-            fontSize: "0.85rem",
+            fontWeight: 700,
+            fontSize: "0.875rem",
             opacity: adding ? 0.7 : 1,
+            fontFamily: "Syne, sans-serif",
           }}
         >
           Add Friend
         </button>
       </form>
-      {addError && <p style={{ color: "#f55", marginBottom: "1rem", fontSize: "0.85rem" }}>{addError}</p>}
-      {addSuccess && <p style={{ color: "#5c5", marginBottom: "1rem", fontSize: "0.85rem" }}>{addSuccess}</p>}
+
+      {addError && <p style={{ color: "var(--danger)", marginBottom: "1rem", fontSize: "0.85rem" }}>{addError}</p>}
+      {addSuccess && <p style={{ color: "#4ade80", marginBottom: "1rem", fontSize: "0.85rem" }}>{addSuccess}</p>}
 
       {/* Tabs */}
-      <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.25rem" }}>
+      <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem" }}>
         <button onClick={() => setTab("friends")} style={tabStyle("friends")}>
           My Friends ({friendProfiles.length})
         </button>
@@ -172,7 +186,7 @@ export default function FriendsPage() {
         friendProfiles.length === 0 ? (
           <p style={{ color: "var(--muted)" }}>No friends yet. Add some above!</p>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: "0.5rem" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "0.75rem" }}>
             {friendProfiles.map((u) => (
               <div
                 key={u.id}
@@ -180,35 +194,49 @@ export default function FriendsPage() {
                   display: "flex",
                   alignItems: "center",
                   gap: "0.75rem",
-                  padding: "0.75rem",
+                  padding: "0.75rem 1rem",
                   background: "var(--surface)",
                   border: "1px solid var(--border)",
-                  borderRadius: 8,
+                  borderRadius: 10,
+                  transition: "border-color 0.15s",
                 }}
+                onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
+                onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
               >
                 <div
                   style={{
-                    width: 36,
-                    height: 36,
+                    width: 38,
+                    height: 38,
                     borderRadius: "50%",
                     background: "var(--accent)",
-                    color: "#fff",
+                    color: "#0e0e10",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     fontWeight: 700,
                     fontSize: "0.9rem",
                     flexShrink: 0,
+                    fontFamily: "Syne, sans-serif",
                   }}
                 >
                   {u.username[0]?.toUpperCase()}
                 </div>
                 <div style={{ flex: 1 }}>
-                  <Link to={`/profile/${u.id}`} style={{ fontWeight: 600, color: "var(--text)", textDecoration: "none" }}>
+                  <Link
+                    to={`/profile/${u.id}`}
+                    style={{
+                      fontWeight: 600,
+                      color: "var(--text)",
+                      textDecoration: "none",
+                      fontSize: "0.9rem",
+                    }}
+                  >
                     {u.username}
                   </Link>
                   {u.bio && (
-                    <p style={{ fontSize: "0.8rem", color: "var(--muted)", marginTop: 2 }}>{u.bio}</p>
+                    <p style={{ fontSize: "0.8rem", color: "var(--muted)", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {u.bio}
+                    </p>
                   )}
                 </div>
               </div>
@@ -219,7 +247,7 @@ export default function FriendsPage() {
         pendingRequests.length === 0 ? (
           <p style={{ color: "var(--muted)" }}>No pending requests.</p>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: "0.5rem" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "0.75rem" }}>
             {pendingRequests.map((req) => {
               const requester = requesterProfiles.get(req.requester_id);
               return (
@@ -229,16 +257,16 @@ export default function FriendsPage() {
                     display: "flex",
                     alignItems: "center",
                     gap: "0.75rem",
-                    padding: "0.75rem",
+                    padding: "0.75rem 1rem",
                     background: "var(--surface)",
                     border: "1px solid var(--border)",
-                    borderRadius: 8,
+                    borderRadius: 10,
                   }}
                 >
                   <div
                     style={{
-                      width: 36,
-                      height: 36,
+                      width: 38,
+                      height: 38,
                       borderRadius: "50%",
                       background: "var(--border)",
                       color: "var(--muted)",
@@ -253,24 +281,24 @@ export default function FriendsPage() {
                     {requester?.username[0]?.toUpperCase() ?? "?"}
                   </div>
                   <div style={{ flex: 1 }}>
-                    <span style={{ fontWeight: 600 }}>
+                    <span style={{ fontWeight: 600, fontSize: "0.9rem" }}>
                       {requester?.username ?? req.requester_id}
                     </span>
-                    <p style={{ fontSize: "0.75rem", color: "var(--muted)", marginTop: 2 }}>
+                    <p style={{ fontSize: "0.78rem", color: "var(--muted)", marginTop: 2 }}>
                       wants to be your friend
                     </p>
                   </div>
                   <button
                     onClick={() => handleAccept(req)}
                     style={{
-                      padding: "0.35rem 0.9rem",
+                      padding: "0.4rem 1rem",
                       background: "var(--accent)",
                       border: "none",
-                      color: "#fff",
-                      borderRadius: 6,
+                      color: "#0e0e10",
+                      borderRadius: 8,
                       cursor: "pointer",
                       fontSize: "0.85rem",
-                      fontWeight: 600,
+                      fontWeight: 700,
                     }}
                   >
                     Accept

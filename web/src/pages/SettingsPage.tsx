@@ -9,15 +9,12 @@ export default function SettingsPage() {
   const { userId, profile, setProfile } = useAuthStore();
   const [section, setSection] = useState<Section>("profile");
 
-  // Profile fields
   const [username, setUsername] = useState(profile?.username ?? "");
   const [bio, setBio] = useState(profile?.bio ?? "");
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url ?? "");
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileMsg, setProfileMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
 
-  // Security fields
-  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [securitySaving, setSecuritySaving] = useState(false);
@@ -63,7 +60,6 @@ export default function SettingsPage() {
     try {
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
-      setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
       setSecurityMsg({ type: "ok", text: "Password updated!" });
@@ -76,51 +72,63 @@ export default function SettingsPage() {
 
   const tabStyle = (s: Section): React.CSSProperties => ({
     padding: "0.5rem 1.25rem",
-    background: section === s ? "var(--accent)" : "none",
+    background: section === s ? "rgba(228,255,26,0.1)" : "none",
     border: `1px solid ${section === s ? "var(--accent)" : "var(--border)"}`,
-    color: section === s ? "#fff" : "var(--muted)",
-    borderRadius: 6,
+    color: section === s ? "var(--accent)" : "var(--muted)",
+    borderRadius: 8,
     cursor: "pointer",
-    fontSize: "0.9rem",
+    fontSize: "0.875rem",
     fontWeight: section === s ? 600 : 400,
+    transition: "all 0.12s",
   });
 
   const fieldStyle: React.CSSProperties = {
     width: "100%",
-    padding: "0.5rem 0.75rem",
+    padding: "0.55rem 0.75rem",
     background: "var(--bg)",
     border: "1px solid var(--border)",
     color: "var(--text)",
-    borderRadius: 6,
+    borderRadius: 8,
     fontSize: "0.9rem",
+    outline: "none",
     boxSizing: "border-box",
   };
 
   const labelStyle: React.CSSProperties = {
     display: "block",
-    fontSize: "0.8rem",
+    fontSize: "0.75rem",
     color: "var(--muted)",
     marginBottom: 6,
+    textTransform: "uppercase",
+    letterSpacing: "0.08em",
   };
 
   return (
-    <div style={{ padding: "2rem", maxWidth: 520, margin: "0 auto" }}>
-      <h1 style={{ marginBottom: "1.5rem", fontSize: "1.4rem", fontWeight: 700 }}>Settings</h1>
+    <div style={{ maxWidth: 540, margin: "0 auto", padding: "2.5rem 24px" }}>
+      <h1
+        style={{
+          fontFamily: "Syne, sans-serif",
+          fontSize: "1.5rem",
+          fontWeight: 700,
+          marginBottom: "1.5rem",
+          color: "var(--text)",
+        }}
+      >
+        Settings
+      </h1>
 
-      {/* Tabs */}
-      <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.75rem" }}>
+      <div style={{ display: "flex", gap: "0.5rem", marginBottom: "2rem" }}>
         <button style={tabStyle("profile")} onClick={() => setSection("profile")}>Profile</button>
         <button style={tabStyle("security")} onClick={() => setSection("security")}>Security</button>
       </div>
 
-      {/* Profile section */}
       {section === "profile" && (
         <form
           onSubmit={handleSaveProfile}
           style={{
             background: "var(--surface)",
             border: "1px solid var(--border)",
-            borderRadius: 10,
+            borderRadius: 12,
             padding: "1.5rem",
             display: "flex",
             flexDirection: "column",
@@ -129,11 +137,7 @@ export default function SettingsPage() {
         >
           <div>
             <label style={labelStyle}>Username</label>
-            <input
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              style={fieldStyle}
-            />
+            <input value={username} onChange={(e) => setUsername(e.target.value)} style={fieldStyle} />
           </div>
           <div>
             <label style={labelStyle}>Bio</label>
@@ -142,21 +146,16 @@ export default function SettingsPage() {
               onChange={(e) => setBio(e.target.value)}
               rows={3}
               placeholder="Tell people about yourself..."
-              style={{ ...fieldStyle, resize: "vertical", fontFamily: "inherit" }}
+              style={{ ...fieldStyle, resize: "vertical", fontFamily: "Inter, sans-serif" }}
             />
           </div>
           <div>
             <label style={labelStyle}>Avatar URL</label>
-            <input
-              value={avatarUrl}
-              onChange={(e) => setAvatarUrl(e.target.value)}
-              placeholder="https://..."
-              style={fieldStyle}
-            />
+            <input value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)} placeholder="https://..." style={fieldStyle} />
           </div>
 
           {profileMsg && (
-            <p style={{ color: profileMsg.type === "ok" ? "#5c5" : "#f55", fontSize: "0.85rem", margin: 0 }}>
+            <p style={{ color: profileMsg.type === "ok" ? "#4ade80" : "var(--danger)", fontSize: "0.85rem", margin: 0 }}>
               {profileMsg.text}
             </p>
           )}
@@ -165,15 +164,16 @@ export default function SettingsPage() {
             type="submit"
             disabled={profileSaving}
             style={{
-              padding: "0.6rem",
+              padding: "0.65rem",
               background: "var(--accent)",
               border: "none",
-              color: "#fff",
-              borderRadius: 6,
+              color: "#0e0e10",
+              borderRadius: 8,
               cursor: profileSaving ? "not-allowed" : "pointer",
-              fontWeight: 600,
+              fontWeight: 700,
               fontSize: "0.9rem",
               opacity: profileSaving ? 0.7 : 1,
+              fontFamily: "Syne, sans-serif",
             }}
           >
             {profileSaving ? "Saving..." : "Save Profile"}
@@ -181,21 +181,20 @@ export default function SettingsPage() {
         </form>
       )}
 
-      {/* Security section */}
       {section === "security" && (
         <form
           onSubmit={handleChangePassword}
           style={{
             background: "var(--surface)",
             border: "1px solid var(--border)",
-            borderRadius: 10,
+            borderRadius: 12,
             padding: "1.5rem",
             display: "flex",
             flexDirection: "column",
             gap: "1.1rem",
           }}
         >
-          <p style={{ fontSize: "0.85rem", color: "var(--muted)", margin: 0 }}>
+          <p style={{ fontSize: "0.875rem", color: "var(--muted)", margin: 0 }}>
             Leave fields blank if you don't want to change your password.
           </p>
           <div>
@@ -219,7 +218,7 @@ export default function SettingsPage() {
           </div>
 
           {securityMsg && (
-            <p style={{ color: securityMsg.type === "ok" ? "#5c5" : "#f55", fontSize: "0.85rem", margin: 0 }}>
+            <p style={{ color: securityMsg.type === "ok" ? "#4ade80" : "var(--danger)", fontSize: "0.85rem", margin: 0 }}>
               {securityMsg.text}
             </p>
           )}
@@ -228,15 +227,16 @@ export default function SettingsPage() {
             type="submit"
             disabled={securitySaving || !newPassword}
             style={{
-              padding: "0.6rem",
+              padding: "0.65rem",
               background: "var(--accent)",
               border: "none",
-              color: "#fff",
-              borderRadius: 6,
+              color: "#0e0e10",
+              borderRadius: 8,
               cursor: securitySaving || !newPassword ? "not-allowed" : "pointer",
-              fontWeight: 600,
+              fontWeight: 700,
               fontSize: "0.9rem",
               opacity: securitySaving || !newPassword ? 0.7 : 1,
+              fontFamily: "Syne, sans-serif",
             }}
           >
             {securitySaving ? "Updating..." : "Update Password"}

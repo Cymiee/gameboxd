@@ -1,40 +1,39 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { PageSpinner } from "../components/Spinner";
-import type { IGDBGame, GameLogRow, GameStatus } from "@gameboxd/lib";
-import { getCoverUrl, getUserGameLogs, toggleLike, deleteGameLog } from "@gameboxd/lib";
-import { getGame } from "../lib/igdb";
+import type { IGDBGame, GameLogRow, GameStatus, UserRow } from "@gameboxd/lib";
+import { getCoverUrl, getUserGameLogs, toggleLike, deleteGameLog, getFriends } from "@gameboxd/lib";
+import { getGame, getGames } from "../lib/igdb";
 import { supabase } from "../lib/supabase";
 import { useAuthStore } from "../store/auth";
 import { useGamesStore } from "../store/games";
+import LogGameModal from "../components/LogGameModal";
+import GameCard from "../components/GameCard";
 
-const STATUS_OPTIONS: { value: GameStatus; label: string }[] = [
-  { value: "playing", label: "Playing" },
-  { value: "completed", label: "Completed" },
-  { value: "dropped", label: "Dropped" },
-];
+interface FriendRating {
+  user: Pick<UserRow, "id" | "username">;
+  rating: number;
+}
 
 export default function GamePage() {
   const { id } = useParams<{ id: string }>();
   const { userId } = useAuthStore();
   const { logGame } = useGamesStore();
+  const navigate = useNavigate();
 
   const [game, setGame] = useState<IGDBGame | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [existingLog, setExistingLog] = useState<GameLogRow | null>(null);
-  const [status, setStatus] = useState<GameStatus>("playing");
-  const [rating, setRating] = useState<number | null>(null);
-  const [review, setReview] = useState("");
-  const [isLiked, setIsLiked] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
-  const [saveSuccess, setSaveSuccess] = useState(false);
-
-  // Want to Play (backlog) — stored as status="want_to_play", separate from the main log form
   const [wantToPlay, setWantToPlay] = useState(false);
   const [wtpSaving, setWtpSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const [showLogModal, setShowLogModal] = useState(false);
+
+  const [friendRatings, setFriendRatings] = useState<FriendRating[]>([]);
+  const [similarGames, setSimilarGames] = useState<IGDBGame[]>([]);
 
   useEffect(() => {
     if (!id) return;
@@ -53,15 +52,44 @@ export default function GamePage() {
         const log = logs.find((l) => l.game_igdb_id === Number(id)) ?? null;
         if (log) {
           setExistingLog(log);
-          if (log.status === "want_to_play") {
-            setWantToPlay(true);
-            // Keep form defaulting to "playing" so they can upgrade easily
-          } else {
-            setStatus(log.status);
-            setRating(log.rating);
-            setReview(log.review ?? "");
+          setWantToPlay(log.status === "want_to_play");
+        }
+
+        // Similar games
+        if (g.similar_games && g.similar_games.length > 0) {
+          const similar = await getGames(g.similar_games.slice(0, 6));
+          if (!cancelled) setSimilarGames(similar);
+        }
+
+        // Friends' ratings
+        if (userId) {
+          const friendIds = await getFriends(supabase, userId);
+          if (friendIds.length > 0) {
+            const { data: friendLogs } = await supabase
+              .from("game_logs")
+              .select("user_id, rating")
+              .in("user_id", friendIds)
+              .eq("game_igdb_id", Number(id))
+              .not("rating", "is", null);
+
+            if (friendLogs && friendLogs.length > 0 && !cancelled) {
+              const uniqueUserIds = friendLogs.map((r) => r.user_id);
+              const { data: userRows } = await supabase
+                .from("users")
+                .select("id, username")
+                .in("id", uniqueUserIds);
+
+              const userMap = new Map((userRows ?? []).map((u) => [u.id, u]));
+              const ratings: FriendRating[] = [];
+              for (const row of friendLogs) {
+                const user = userMap.get(row.user_id);
+                if (user && row.rating != null) {
+                  ratings.push({ user, rating: row.rating });
+                }
+              }
+              setFriendRatings(ratings);
+            }
           }
-          setIsLiked(log.is_liked);
         }
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : "Failed to load game");
@@ -79,14 +107,12 @@ export default function GamePage() {
     setWtpSaving(true);
     try {
       if (wantToPlay) {
-        // Remove from backlog
         await deleteGameLog(supabase, userId, game.id);
         setExistingLog(null);
         setWantToPlay(false);
       } else {
-        // Add to backlog
         const log = await logGame(game.id, "want_to_play");
-        setExistingLog({ ...log, is_liked: isLiked });
+        setExistingLog(log);
         setWantToPlay(true);
       }
     } catch (e) {
@@ -96,53 +122,44 @@ export default function GamePage() {
     }
   };
 
-  const handleSave = async () => {
+  const handleSaveLog = async (status: GameStatus, rating?: number | null, review?: string | null) => {
     if (!userId || !game) return;
-    setSaving(true);
     setSaveError(null);
-    setSaveSuccess(false);
-    try {
-      // Enforce 5-like max
-      if (isLiked && !existingLog?.is_liked) {
-        const logs = await getUserGameLogs(supabase, userId);
-        const likeCount = logs.filter((l) => l.is_liked && l.game_igdb_id !== game.id).length;
-        if (likeCount >= 5) {
-          setSaveError("You already have 5 liked games. Unlike one first.");
-          setSaving(false);
-          return;
-        }
+
+    if (existingLog?.is_liked) {
+      const logs = await getUserGameLogs(supabase, userId);
+      const likeCount = logs.filter((l) => l.is_liked && l.game_igdb_id !== game.id).length;
+      if (likeCount >= 5) {
+        throw new Error("You already have 5 liked games. Unlike one first.");
       }
-      const log = await logGame(game.id, status, rating, review.trim() || null);
-      try {
-        await toggleLike(supabase, userId, game.id, isLiked);
-      } catch {
-        // is_liked column may not be migrated yet — log still saved
-      }
-      setExistingLog({ ...log, is_liked: isLiked });
-      setWantToPlay(false); // upgrading from backlog to real log
-      setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 2500);
-    } catch (e) {
-      setSaveError(e instanceof Error ? e.message : "Failed to save");
-    } finally {
-      setSaving(false);
     }
+
+    const log = await logGame(game.id, status, rating, review);
+    try {
+      await toggleLike(supabase, userId, game.id, existingLog?.is_liked ?? false);
+    } catch {
+      // is_liked may not be migrated yet
+    }
+    setExistingLog({ ...log, is_liked: existingLog?.is_liked ?? false });
+    setWantToPlay(false);
   };
 
   if (loading) return <PageSpinner />;
-  if (error) return <div style={{ padding: "2rem", color: "#f55" }}>{error}</div>;
+  if (error) return <div style={{ padding: "2rem", color: "var(--danger)" }}>{error}</div>;
   if (!game) return null;
 
   const year = game.first_release_date
     ? new Date(game.first_release_date * 1000).getFullYear()
     : null;
   const developer = game.involved_companies?.find((c) => c.developer)?.company.name ?? null;
+  const publisher = game.involved_companies?.find((c) => !c.developer)?.company.name ?? null;
   const coverUrl = game.cover ? getCoverUrl(game.cover.image_id, "cover_big") : null;
+  const communityRating = game.rating != null ? (game.rating / 10).toFixed(1) : null;
 
   return (
     <div>
       {/* ── Hero ── */}
-      <div style={{ position: "relative", height: 340, overflow: "hidden" }}>
+      <div style={{ position: "relative", height: 420, overflow: "hidden" }}>
         {/* Blurred background */}
         {coverUrl && (
           <img
@@ -155,295 +172,390 @@ export default function GamePage() {
               width: "100%",
               height: "100%",
               objectFit: "cover",
-              filter: "blur(22px) brightness(0.35)",
+              filter: "blur(40px) brightness(0.3)",
               transform: "scale(1.12)",
             }}
           />
         )}
-        {/* Gradient fade to page bg */}
         <div
           style={{
             position: "absolute",
             inset: 0,
-            background: "linear-gradient(to bottom, rgba(0,0,0,0.05) 30%, var(--bg) 100%)",
+            background: "linear-gradient(to bottom, rgba(0,0,0,0.1) 40%, var(--bg) 100%)",
           }}
         />
-        {/* Content anchored to bottom */}
+
+        {/* Hero content centred */}
         <div
           style={{
             position: "absolute",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            maxWidth: 960,
-            margin: "0 auto",
-            padding: "0 2rem 1.75rem",
+            inset: 0,
             display: "flex",
-            gap: "1.5rem",
-            alignItems: "flex-end",
+            alignItems: "center",
+            justifyContent: "center",
           }}
         >
-          {coverUrl && (
-            <img
-              src={coverUrl}
-              alt={game.name}
-              style={{
-                width: 115,
-                borderRadius: 8,
-                flexShrink: 0,
-                boxShadow: "0 6px 24px rgba(0,0,0,0.7)",
-              }}
-            />
-          )}
-          <div>
-            <h1 style={{ fontSize: "1.9rem", fontWeight: 700, lineHeight: 1.2, margin: 0 }}>
-              {game.name}
-            </h1>
-            <div style={{ display: "flex", gap: "0.6rem", marginTop: "0.4rem", flexWrap: "wrap", alignItems: "center" }}>
-              {year && <span style={{ color: "var(--muted)", fontSize: "0.95rem" }}>{year}</span>}
-              {developer && (
-                <span style={{ color: "var(--muted)", fontSize: "0.95rem" }}>· {developer}</span>
-              )}
-              {game.rating != null && (
-                <span style={{ color: "var(--accent)", fontSize: "0.9rem" }}>
-                  · ★ {game.rating.toFixed(0)}/100
-                  {game.rating_count != null && (
-                    <span style={{ color: "var(--muted)", fontSize: "0.8rem" }}>
-                      {" "}({game.rating_count.toLocaleString()} ratings)
+          <div
+            style={{
+              maxWidth: 1280,
+              width: "100%",
+              padding: "0 24px",
+              display: "flex",
+              gap: "2rem",
+              alignItems: "center",
+            }}
+          >
+            {coverUrl && (
+              <img
+                src={coverUrl}
+                alt={game.name}
+                style={{
+                  width: 200,
+                  flexShrink: 0,
+                  borderRadius: 10,
+                  boxShadow: "0 10px 40px rgba(0,0,0,0.7)",
+                }}
+              />
+            )}
+
+            <div>
+              <h1
+                style={{
+                  fontFamily: "Syne, sans-serif",
+                  fontSize: "clamp(1.75rem, 3vw, 2.5rem)",
+                  fontWeight: 800,
+                  color: "#fff",
+                  lineHeight: 1.15,
+                  margin: 0,
+                  marginBottom: "0.6rem",
+                }}
+              >
+                {game.name}
+              </h1>
+
+              {game.genres && game.genres.length > 0 && (
+                <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap", marginBottom: "0.6rem" }}>
+                  {game.genres.map((g) => (
+                    <span
+                      key={g.id}
+                      style={{
+                        padding: "0.2rem 0.65rem",
+                        background: "var(--border)",
+                        borderRadius: 999,
+                        fontSize: "0.75rem",
+                        color: "var(--muted)",
+                      }}
+                    >
+                      {g.name}
                     </span>
-                  )}
-                </span>
+                  ))}
+                </div>
               )}
-            </div>
-            {game.genres && game.genres.length > 0 && (
-              <div style={{ display: "flex", gap: "0.4rem", marginTop: "0.6rem", flexWrap: "wrap" }}>
-                {game.genres.map((g) => (
+
+              <div style={{ display: "flex", gap: "1rem", alignItems: "center", flexWrap: "wrap", marginBottom: "0.75rem" }}>
+                {year && <span style={{ color: "var(--muted)", fontSize: "0.9rem" }}>{year}</span>}
+                {game.platforms && game.platforms.length > 0 && (
+                  <span style={{ color: "var(--muted)", fontSize: "0.85rem" }}>
+                    {game.platforms.map((p) => p.name).join(", ")}
+                  </span>
+                )}
+              </div>
+
+              {communityRating && (
+                <div style={{ marginBottom: "1rem" }}>
                   <span
-                    key={g.id}
                     style={{
-                      padding: "0.15rem 0.55rem",
-                      background: "rgba(255,255,255,0.08)",
-                      borderRadius: 20,
-                      fontSize: "0.75rem",
-                      color: "var(--muted)",
+                      fontFamily: "Syne, sans-serif",
+                      fontSize: "2.5rem",
+                      fontWeight: 800,
+                      color: "var(--accent)",
+                      lineHeight: 1,
                     }}
                   >
-                    {g.name}
+                    {communityRating}
                   </span>
-                ))}
+                  <span style={{ color: "var(--muted)", fontSize: "0.85rem", marginLeft: "0.5rem" }}>
+                    {game.rating_count != null && `(${game.rating_count.toLocaleString()} ratings)`}
+                  </span>
+                </div>
+              )}
+
+              <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap" }}>
+                {userId && (
+                  <button
+                    onClick={() => setShowLogModal(true)}
+                    style={{
+                      padding: "0.6rem 1.5rem",
+                      background: "var(--accent)",
+                      border: "none",
+                      color: "#0e0e10",
+                      borderRadius: 8,
+                      cursor: "pointer",
+                      fontWeight: 700,
+                      fontSize: "0.9rem",
+                      fontFamily: "Syne, sans-serif",
+                    }}
+                  >
+                    {existingLog && existingLog.status !== "want_to_play" ? "Edit log" : "Log this game"}
+                  </button>
+                )}
+
+                {userId && (!existingLog || existingLog.status === "want_to_play") && (
+                  <button
+                    onClick={handleWantToPlay}
+                    disabled={wtpSaving}
+                    style={{
+                      padding: "0.6rem 1.25rem",
+                      background: wantToPlay ? "rgba(228,255,26,0.1)" : "transparent",
+                      border: `1px solid ${wantToPlay ? "var(--accent)" : "var(--border)"}`,
+                      color: wantToPlay ? "var(--accent)" : "var(--muted)",
+                      borderRadius: 8,
+                      cursor: wtpSaving ? "not-allowed" : "pointer",
+                      fontSize: "0.875rem",
+                      fontWeight: wantToPlay ? 600 : 400,
+                      opacity: wtpSaving ? 0.7 : 1,
+                    }}
+                  >
+                    {wantToPlay ? "✓ Want to Play" : "+ Want to Play"}
+                  </button>
+                )}
               </div>
-            )}
+
+              {saveError && <p style={{ color: "var(--danger)", fontSize: "0.8rem", marginTop: "0.5rem" }}>{saveError}</p>}
+            </div>
           </div>
         </div>
       </div>
 
       {/* ── Body ── */}
-      <div style={{ maxWidth: 960, margin: "0 auto", padding: "2rem 2rem 4rem" }}>
-        <div style={{ display: "flex", gap: "2.5rem", alignItems: "flex-start" }}>
-          {/* Left: description + platforms */}
-          <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "2.5rem 24px 4rem" }}>
+
+        {/* Friends' ratings strip */}
+        {userId && (
+          <section style={{ marginBottom: "2.5rem" }}>
+            <h2
+              style={{
+                fontFamily: "Syne, sans-serif",
+                fontSize: "0.72rem",
+                fontWeight: 700,
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+                color: "var(--muted)",
+                marginBottom: "0.75rem",
+              }}
+            >
+              Your Friends Rated This
+            </h2>
+            {friendRatings.length === 0 ? (
+              <p style={{ color: "var(--muted)", fontSize: "0.875rem" }}>
+                None of your friends have played this yet.
+              </p>
+            ) : (
+              <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
+                {friendRatings.map((fr) => (
+                  <div
+                    key={fr.user.id}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.5rem",
+                      background: "var(--surface)",
+                      border: "1px solid var(--border)",
+                      borderRadius: 8,
+                      padding: "0.5rem 0.75rem",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: "50%",
+                        background: "var(--accent)",
+                        color: "#0e0e10",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontWeight: 700,
+                        fontSize: "0.75rem",
+                        fontFamily: "Syne, sans-serif",
+                        flexShrink: 0,
+                      }}
+                    >
+                      {fr.user.username[0]?.toUpperCase()}
+                    </div>
+                    <span style={{ fontSize: "0.875rem", color: "var(--text)" }}>{fr.user.username}</span>
+                    <span
+                      style={{
+                        background: "var(--accent)",
+                        color: "#0e0e10",
+                        borderRadius: 4,
+                        fontSize: "0.75rem",
+                        fontWeight: 700,
+                        padding: "1px 6px",
+                      }}
+                    >
+                      {fr.rating}/10
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* About section */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: "2.5rem", alignItems: "start" }}>
+          <div>
             {game.summary && (
-              <p style={{ fontSize: "0.95rem", color: "var(--text)", lineHeight: 1.75, marginBottom: "1.25rem" }}>
+              <p style={{ fontSize: "0.95rem", color: "var(--text)", lineHeight: 1.8, marginBottom: "1.5rem" }}>
                 {game.summary}
               </p>
             )}
+
+            <div style={{ display: "flex", gap: "2rem", flexWrap: "wrap", marginBottom: "1.5rem" }}>
+              {developer && (
+                <div>
+                  <div style={{ fontSize: "0.7rem", color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 3 }}>Developer</div>
+                  <div style={{ fontSize: "0.9rem", color: "var(--text)" }}>{developer}</div>
+                </div>
+              )}
+              {publisher && publisher !== developer && (
+                <div>
+                  <div style={{ fontSize: "0.7rem", color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 3 }}>Publisher</div>
+                  <div style={{ fontSize: "0.9rem", color: "var(--text)" }}>{publisher}</div>
+                </div>
+              )}
+              {year && (
+                <div>
+                  <div style={{ fontSize: "0.7rem", color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 3 }}>Released</div>
+                  <div style={{ fontSize: "0.9rem", color: "var(--text)" }}>{year}</div>
+                </div>
+              )}
+            </div>
+
             {game.platforms && game.platforms.length > 0 && (
-              <p style={{ fontSize: "0.8rem", color: "var(--muted)" }}>
-                {game.platforms.map((p) => p.name).join(" · ")}
-              </p>
+              <div>
+                <div style={{ fontSize: "0.7rem", color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Platforms</div>
+                <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
+                  {game.platforms.map((p) => (
+                    <span
+                      key={p.id}
+                      style={{
+                        padding: "0.2rem 0.65rem",
+                        background: "var(--surface)",
+                        border: "1px solid var(--border)",
+                        borderRadius: 6,
+                        fontSize: "0.8rem",
+                        color: "var(--muted)",
+                      }}
+                    >
+                      {p.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
 
-          {/* Right: log panel */}
-          {userId && (
+          {/* Right: user log state summary (read-only when logged) */}
+          {existingLog && existingLog.status !== "want_to_play" && (
             <div
               style={{
-                width: 270,
-                flexShrink: 0,
                 background: "var(--surface)",
                 border: "1px solid var(--border)",
                 borderRadius: 10,
                 padding: "1.25rem",
-                display: "flex",
-                flexDirection: "column",
-                gap: "1rem",
               }}
             >
-              <h3 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 600 }}>
-                {existingLog && existingLog.status !== "want_to_play" ? "Your Log" : "Log This Game"}
-              </h3>
-
-              {/* Want to Play button — only when not yet properly logged */}
-              {(!existingLog || existingLog.status === "want_to_play") && (
-                <button
-                  onClick={handleWantToPlay}
-                  disabled={wtpSaving}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "0.4rem",
-                    padding: "0.5rem",
-                    background: wantToPlay ? "rgba(108,99,255,0.12)" : "var(--bg)",
-                    border: `1px solid ${wantToPlay ? "var(--accent)" : "var(--border)"}`,
-                    color: wantToPlay ? "var(--accent)" : "var(--muted)",
-                    borderRadius: 6,
-                    cursor: wtpSaving ? "not-allowed" : "pointer",
-                    fontSize: "0.875rem",
-                    fontWeight: wantToPlay ? 600 : 400,
-                    opacity: wtpSaving ? 0.7 : 1,
-                  }}
-                >
-                  {wantToPlay ? "✓ Want to Play" : "+ Want to Play"}
-                </button>
-              )}
-
-              {/* Divider before log form */}
-              <div style={{ height: 1, background: "var(--border)", margin: "0 -1.25rem" }} />
-
-              {/* Status */}
-              <div>
-                <label style={{ fontSize: "0.75rem", color: "var(--muted)", display: "block", marginBottom: 5 }}>
-                  Status
-                </label>
-                <select
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value as GameStatus)}
-                  style={{
-                    width: "100%",
-                    padding: "0.45rem 0.6rem",
-                    background: "var(--bg)",
-                    border: "1px solid var(--border)",
-                    color: "var(--text)",
-                    borderRadius: 6,
-                    fontSize: "0.9rem",
-                  }}
-                >
-                  {STATUS_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Rating */}
-              <div>
-                <label style={{ fontSize: "0.75rem", color: "var(--muted)", display: "block", marginBottom: 5 }}>
-                  Your Rating {rating ? `(${rating}/10)` : "(none)"}
-                </label>
-                <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                  {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
-                    <button
-                      key={n}
-                      onClick={() => setRating(rating === n ? null : n)}
-                      style={{
-                        width: 28,
-                        height: 28,
-                        borderRadius: 5,
-                        border: "1px solid var(--border)",
-                        background: rating === n ? "var(--accent)" : "var(--bg)",
-                        color: rating === n ? "#fff" : "var(--muted)",
-                        cursor: "pointer",
-                        fontSize: "0.8rem",
-                        fontWeight: rating === n ? 700 : 400,
-                      }}
-                    >
-                      {n}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Review */}
-              <div>
-                <label style={{ fontSize: "0.75rem", color: "var(--muted)", display: "block", marginBottom: 5 }}>
-                  Review (optional)
-                </label>
-                <textarea
-                  value={review}
-                  onChange={(e) => setReview(e.target.value)}
-                  placeholder="Your thoughts..."
-                  rows={3}
-                  style={{
-                    width: "100%",
-                    padding: "0.4rem 0.6rem",
-                    background: "var(--bg)",
-                    border: "1px solid var(--border)",
-                    color: "var(--text)",
-                    borderRadius: 6,
-                    fontSize: "0.85rem",
-                    resize: "vertical",
-                    fontFamily: "inherit",
-                  }}
-                />
-              </div>
-
-              {/* Like toggle */}
-              <button
-                onClick={() => setIsLiked((f) => !f)}
+              <div
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "0.5rem",
-                  padding: "0.45rem",
-                  background: isLiked ? "rgba(255,60,100,0.12)" : "var(--bg)",
-                  border: `1px solid ${isLiked ? "rgba(255,60,100,0.45)" : "var(--border)"}`,
-                  color: isLiked ? "#ff3c64" : "var(--muted)",
+                  fontSize: "0.7rem",
+                  color: "var(--muted)",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                  marginBottom: "0.75rem",
+                }}
+              >
+                Your Log
+              </div>
+              <div style={{ fontSize: "0.9rem", color: "var(--text)", marginBottom: "0.4rem", textTransform: "capitalize" }}>
+                {existingLog.status.replace("_", " ")}
+              </div>
+              {existingLog.rating != null && (
+                <div style={{ marginBottom: "0.4rem" }}>
+                  <span style={{ background: "var(--accent)", color: "#0e0e10", borderRadius: 4, fontSize: "0.8rem", fontWeight: 700, padding: "2px 8px" }}>
+                    {existingLog.rating}/10
+                  </span>
+                </div>
+              )}
+              {existingLog.review && (
+                <p style={{ fontSize: "0.85rem", color: "var(--muted)", lineHeight: 1.5, marginTop: "0.5rem" }}>
+                  {existingLog.review.length > 120 ? existingLog.review.slice(0, 120) + "…" : existingLog.review}
+                </p>
+              )}
+              <button
+                onClick={() => setShowLogModal(true)}
+                style={{
+                  marginTop: "0.75rem",
+                  padding: "0.4rem 0.9rem",
+                  background: "none",
+                  border: "1px solid var(--border)",
+                  color: "var(--muted)",
                   borderRadius: 6,
                   cursor: "pointer",
-                  fontSize: "0.875rem",
-                  fontWeight: isLiked ? 600 : 400,
+                  fontSize: "0.8rem",
                 }}
               >
-                {isLiked ? "♥ Liked" : "♡ Like"}
-              </button>
-
-              {saveError && <p style={{ color: "#f55", fontSize: "0.8rem", margin: 0 }}>{saveError}</p>}
-
-              <button
-                onClick={handleSave}
-                disabled={saving || saveSuccess}
-                style={{
-                  padding: "0.6rem",
-                  background: saveSuccess ? "#2d7a3a" : "var(--accent)",
-                  border: "none",
-                  color: "#fff",
-                  borderRadius: 6,
-                  cursor: (saving || saveSuccess) ? "default" : "pointer",
-                  fontWeight: 600,
-                  fontSize: "0.9rem",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "0.45rem",
-                  transition: "background 0.25s",
-                }}
-              >
-                {saving ? (
-                  <>
-                    <span
-                      style={{
-                        width: 13,
-                        height: 13,
-                        border: "2px solid rgba(255,255,255,0.35)",
-                        borderTopColor: "#fff",
-                        borderRadius: "50%",
-                        animation: "spin 0.65s linear infinite",
-                        flexShrink: 0,
-                      }}
-                    />
-                    Saving...
-                  </>
-                ) : saveSuccess ? (
-                  <>&#10003; Saved</>
-                ) : (
-                  existingLog ? "Update Log" : "Save Log"
-                )}
+                Edit
               </button>
             </div>
           )}
         </div>
+
+        {/* Similar games */}
+        {similarGames.length > 0 && (
+          <section style={{ marginTop: "3rem" }}>
+            <h2
+              style={{
+                fontFamily: "Syne, sans-serif",
+                fontSize: "0.72rem",
+                fontWeight: 700,
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+                color: "var(--muted)",
+                marginBottom: "1rem",
+              }}
+            >
+              Similar Games
+            </h2>
+            <div
+              style={{
+                display: "flex",
+                gap: "0.75rem",
+                overflowX: "auto",
+                paddingBottom: "0.5rem",
+                scrollbarWidth: "none",
+              }}
+            >
+              {similarGames.map((g) => (
+                <div key={g.id} style={{ flex: "0 0 130px" }}>
+                  <GameCard game={g} onSelect={(sg) => navigate(`/game/${sg.id}`)} />
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
+
+      {/* Log modal */}
+      {showLogModal && game && (
+        <LogGameModal
+          game={game}
+          {...(existingLog ? { existingLog } : {})}
+          onClose={() => setShowLogModal(false)}
+          onSave={handleSaveLog}
+        />
+      )}
     </div>
   );
 }

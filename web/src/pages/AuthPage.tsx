@@ -23,10 +23,22 @@ export default function AuthPage() {
       }
       navigate("/");
     } catch (err) {
-      console.error("Auth error:", err);
       setError(err instanceof Error ? err.message : String(err));
     }
   }
+
+  const fieldStyle: React.CSSProperties = {
+    background: "var(--bg)",
+    border: "1px solid var(--border)",
+    borderRadius: 8,
+    padding: "0.7rem 0.9rem",
+    color: "var(--text)",
+    fontSize: "0.95rem",
+    width: "100%",
+    outline: "none",
+    boxSizing: "border-box",
+    transition: "border-color 0.15s",
+  };
 
   return (
     <main
@@ -35,103 +47,117 @@ export default function AuthPage() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
+        padding: "1.5rem",
       }}
     >
-      <form
-        onSubmit={handleSubmit}
-        style={{
-          background: "var(--surface)",
-          border: "1px solid var(--border)",
-          borderRadius: "12px",
-          padding: "2rem",
-          width: "100%",
-          maxWidth: "400px",
-          display: "flex",
-          flexDirection: "column",
-          gap: "1rem",
-        }}
-      >
-        <h1 style={{ fontSize: "1.5rem" }}>
-          {mode === "login" ? "Sign in to Gameboxd" : "Create account"}
-        </h1>
+      <div style={{ width: "100%", maxWidth: 400 }}>
+        <div style={{ textAlign: "center", marginBottom: "2rem" }}>
+          <h1
+            style={{
+              fontFamily: "Syne, sans-serif",
+              fontSize: "2rem",
+              fontWeight: 800,
+              color: "var(--accent)",
+              marginBottom: "0.25rem",
+            }}
+          >
+            Shelved
+          </h1>
+          <p style={{ color: "var(--muted)", fontSize: "0.9rem" }}>
+            {mode === "login" ? "Welcome back." : "Start your collection."}
+          </p>
+        </div>
 
-        {mode === "signup" && (
+        <form
+          onSubmit={handleSubmit}
+          style={{
+            background: "var(--surface)",
+            border: "1px solid var(--border)",
+            borderRadius: 14,
+            padding: "2rem",
+            display: "flex",
+            flexDirection: "column",
+            gap: "1rem",
+          }}
+        >
+          {mode === "signup" && (
+            <input
+              type="text"
+              placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+              style={fieldStyle}
+              onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
+              onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
+            />
+          )}
+
           <input
-            type="text"
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             required
-            style={inputStyle}
+            style={fieldStyle}
+            onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
+            onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
           />
-        )}
 
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          style={inputStyle}
-        />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            style={fieldStyle}
+            onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
+            onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
+          />
 
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          style={inputStyle}
-        />
+          {error && (
+            <p style={{ color: "var(--danger)", fontSize: "0.875rem", margin: 0 }}>{error}</p>
+          )}
 
-        {error && (
-          <p style={{ color: "#ff6b6b", fontSize: "0.875rem" }}>{error}</p>
-        )}
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              background: "var(--accent)",
+              color: "#0e0e10",
+              border: "none",
+              borderRadius: 8,
+              padding: "0.75rem",
+              cursor: loading ? "not-allowed" : "pointer",
+              fontSize: "0.95rem",
+              fontWeight: 700,
+              opacity: loading ? 0.7 : 1,
+              fontFamily: "Syne, sans-serif",
+              marginTop: "0.25rem",
+            }}
+          >
+            {loading ? "Loading…" : mode === "login" ? "Sign in" : "Sign up"}
+          </button>
 
-        <button
-          type="submit"
-          disabled={loading}
-          style={{
-            background: "var(--accent)",
-            color: "#fff",
-            border: "none",
-            borderRadius: "8px",
-            padding: "0.75rem",
-            cursor: loading ? "not-allowed" : "pointer",
-            fontSize: "1rem",
-            fontWeight: "600",
-            opacity: loading ? 0.7 : 1,
-          }}
-        >
-          {loading ? "Loading…" : mode === "login" ? "Sign in" : "Sign up"}
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setMode(mode === "login" ? "signup" : "login")}
-          style={{
-            background: "none",
-            border: "none",
-            color: "var(--accent)",
-            cursor: "pointer",
-            fontSize: "0.875rem",
-          }}
-        >
-          {mode === "login"
-            ? "Don't have an account? Sign up"
-            : "Already have an account? Sign in"}
-        </button>
-      </form>
+          <button
+            type="button"
+            onClick={() => setMode(mode === "login" ? "signup" : "login")}
+            style={{
+              background: "none",
+              border: "none",
+              color: "var(--muted)",
+              cursor: "pointer",
+              fontSize: "0.875rem",
+              textDecoration: "underline",
+              padding: 0,
+            }}
+          >
+            {mode === "login"
+              ? "Don't have an account? Sign up"
+              : "Already have an account? Sign in"}
+          </button>
+        </form>
+      </div>
     </main>
   );
 }
-
-const inputStyle: React.CSSProperties = {
-  background: "var(--bg)",
-  border: "1px solid var(--border)",
-  borderRadius: "8px",
-  padding: "0.75rem",
-  color: "var(--text)",
-  fontSize: "1rem",
-  width: "100%",
-};

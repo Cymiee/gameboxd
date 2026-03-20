@@ -6,7 +6,7 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 const PROXY_URL = `${SUPABASE_URL}/functions/v1/igdb-proxy`;
 
 const GAME_FIELDS =
-  "fields id,name,summary,first_release_date,rating,rating_count," +
+  "fields id,name,summary,first_release_date,rating,rating_count,hypes,similar_games," +
   "cover.id,cover.image_id,cover.url,genres.id,genres.name,platforms.id,platforms.name," +
   "involved_companies.company.id,involved_companies.company.name,involved_companies.developer;";
 
@@ -52,6 +52,13 @@ export async function getTrendingGames(): Promise<IGDBGame[]> {
 export async function getGamesByGenre(genreId: number, excludeIds: number[]): Promise<IGDBGame[]> {
   const exclude = excludeIds.length > 0 ? ` & id != (${excludeIds.join(",")})` : "";
   const body = `${GAME_FIELDS} where genres = ${genreId}${exclude} & rating_count > 30; sort rating_count desc; limit 15;`;
+  return callProxy("/games", body);
+}
+
+export async function getNewReleases(limit = 7): Promise<IGDBGame[]> {
+  const now = Math.floor(Date.now() / 1000);
+  const fourteenDaysAgo = now - 14 * 24 * 3600;
+  const body = `${GAME_FIELDS} where first_release_date >= ${fourteenDaysAgo} & first_release_date <= ${now} & hypes > 0; sort hypes desc; limit ${limit};`;
   return callProxy("/games", body);
 }
 

@@ -81,13 +81,13 @@ export default function ActivityCard({ activity, user, game }: Props) {
         <img
           src={getCoverUrl(game.cover.image_id, "thumb")}
           alt={game.name}
-          style={{ width: 40, height: 56, objectFit: "cover", borderRadius: 4, flexShrink: 0 }}
+          style={{ width: 40, height: 57, objectFit: "cover", borderRadius: 4, flexShrink: 0 }}
         />
       ) : (
         <div
           style={{
             width: 40,
-            height: 56,
+            height: 57,
             background: "var(--border)",
             borderRadius: 4,
             flexShrink: 0,
@@ -95,7 +95,7 @@ export default function ActivityCard({ activity, user, game }: Props) {
         />
       )}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: "0.9rem", color: "var(--text)", lineHeight: 1.4 }}>
+        <div style={{ fontSize: "0.875rem", color: "var(--text)", lineHeight: 1.45 }}>
           {activityText(activity, user.username, game.name)}
         </div>
         <div style={{ marginTop: "0.25rem", display: "flex", gap: "0.5rem", alignItems: "center" }}>

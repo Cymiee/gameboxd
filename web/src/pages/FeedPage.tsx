@@ -25,10 +25,7 @@ export default function FeedPage() {
         const feed = await getFriendsActivityFeed(supabase, userId!);
         setActivities(feed);
 
-        if (feed.length === 0) {
-          setLoading(false);
-          return;
-        }
+        if (feed.length === 0) { setLoading(false); return; }
 
         const uniqueGameIds = [...new Set(feed.map((a) => a.game_igdb_id))];
         const uniqueUserIds = [...new Set(feed.map((a) => a.user_id))];
@@ -46,7 +43,6 @@ export default function FeedPage() {
         for (const u of userRows ?? []) userMap.set(u.id, u);
         setUsers(userMap);
       } catch (e) {
-        console.error("Feed load error:", e);
         const msg = e instanceof Error ? e.message : (e as { message?: string })?.message ?? JSON.stringify(e);
         setError(msg || "Failed to load feed");
       } finally {
@@ -60,25 +56,44 @@ export default function FeedPage() {
   if (loading) return <PageSpinner />;
 
   if (error) {
-    return <div style={{ padding: "2rem", color: "#f55" }}>{error}</div>;
+    return <div style={{ padding: "2rem", color: "var(--danger)" }}>{error}</div>;
   }
 
   if (activities.length === 0) {
     return (
-      <div style={{ padding: "2rem", textAlign: "center" }}>
-        <h2 style={{ marginBottom: "0.5rem" }}>Activity Feed</h2>
-        <p style={{ color: "var(--muted)" }}>Follow friends to see their activity.</p>
+      <div style={{ maxWidth: 640, margin: "0 auto", padding: "4rem 24px", textAlign: "center" }}>
+        <h2
+          style={{
+            fontFamily: "Syne, sans-serif",
+            fontSize: "1.25rem",
+            fontWeight: 700,
+            marginBottom: "0.5rem",
+          }}
+        >
+          Activity Feed
+        </h2>
+        <p style={{ color: "var(--muted)" }}>Follow friends to see their activity here.</p>
       </div>
     );
   }
 
   return (
-    <div style={{ padding: "2rem", maxWidth: 1400, margin: "0 auto" }}>
-      <h1 style={{ marginBottom: "1.5rem" }}>Activity Feed</h1>
+    <div style={{ maxWidth: 1280, margin: "0 auto", padding: "2rem 24px" }}>
+      <h1
+        style={{
+          fontFamily: "Syne, sans-serif",
+          fontSize: "1.5rem",
+          fontWeight: 700,
+          marginBottom: "1.5rem",
+          color: "var(--text)",
+        }}
+      >
+        Activity Feed
+      </h1>
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(400px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fill, minmax(380px, 1fr))",
           gap: "0.75rem",
         }}
       >

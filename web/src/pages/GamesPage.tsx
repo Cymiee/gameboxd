@@ -5,7 +5,7 @@ import { searchGames, getTrendingGames, getGamesByFilter } from "../lib/igdb";
 import GameCard from "../components/GameCard";
 import Spinner from "../components/Spinner";
 
-// ── Static filter data ───────────────────────────────────────────────────────
+// ── Static filter data ────────────────────────────────────────────────────────
 
 const GENRES: { id: number; name: string }[] = [
   { id: 2,  name: "Point-and-Click" },
@@ -58,25 +58,17 @@ const THEMES: { id: number; name: string }[] = [
   { id: 44, name: "Romance" },
 ];
 
-// ── FilterPill ───────────────────────────────────────────────────────────────
+// ── FilterPill ────────────────────────────────────────────────────────────────
 
-function FilterPill({
-  label,
-  active,
-  onClick,
-}: {
-  label: string;
-  active: boolean;
-  onClick: () => void;
-}) {
+function FilterPill({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
       style={{
-        padding: "0.2rem 0.6rem",
-        borderRadius: 20,
+        padding: "0.2rem 0.65rem",
+        borderRadius: 999,
         border: `1px solid ${active ? "var(--accent)" : "var(--border)"}`,
-        background: active ? "rgba(108,99,255,0.14)" : "transparent",
+        background: active ? "rgba(228,255,26,0.1)" : "transparent",
         color: active ? "var(--accent)" : "var(--muted)",
         cursor: "pointer",
         fontSize: "0.75rem",
@@ -90,14 +82,9 @@ function FilterPill({
   );
 }
 
-// ── FilterGroup ──────────────────────────────────────────────────────────────
+// ── FilterGroup ───────────────────────────────────────────────────────────────
 
-function FilterGroup({
-  title,
-  items,
-  selected,
-  onToggle,
-}: {
+function FilterGroup({ title, items, selected, onToggle }: {
   title: string;
   items: { id: number; name: string }[];
   selected: number[];
@@ -108,8 +95,9 @@ function FilterGroup({
       <div
         style={{
           fontSize: "0.68rem",
+          fontFamily: "Syne, sans-serif",
           fontWeight: 700,
-          letterSpacing: "0.1em",
+          letterSpacing: "0.12em",
           textTransform: "uppercase",
           color: "var(--muted)",
           marginBottom: "0.6rem",
@@ -131,7 +119,7 @@ function FilterGroup({
   );
 }
 
-// ── GamesPage ────────────────────────────────────────────────────────────────
+// ── GamesPage ─────────────────────────────────────────────────────────────────
 
 export default function GamesPage() {
   const [searchParams] = useSearchParams();
@@ -140,14 +128,12 @@ export default function GamesPage() {
 
   const [selectedGenres, setSelectedGenres] = useState<number[]>([]);
   const [selectedThemes, setSelectedThemes] = useState<number[]>([]);
-
   const [results, setResults] = useState<IGDBGame[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const hasFilters = selectedGenres.length > 0 || selectedThemes.length > 0;
 
-  // Reset filters when search query changes
   useEffect(() => {
     setSelectedGenres([]);
     setSelectedThemes([]);
@@ -178,14 +164,10 @@ export default function GamesPage() {
   }, [q, selectedGenres.join(","), selectedThemes.join(",")]);
 
   const toggleGenre = (id: number) =>
-    setSelectedGenres((prev) =>
-      prev.includes(id) ? prev.filter((g) => g !== id) : [...prev, id]
-    );
+    setSelectedGenres((prev) => prev.includes(id) ? prev.filter((g) => g !== id) : [...prev, id]);
 
   const toggleTheme = (id: number) =>
-    setSelectedThemes((prev) =>
-      prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]
-    );
+    setSelectedThemes((prev) => prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]);
 
   const clearFilters = () => {
     setSelectedGenres([]);
@@ -199,17 +181,17 @@ export default function GamesPage() {
     : "Trending Games";
 
   return (
-    <div style={{ maxWidth: 1500, margin: "0 auto", padding: "2rem" }}>
+    <div style={{ maxWidth: 1280, margin: "0 auto", padding: "2rem 24px" }}>
       <div style={{ display: "flex", gap: "2rem", alignItems: "flex-start" }}>
 
-        {/* ── Sidebar ── */}
+        {/* Sidebar */}
         <div
           style={{
             width: 185,
             flexShrink: 0,
             position: "sticky",
-            top: 80,
-            maxHeight: "calc(100vh - 100px)",
+            top: 76,
+            maxHeight: "calc(100vh - 96px)",
             overflowY: "auto",
             scrollbarWidth: "none",
           }}
@@ -228,44 +210,36 @@ export default function GamesPage() {
                 borderRadius: 6,
                 cursor: "pointer",
                 fontSize: "0.78rem",
+                transition: "border-color 0.12s",
               }}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
+              onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
             >
               ✕ Clear filters
             </button>
           )}
-
-          <FilterGroup
-            title="Genres"
-            items={GENRES}
-            selected={selectedGenres}
-            onToggle={toggleGenre}
-          />
-
-          <FilterGroup
-            title="Themes"
-            items={THEMES}
-            selected={selectedThemes}
-            onToggle={toggleTheme}
-          />
+          <FilterGroup title="Genres" items={GENRES} selected={selectedGenres} onToggle={toggleGenre} />
+          <FilterGroup title="Themes" items={THEMES} selected={selectedThemes} onToggle={toggleTheme} />
         </div>
 
-        {/* ── Main content ── */}
+        {/* Main content */}
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "1rem",
-              marginBottom: "1.25rem",
-            }}
-          >
-            <h1 style={{ fontSize: "1.2rem", fontWeight: 700, margin: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "1.5rem" }}>
+            <h1
+              style={{
+                fontFamily: "Syne, sans-serif",
+                fontSize: "1.15rem",
+                fontWeight: 700,
+                margin: 0,
+                color: "var(--text)",
+              }}
+            >
               {pageTitle}
             </h1>
             {loading && <Spinner size={18} />}
           </div>
 
-          {error && <p style={{ color: "#f55" }}>{error}</p>}
+          {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
 
           {!loading && !error && results.length === 0 && (
             <p style={{ color: "var(--muted)" }}>
@@ -280,7 +254,7 @@ export default function GamesPage() {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
               gap: "1rem",
             }}
           >

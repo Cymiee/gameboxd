@@ -26,6 +26,7 @@ export {
   getFriends,
   getPendingRequests,
   getFriendsActivityFeed,
+  getPopularAmongFriends,
 } from "./supabase/friends.js";
 
 // IGDB

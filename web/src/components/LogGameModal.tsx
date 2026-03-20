@@ -42,7 +42,7 @@ export default function LogGameModal({ game, existingLog, onClose, onSave }: Pro
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(0,0,0,0.6)",
+        background: "rgba(0,0,0,0.7)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -56,7 +56,7 @@ export default function LogGameModal({ game, existingLog, onClose, onSave }: Pro
           border: "1px solid var(--border)",
           borderRadius: 12,
           padding: "1.5rem",
-          width: "min(480px, 90vw)",
+          width: "min(500px, 92vw)",
           display: "flex",
           flexDirection: "column",
           gap: "1.25rem",
@@ -68,63 +68,68 @@ export default function LogGameModal({ game, existingLog, onClose, onSave }: Pro
             <img
               src={getCoverUrl(game.cover.image_id, "cover_small")}
               alt={game.name}
-              style={{ width: 60, borderRadius: 4, flexShrink: 0 }}
+              style={{ width: 56, borderRadius: 6, flexShrink: 0 }}
             />
           )}
           <div>
-            <h2 style={{ fontSize: "1.1rem", fontWeight: 700 }}>{game.name}</h2>
-            <p style={{ fontSize: "0.8rem", color: "var(--muted)", marginTop: 4 }}>
+            <h2 style={{ fontSize: "1.05rem", fontWeight: 700, fontFamily: "Syne, sans-serif" }}>
+              {game.name}
+            </h2>
+            <p style={{ fontSize: "0.8rem", color: "var(--muted)", marginTop: 3 }}>
               {existingLog ? "Update your log" : "Log this game"}
             </p>
           </div>
         </div>
 
-        {/* Status */}
+        {/* Status pills */}
         <div>
-          <label style={{ fontSize: "0.8rem", color: "var(--muted)", display: "block", marginBottom: 6 }}>
+          <label style={{ fontSize: "0.75rem", color: "var(--muted)", display: "block", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.08em" }}>
             Status
           </label>
-          <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value as GameStatus)}
-            style={{
-              width: "100%",
-              padding: "0.5rem",
-              background: "var(--bg)",
-              border: "1px solid var(--border)",
-              color: "var(--text)",
-              borderRadius: 6,
-              fontSize: "0.9rem",
-            }}
-          >
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
             {STATUS_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
+              <button
+                key={opt.value}
+                onClick={() => setStatus(opt.value)}
+                style={{
+                  padding: "0.35rem 0.9rem",
+                  borderRadius: 999,
+                  border: `1px solid ${status === opt.value ? "var(--accent)" : "var(--border)"}`,
+                  background: status === opt.value ? "var(--accent)" : "transparent",
+                  color: status === opt.value ? "#0e0e10" : "var(--muted)",
+                  cursor: "pointer",
+                  fontSize: "0.85rem",
+                  fontWeight: status === opt.value ? 600 : 400,
+                  transition: "all 0.12s",
+                }}
+              >
                 {opt.label}
-              </option>
+              </button>
             ))}
-          </select>
+          </div>
         </div>
 
-        {/* Rating */}
+        {/* Rating row */}
         <div>
-          <label style={{ fontSize: "0.8rem", color: "var(--muted)", display: "block", marginBottom: 6 }}>
-            Rating {rating ? `(${rating}/10)` : "(none)"}
+          <label style={{ fontSize: "0.75rem", color: "var(--muted)", display: "block", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+            Rating {rating ? `· ${rating}/10` : "· none"}
           </label>
-          <div style={{ display: "flex", gap: 6 }}>
+          <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
             {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
               <button
                 key={n}
                 onClick={() => setRating(rating === n ? null : n)}
                 style={{
-                  width: 32,
-                  height: 32,
+                  width: 36,
+                  height: 36,
                   borderRadius: 6,
-                  border: "1px solid var(--border)",
+                  border: `1px solid ${rating === n ? "var(--accent)" : "var(--border)"}`,
                   background: rating === n ? "var(--accent)" : "var(--bg)",
-                  color: rating === n ? "#fff" : "var(--muted)",
+                  color: rating === n ? "#0e0e10" : "var(--muted)",
                   cursor: "pointer",
                   fontWeight: rating === n ? 700 : 400,
                   fontSize: "0.85rem",
+                  transition: "all 0.1s",
                 }}
               >
                 {n}
@@ -135,40 +140,41 @@ export default function LogGameModal({ game, existingLog, onClose, onSave }: Pro
 
         {/* Review */}
         <div>
-          <label style={{ fontSize: "0.8rem", color: "var(--muted)", display: "block", marginBottom: 6 }}>
-            Review (optional)
+          <label style={{ fontSize: "0.75rem", color: "var(--muted)", display: "block", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+            Review
           </label>
           <textarea
             value={review}
             onChange={(e) => setReview(e.target.value)}
-            placeholder="Write your thoughts..."
-            rows={3}
+            placeholder="What did you think?"
+            rows={4}
             style={{
               width: "100%",
-              padding: "0.5rem",
+              padding: "0.6rem 0.75rem",
               background: "var(--bg)",
               border: "1px solid var(--border)",
               color: "var(--text)",
-              borderRadius: 6,
+              borderRadius: 8,
               fontSize: "0.9rem",
               resize: "vertical",
-              fontFamily: "inherit",
+              fontFamily: "Inter, sans-serif",
+              lineHeight: 1.5,
             }}
           />
         </div>
 
-        {error && <p style={{ color: "#f55", fontSize: "0.85rem" }}>{error}</p>}
+        {error && <p style={{ color: "var(--danger)", fontSize: "0.85rem" }}>{error}</p>}
 
         {/* Actions */}
         <div style={{ display: "flex", gap: "0.75rem", justifyContent: "flex-end" }}>
           <button
             onClick={onClose}
             style={{
-              padding: "0.5rem 1.25rem",
+              padding: "0.55rem 1.25rem",
               background: "none",
               border: "1px solid var(--border)",
               color: "var(--muted)",
-              borderRadius: 6,
+              borderRadius: 8,
               cursor: "pointer",
               fontSize: "0.9rem",
             }}
@@ -179,18 +185,19 @@ export default function LogGameModal({ game, existingLog, onClose, onSave }: Pro
             onClick={handleSave}
             disabled={saving}
             style={{
-              padding: "0.5rem 1.25rem",
+              padding: "0.55rem 1.5rem",
               background: "var(--accent)",
               border: "none",
-              color: "#fff",
-              borderRadius: 6,
+              color: "#0e0e10",
+              borderRadius: 8,
               cursor: saving ? "not-allowed" : "pointer",
               fontSize: "0.9rem",
-              fontWeight: 600,
+              fontWeight: 700,
               opacity: saving ? 0.7 : 1,
+              fontFamily: "Syne, sans-serif",
             }}
           >
-            {saving ? "Saving..." : "Save"}
+            {saving ? "Saving..." : existingLog ? "Update log" : "Save to log"}
           </button>
         </div>
       </div>

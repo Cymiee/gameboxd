@@ -1,21 +1,27 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import type { IGDBGame, GameLogRow, UserRow } from "@gameboxd/lib";
-import { getCoverUrl, getUserGameLogs } from "@gameboxd/lib";
+import type { IGDBGame, ActivityRow, UserRow } from "@gameboxd/lib";
+import { getCoverUrl, getFriendsActivityFeed, getPopularAmongFriends } from "@gameboxd/lib";
 import { supabase } from "../lib/supabase";
 import { useAuthStore } from "../store/auth";
-import { getTrendingGames, getGames, getGamesByGenre } from "../lib/igdb";
+import { getTrendingGames, getGames, getNewReleases } from "../lib/igdb";
 import GameCard from "../components/GameCard";
+import LogGameModal from "../components/LogGameModal";
 import Spinner from "../components/Spinner";
+import { useGamesStore } from "../store/games";
 import backgroundImg from "../assets/background.png";
 
-// ── Horizontal scrollable row ───────────────────────────────────────────────
+// ── Horizontal scroll row ────────────────────────────────────────────────────
 
-function GameRow({ games, loading }: { games: IGDBGame[]; loading: boolean }) {
+function HScrollRow({ games, loading, onQuickLog }: {
+  games: IGDBGame[];
+  loading: boolean;
+  onQuickLog?: (game: IGDBGame) => void;
+}) {
   const navigate = useNavigate();
   if (loading) {
     return (
-      <div style={{ height: 220, display: "flex", alignItems: "center", paddingLeft: "0.5rem" }}>
+      <div style={{ height: 200, display: "flex", alignItems: "center", paddingLeft: "0.5rem" }}>
         <Spinner />
       </div>
     );
@@ -24,27 +30,36 @@ function GameRow({ games, loading }: { games: IGDBGame[]; loading: boolean }) {
   return (
     <div
       style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
+        display: "flex",
         gap: "0.75rem",
+        overflowX: "auto",
+        paddingBottom: "0.5rem",
+        scrollbarWidth: "none",
       }}
     >
       {games.map((g) => (
-        <GameCard key={g.id} game={g} onSelect={(game) => navigate(`/game/${game.id}`)} />
+        <div key={g.id} style={{ flex: "0 0 140px" }}>
+          <GameCard
+            game={g}
+            onSelect={(game) => navigate(`/game/${game.id}`)}
+            {...(onQuickLog ? { onQuickLog } : {})}
+          />
+        </div>
       ))}
     </div>
   );
 }
 
-// ── Section header ──────────────────────────────────────────────────────────
+// ── Section header ───────────────────────────────────────────────────────────
 
 function SectionHeader({ title }: { title: string }) {
   return (
     <h2
       style={{
-        fontSize: "0.8rem",
+        fontFamily: "Syne, sans-serif",
+        fontSize: "0.72rem",
         fontWeight: 700,
-        letterSpacing: "0.1em",
+        letterSpacing: "0.12em",
         textTransform: "uppercase",
         color: "var(--muted)",
         marginBottom: "1rem",
@@ -55,252 +70,347 @@ function SectionHeader({ title }: { title: string }) {
   );
 }
 
-// ── Review card ─────────────────────────────────────────────────────────────
+// ── timeAgo helper ───────────────────────────────────────────────────────────
 
-interface ReviewItem {
-  log: GameLogRow & { review: string };
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d ago`;
+}
+
+// ── Friends activity strip ────────────────────────────────────────────────────
+
+interface FeedItem {
+  activity: ActivityRow;
   user: Pick<UserRow, "id" | "username">;
   game: Pick<IGDBGame, "id" | "name" | "cover">;
 }
 
-function ReviewCard({ item }: { item: ReviewItem }) {
-  const excerpt =
-    item.log.review.length > 140
-      ? item.log.review.slice(0, 140).trimEnd() + "…"
-      : item.log.review;
+function FriendsStrip({ items }: { items: FeedItem[] }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  if (items.length === 0) return null;
 
   return (
-    <Link
-      to={`/game/${item.game.id}`}
-      style={{ textDecoration: "none" }}
+    <div
+      ref={scrollRef}
+      style={{
+        display: "flex",
+        gap: "0.75rem",
+        overflowX: "auto",
+        paddingBottom: "0.5rem",
+        scrollbarWidth: "none",
+      }}
     >
-      <div
-        style={{
-          background: "var(--surface)",
-          border: "1px solid var(--border)",
-          borderRadius: 8,
-          padding: "0.9rem",
-          display: "flex",
-          gap: "0.75rem",
-          height: "100%",
-          boxSizing: "border-box",
-          transition: "border-color 0.15s",
-        }}
-        onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
-        onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
-      >
-        {item.game.cover && (
-          <img
-            src={getCoverUrl(item.game.cover.image_id, "thumb")}
-            alt={item.game.name}
-            style={{ width: 44, height: 62, objectFit: "cover", borderRadius: 4, flexShrink: 0 }}
-          />
-        )}
-        <div style={{ minWidth: 0 }}>
+      {items.map((item) => (
+        <Link
+          key={item.activity.id}
+          to={`/game/${item.game.id}`}
+          style={{
+            flex: "0 0 auto",
+            background: "var(--surface)",
+            border: "1px solid var(--border)",
+            borderRadius: 10,
+            padding: "0.75rem",
+            display: "flex",
+            alignItems: "center",
+            gap: "0.6rem",
+            textDecoration: "none",
+            minWidth: 220,
+            maxWidth: 260,
+            transition: "border-color 0.15s",
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
+          onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
+        >
+          {/* Avatar */}
           <div
             style={{
-              fontWeight: 600,
-              fontSize: "0.875rem",
-              color: "var(--text)",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
+              width: 32,
+              height: 32,
+              borderRadius: "50%",
+              background: "var(--accent)",
+              color: "#0e0e10",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontWeight: 700,
+              fontSize: "0.75rem",
+              flexShrink: 0,
+              fontFamily: "Syne, sans-serif",
             }}
           >
-            {item.game.name}
+            {item.user.username[0]?.toUpperCase()}
           </div>
-          <div style={{ fontSize: "0.75rem", color: "var(--muted)", marginTop: 2, marginBottom: 6 }}>
-            <span style={{ color: "var(--accent)" }}>
-              {item.user.username}
-            </span>
-            {item.log.rating != null && (
-              <span style={{ marginLeft: "0.4rem" }}>· {item.log.rating}/10</span>
-            )}
+
+          {/* Text */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div
+              style={{
+                fontSize: "0.8rem",
+                color: "var(--text)",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              <span style={{ fontWeight: 600 }}>{item.user.username}</span>
+              {" "}
+              <span style={{ color: "var(--muted)" }}>
+                {item.activity.type === "rated" ? "rated" :
+                 item.activity.type === "reviewed" ? "reviewed" :
+                 item.activity.type === "topped" ? "topped" : "logged"}
+              </span>
+              {" "}
+              <span style={{ fontWeight: 500 }}>{item.game.name}</span>
+            </div>
+            <div style={{ fontSize: "0.7rem", color: "var(--muted)", marginTop: 2 }}>
+              {timeAgo(item.activity.created_at)}
+            </div>
           </div>
-          <p
-            style={{
-              fontSize: "0.8rem",
-              color: "var(--muted)",
-              lineHeight: 1.5,
-              margin: 0,
-            }}
-          >
-            {excerpt}
-          </p>
-        </div>
-      </div>
-    </Link>
+
+          {/* Game cover */}
+          {item.game.cover && (
+            <img
+              src={getCoverUrl(item.game.cover.image_id, "thumb")}
+              alt={item.game.name}
+              style={{ width: 28, height: 40, objectFit: "cover", borderRadius: 3, flexShrink: 0 }}
+            />
+          )}
+        </Link>
+      ))}
+    </div>
   );
 }
 
-// ── HomePage ────────────────────────────────────────────────────────────────
+// ── HomePage ─────────────────────────────────────────────────────────────────
 
 export default function HomePage() {
-  const { userId } = useAuthStore();
+  const { userId, profile } = useAuthStore();
+  const { logGame } = useGamesStore();
+  const navigate = useNavigate();
 
   const [trending, setTrending] = useState<IGDBGame[]>([]);
   const [trendingLoading, setTrendingLoading] = useState(true);
 
-  const [recommended, setRecommended] = useState<IGDBGame[]>([]);
-  const [recommendedLoading, setRecommendedLoading] = useState(false);
+  const [newReleases, setNewReleases] = useState<IGDBGame[]>([]);
+  const [newReleasesLoading, setNewReleasesLoading] = useState(true);
 
-  const [reviews, setReviews] = useState<ReviewItem[]>([]);
-  const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [friendsFeed, setFriendsFeed] = useState<FeedItem[]>([]);
+  const [friendsFeedLoading, setFriendsFeedLoading] = useState(false);
 
-  // ── Trending ──────────────────────────────────────────────────────────────
+  const [popularFriends, setPopularFriends] = useState<IGDBGame[]>([]);
+  const [popularFriendsLoading, setPopularFriendsLoading] = useState(false);
+
+  const [quickLogGame, setQuickLogGame] = useState<IGDBGame | null>(null);
+
+  // Trending
   useEffect(() => {
     getTrendingGames()
-      .then(setTrending)
+      .then((g) => setTrending(g.slice(0, 7)))
       .catch(() => {})
       .finally(() => setTrendingLoading(false));
   }, []);
 
-  // ── Recommendations ───────────────────────────────────────────────────────
+  // New releases
+  useEffect(() => {
+    getNewReleases(7)
+      .then(setNewReleases)
+      .catch(() => {})
+      .finally(() => setNewReleasesLoading(false));
+  }, []);
+
+  // Friends feed & popular (logged-in only)
   useEffect(() => {
     if (!userId) return;
-    setRecommendedLoading(true);
 
-    async function loadRecs() {
-      const logs = await getUserGameLogs(supabase, userId!);
-      if (logs.length === 0) { setRecommendedLoading(false); return; }
+    setFriendsFeedLoading(true);
+    async function loadFriendsFeed() {
+      const feed = await getFriendsActivityFeed(supabase, userId!, 10);
+      if (feed.length === 0) { setFriendsFeedLoading(false); return; }
 
-      const loggedIds = logs.map((l) => l.game_igdb_id);
-      const loggedGames = await getGames(loggedIds.slice(0, 20));
+      const uniqueGameIds = [...new Set(feed.map((a) => a.game_igdb_id))];
+      const uniqueUserIds = [...new Set(feed.map((a) => a.user_id))];
 
-      // Tally genre frequency across logged games
-      const freq = new Map<number, number>();
-      for (const g of loggedGames) {
-        for (const genre of g.genres ?? []) {
-          freq.set(genre.id, (freq.get(genre.id) ?? 0) + 1);
-        }
-      }
-      if (freq.size === 0) { setRecommendedLoading(false); return; }
-
-      const topGenre = [...freq.entries()].sort((a, b) => b[1] - a[1])[0]![0];
-      const recs = await getGamesByGenre(topGenre, loggedIds);
-      setRecommended(recs);
-    }
-
-    loadRecs()
-      .catch(() => {})
-      .finally(() => setRecommendedLoading(false));
-  }, [userId]);
-
-  // ── Popular reviews ───────────────────────────────────────────────────────
-  useEffect(() => {
-    async function loadReviews() {
-      const { data: logRows } = await supabase
-        .from("game_logs")
-        .select("*")
-        .not("review", "is", null)
-        .order("updated_at", { ascending: false })
-        .limit(6);
-
-      if (!logRows || logRows.length === 0) { setReviewsLoading(false); return; }
-
-      const uniqueUserIds = [...new Set(logRows.map((r) => r.user_id))];
-      const uniqueGameIds = [...new Set(logRows.map((r) => r.game_igdb_id))];
-
-      const [{ data: userRows }, gameRows] = await Promise.all([
-        supabase.from("users").select("id, username").in("id", uniqueUserIds),
+      const [igdbGames, { data: userRows }] = await Promise.all([
         getGames(uniqueGameIds),
+        supabase.from("users").select("id, username").in("id", uniqueUserIds),
       ]);
 
+      const gameMap = new Map(igdbGames.map((g) => [g.id, g]));
       const userMap = new Map((userRows ?? []).map((u) => [u.id, u]));
-      const gameMap = new Map(gameRows.map((g) => [g.id, g]));
 
-      const items: ReviewItem[] = [];
-      for (const log of logRows) {
-        if (!log.review) continue;
-        const user = userMap.get(log.user_id);
-        const game = gameMap.get(log.game_igdb_id);
-        if (user && game) {
-          items.push({
-            log: log as GameLogRow & { review: string },
-            user,
-            game,
-          });
-        }
+      const items: FeedItem[] = [];
+      for (const activity of feed) {
+        const user = userMap.get(activity.user_id);
+        const game = gameMap.get(activity.game_igdb_id);
+        if (user && game) items.push({ activity, user, game });
       }
-      setReviews(items);
+      setFriendsFeed(items);
     }
 
-    loadReviews()
+    loadFriendsFeed()
       .catch(() => {})
-      .finally(() => setReviewsLoading(false));
-  }, []);
+      .finally(() => setFriendsFeedLoading(false));
+  }, [userId]);
+
+  useEffect(() => {
+    if (!userId) return;
+
+    setPopularFriendsLoading(true);
+    async function loadPopular() {
+      const entries = await getPopularAmongFriends(supabase, userId!);
+      if (entries.length === 0) { setPopularFriendsLoading(false); return; }
+      const ids = entries.map((e) => e.gameIgdbId);
+      const games = await getGames(ids);
+      setPopularFriends(games);
+    }
+
+    loadPopular()
+      .catch(() => {})
+      .finally(() => setPopularFriendsLoading(false));
+  }, [userId]);
+
+  const handleQuickLog = (game: IGDBGame) => setQuickLogGame(game);
 
   return (
     <div style={{ paddingBottom: "4rem" }}>
       {/* ── Hero ── */}
       <div
         style={{
-          backgroundImage: `linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.65)), url(${backgroundImg})`,
+          backgroundImage: `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.7)), url(${backgroundImg})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
           borderBottom: "1px solid var(--border)",
-          padding: "7rem 2rem 6rem",
+          height: 420,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
           textAlign: "center",
+          padding: "0 2rem",
         }}
       >
         <h1
           style={{
-            fontFamily: "Orbitron, sans-serif",
-            fontSize: "4rem",
-            fontWeight: 700,
+            fontFamily: "Syne, sans-serif",
+            fontSize: "clamp(3rem, 6vw, 4.5rem)",
+            fontWeight: 800,
             color: "#fff",
             margin: 0,
-            letterSpacing: "0.06em",
-            textShadow: "0 2px 24px rgba(108,99,255,0.5)",
+            lineHeight: 1.1,
           }}
         >
           Shelved
         </h1>
-        <p style={{ color: "#d0d0d0", marginTop: "1rem", fontSize: "1.1rem", fontWeight: 600, letterSpacing: "0.03em" }}>
+        <p
+          style={{
+            color: "#a1a1aa",
+            marginTop: "1rem",
+            fontSize: "1.1rem",
+            fontWeight: 400,
+            maxWidth: 420,
+          }}
+        >
           Track, rate, and discover games with your friends.
         </p>
+        <div style={{ marginTop: "1.75rem" }}>
+          {!userId ? (
+            <Link
+              to="/auth"
+              style={{
+                display: "inline-block",
+                padding: "0.7rem 1.75rem",
+                background: "var(--accent)",
+                color: "#0e0e10",
+                borderRadius: 999,
+                fontWeight: 700,
+                fontSize: "0.95rem",
+                fontFamily: "Syne, sans-serif",
+                textDecoration: "none",
+                transition: "opacity 0.15s",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.9")}
+              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+            >
+              Start tracking
+            </Link>
+          ) : (
+            <Link
+              to={`/profile/${userId}`}
+              style={{
+                display: "inline-block",
+                padding: "0.7rem 1.75rem",
+                background: "var(--accent)",
+                color: "#0e0e10",
+                borderRadius: 999,
+                fontWeight: 700,
+                fontSize: "0.95rem",
+                fontFamily: "Syne, sans-serif",
+                textDecoration: "none",
+              }}
+            >
+              Go to your profile
+            </Link>
+          )}
+        </div>
       </div>
 
-      <div style={{ maxWidth: 1500, margin: "0 auto", padding: "2.5rem 2rem 0" }}>
+      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "2.5rem 24px 0" }}>
+
+        {/* ── Friends Activity Strip ── */}
+        {userId && (friendsFeedLoading || friendsFeed.length > 0) && (
+          <section style={{ marginBottom: "2.5rem" }}>
+            <SectionHeader title="From Your Friends" />
+            {friendsFeedLoading ? (
+              <div style={{ height: 80, display: "flex", alignItems: "center" }}>
+                <Spinner />
+              </div>
+            ) : (
+              <FriendsStrip items={friendsFeed} />
+            )}
+          </section>
+        )}
 
         {/* ── Trending Now ── */}
         <section style={{ marginBottom: "2.5rem" }}>
           <SectionHeader title="Trending Now" />
-          <GameRow games={trending} loading={trendingLoading} />
+          <HScrollRow games={trending} loading={trendingLoading} {...(userId ? { onQuickLog: handleQuickLog } : {})} />
         </section>
 
-        {/* ── You Might Like (logged-in only) ── */}
-        {userId && (recommended.length > 0 || recommendedLoading) && (
+        {/* ── New Releases ── */}
+        {(newReleasesLoading || newReleases.length > 0) && (
           <section style={{ marginBottom: "2.5rem" }}>
-            <SectionHeader title="You Might Like" />
-            <GameRow games={recommended} loading={recommendedLoading} />
+            <SectionHeader title="New Releases" />
+            <HScrollRow games={newReleases} loading={newReleasesLoading} {...(userId ? { onQuickLog: handleQuickLog } : {})} />
           </section>
         )}
 
-        {/* ── Popular Reviews ── */}
-        {(reviewsLoading || reviews.length > 0) && (
+        {/* ── Popular Among Friends ── */}
+        {userId && (popularFriendsLoading || popularFriends.length > 0) && (
           <section style={{ marginBottom: "2.5rem" }}>
-            <SectionHeader title="Popular Reviews" />
-            {reviewsLoading ? (
-              <div style={{ height: 120, display: "flex", alignItems: "center" }}>
-                <Spinner />
-              </div>
-            ) : (
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-                  gap: "0.75rem",
-                }}
-              >
-                {reviews.map((item) => (
-                  <ReviewCard key={item.log.id} item={item} />
-                ))}
-              </div>
-            )}
+            <SectionHeader title="Popular With Your Friends" />
+            <HScrollRow games={popularFriends} loading={popularFriendsLoading} onQuickLog={handleQuickLog} />
           </section>
         )}
       </div>
+
+      {/* ── Quick-log modal ── */}
+      {quickLogGame && (
+        <LogGameModal
+          game={quickLogGame}
+          onClose={() => setQuickLogGame(null)}
+          onSave={async (status, rating, review) => {
+            await logGame(quickLogGame.id, status, rating ?? undefined, review ?? undefined);
+            navigate(`/game/${quickLogGame.id}`);
+          }}
+        />
+      )}
     </div>
   );
 }

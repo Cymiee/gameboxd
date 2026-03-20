@@ -57,8 +57,16 @@ export default function WantToPlayPage() {
   if (loading) return <PageSpinner />;
 
   return (
-    <div style={{ maxWidth: 800, margin: "0 auto", padding: "2rem" }}>
-      <h1 style={{ fontSize: "1.5rem", fontWeight: 700, marginBottom: "1.5rem" }}>
+    <div style={{ maxWidth: 800, margin: "0 auto", padding: "2.5rem 24px" }}>
+      <h1
+        style={{
+          fontFamily: "Syne, sans-serif",
+          fontSize: "1.5rem",
+          fontWeight: 700,
+          marginBottom: "1.5rem",
+          color: "var(--text)",
+        }}
+      >
         Want to Play
       </h1>
 
@@ -71,7 +79,7 @@ export default function WantToPlayPage() {
           and add some!
         </p>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
           {logs.map((log) => {
             const game = games.get(log.game_igdb_id);
             const coverUrl = game?.cover ? getCoverUrl(game.cover.image_id, "cover_small") : null;
@@ -88,23 +96,26 @@ export default function WantToPlayPage() {
                   gap: "1rem",
                   background: "var(--surface)",
                   border: "1px solid var(--border)",
-                  borderRadius: 8,
+                  borderRadius: 10,
                   padding: "0.75rem 1rem",
+                  transition: "border-color 0.15s",
                 }}
+                onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
+                onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
               >
                 {coverUrl ? (
                   <img
                     src={coverUrl}
                     alt={game?.name}
-                    style={{ width: 44, height: 60, objectFit: "cover", borderRadius: 4, flexShrink: 0 }}
+                    style={{ width: 44, height: 60, objectFit: "cover", borderRadius: 5, flexShrink: 0 }}
                   />
                 ) : (
                   <div
                     style={{
                       width: 44,
                       height: 60,
-                      background: "var(--bg)",
-                      borderRadius: 4,
+                      background: "var(--border)",
+                      borderRadius: 5,
                       flexShrink: 0,
                     }}
                   />
@@ -135,13 +146,13 @@ export default function WantToPlayPage() {
                   <Link
                     to={`/game/${log.game_igdb_id}`}
                     style={{
-                      padding: "0.35rem 0.75rem",
+                      padding: "0.35rem 0.85rem",
                       background: "var(--accent)",
-                      color: "#fff",
-                      borderRadius: 5,
+                      color: "#0e0e10",
+                      borderRadius: 6,
                       textDecoration: "none",
                       fontSize: "0.8rem",
-                      fontWeight: 600,
+                      fontWeight: 700,
                     }}
                   >
                     Log it
@@ -150,11 +161,11 @@ export default function WantToPlayPage() {
                     onClick={() => handleRemove(log.game_igdb_id)}
                     disabled={removing === log.game_igdb_id}
                     style={{
-                      padding: "0.35rem 0.75rem",
+                      padding: "0.35rem 0.85rem",
                       background: "var(--bg)",
                       border: "1px solid var(--border)",
                       color: "var(--muted)",
-                      borderRadius: 5,
+                      borderRadius: 6,
                       cursor: removing === log.game_igdb_id ? "not-allowed" : "pointer",
                       fontSize: "0.8rem",
                       opacity: removing === log.game_igdb_id ? 0.6 : 1,

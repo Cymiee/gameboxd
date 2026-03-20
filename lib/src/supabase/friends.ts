@@ -61,6 +61,35 @@ export async function getPendingRequests(
   return data;
 }
 
+export async function getPopularAmongFriends(
+  client: SupabaseClient<Database>,
+  userId: string,
+  limit = 8
+): Promise<{ gameIgdbId: number; count: number }[]> {
+  const friendIds = await getFriends(client, userId);
+  if (friendIds.length === 0) return [];
+
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString();
+
+  const { data, error } = await client
+    .from("game_logs")
+    .select("game_igdb_id")
+    .in("user_id", friendIds)
+    .gte("updated_at", thirtyDaysAgo);
+
+  if (error) throw error;
+
+  const freq = new Map<number, number>();
+  for (const row of data) {
+    freq.set(row.game_igdb_id, (freq.get(row.game_igdb_id) ?? 0) + 1);
+  }
+
+  return [...freq.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, limit)
+    .map(([gameIgdbId, count]) => ({ gameIgdbId, count }));
+}
+
 export async function getFriendsActivityFeed(
   client: SupabaseClient<Database>,
   userId: string,
