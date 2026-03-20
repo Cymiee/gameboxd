@@ -54,3 +54,19 @@ export async function getGamesByGenre(genreId: number, excludeIds: number[]): Pr
   const body = `${GAME_FIELDS} where genres = ${genreId}${exclude} & rating_count > 30; sort rating_count desc; limit 15;`;
   return callProxy("/games", body);
 }
+
+export async function getGamesByFilter(
+  genreIds: number[],
+  themeIds: number[],
+  query?: string
+): Promise<IGDBGame[]> {
+  const conditions: string[] = ["rating_count > 5"];
+  if (query) {
+    const escaped = query.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+    conditions.push(`name ~ *"${escaped}"*`);
+  }
+  if (genreIds.length > 0) conditions.push(`genres = (${genreIds.join(",")}) `);
+  if (themeIds.length > 0) conditions.push(`themes = (${themeIds.join(",")}) `);
+  const body = `${GAME_FIELDS} where ${conditions.join("& ")}; sort rating_count desc; limit 30;`;
+  return callProxy("/games", body);
+}
