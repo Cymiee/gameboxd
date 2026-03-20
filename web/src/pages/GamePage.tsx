@@ -2,14 +2,13 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { PageSpinner } from "../components/Spinner";
 import type { IGDBGame, GameLogRow, GameStatus } from "@gameboxd/lib";
-import { getCoverUrl, getUserGameLogs, toggleFavourite } from "@gameboxd/lib";
+import { getCoverUrl, getUserGameLogs, toggleLike, deleteGameLog } from "@gameboxd/lib";
 import { getGame } from "../lib/igdb";
 import { supabase } from "../lib/supabase";
 import { useAuthStore } from "../store/auth";
 import { useGamesStore } from "../store/games";
 
 const STATUS_OPTIONS: { value: GameStatus; label: string }[] = [
-  { value: "want_to_play", label: "Want to Play" },
   { value: "playing", label: "Playing" },
   { value: "completed", label: "Completed" },
   { value: "dropped", label: "Dropped" },
@@ -25,13 +24,17 @@ export default function GamePage() {
   const [error, setError] = useState<string | null>(null);
 
   const [existingLog, setExistingLog] = useState<GameLogRow | null>(null);
-  const [status, setStatus] = useState<GameStatus>("want_to_play");
+  const [status, setStatus] = useState<GameStatus>("playing");
   const [rating, setRating] = useState<number | null>(null);
   const [review, setReview] = useState("");
-  const [isFavourite, setIsFavourite] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Want to Play (backlog) — stored as status="want_to_play", separate from the main log form
+  const [wantToPlay, setWantToPlay] = useState(false);
+  const [wtpSaving, setWtpSaving] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -50,10 +53,15 @@ export default function GamePage() {
         const log = logs.find((l) => l.game_igdb_id === Number(id)) ?? null;
         if (log) {
           setExistingLog(log);
-          setStatus(log.status);
-          setRating(log.rating);
-          setReview(log.review ?? "");
-          setIsFavourite(log.is_favourite);
+          if (log.status === "want_to_play") {
+            setWantToPlay(true);
+            // Keep form defaulting to "playing" so they can upgrade easily
+          } else {
+            setStatus(log.status);
+            setRating(log.rating);
+            setReview(log.review ?? "");
+          }
+          setIsLiked(log.is_liked);
         }
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : "Failed to load game");
@@ -66,25 +74,52 @@ export default function GamePage() {
     return () => { cancelled = true; };
   }, [id, userId]);
 
+  const handleWantToPlay = async () => {
+    if (!userId || !game) return;
+    setWtpSaving(true);
+    try {
+      if (wantToPlay) {
+        // Remove from backlog
+        await deleteGameLog(supabase, userId, game.id);
+        setExistingLog(null);
+        setWantToPlay(false);
+      } else {
+        // Add to backlog
+        const log = await logGame(game.id, "want_to_play");
+        setExistingLog({ ...log, is_liked: isLiked });
+        setWantToPlay(true);
+      }
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : "Failed to update");
+    } finally {
+      setWtpSaving(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!userId || !game) return;
     setSaving(true);
     setSaveError(null);
     setSaveSuccess(false);
     try {
-      // Enforce 5-favourite max
-      if (isFavourite && !existingLog?.is_favourite) {
+      // Enforce 5-like max
+      if (isLiked && !existingLog?.is_liked) {
         const logs = await getUserGameLogs(supabase, userId);
-        const favCount = logs.filter((l) => l.is_favourite && l.game_igdb_id !== game.id).length;
-        if (favCount >= 5) {
-          setSaveError("You already have 5 favourite games. Remove one first.");
+        const likeCount = logs.filter((l) => l.is_liked && l.game_igdb_id !== game.id).length;
+        if (likeCount >= 5) {
+          setSaveError("You already have 5 liked games. Unlike one first.");
           setSaving(false);
           return;
         }
       }
       const log = await logGame(game.id, status, rating, review.trim() || null);
-      await toggleFavourite(supabase, userId, game.id, isFavourite);
-      setExistingLog({ ...log, is_favourite: isFavourite });
+      try {
+        await toggleLike(supabase, userId, game.id, isLiked);
+      } catch {
+        // is_liked column may not be migrated yet — log still saved
+      }
+      setExistingLog({ ...log, is_liked: isLiked });
+      setWantToPlay(false); // upgrading from backlog to real log
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 2500);
     } catch (e) {
@@ -235,8 +270,36 @@ export default function GamePage() {
               }}
             >
               <h3 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 600 }}>
-                {existingLog ? "Your Log" : "Log This Game"}
+                {existingLog && existingLog.status !== "want_to_play" ? "Your Log" : "Log This Game"}
               </h3>
+
+              {/* Want to Play button — only when not yet properly logged */}
+              {(!existingLog || existingLog.status === "want_to_play") && (
+                <button
+                  onClick={handleWantToPlay}
+                  disabled={wtpSaving}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "0.4rem",
+                    padding: "0.5rem",
+                    background: wantToPlay ? "rgba(108,99,255,0.12)" : "var(--bg)",
+                    border: `1px solid ${wantToPlay ? "var(--accent)" : "var(--border)"}`,
+                    color: wantToPlay ? "var(--accent)" : "var(--muted)",
+                    borderRadius: 6,
+                    cursor: wtpSaving ? "not-allowed" : "pointer",
+                    fontSize: "0.875rem",
+                    fontWeight: wantToPlay ? 600 : 400,
+                    opacity: wtpSaving ? 0.7 : 1,
+                  }}
+                >
+                  {wantToPlay ? "✓ Want to Play" : "+ Want to Play"}
+                </button>
+              )}
+
+              {/* Divider before log form */}
+              <div style={{ height: 1, background: "var(--border)", margin: "0 -1.25rem" }} />
 
               {/* Status */}
               <div>
@@ -314,25 +377,25 @@ export default function GamePage() {
                 />
               </div>
 
-              {/* Favourite toggle */}
+              {/* Like toggle */}
               <button
-                onClick={() => setIsFavourite((f) => !f)}
+                onClick={() => setIsLiked((f) => !f)}
                 style={{
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   gap: "0.5rem",
                   padding: "0.45rem",
-                  background: isFavourite ? "rgba(255,60,100,0.12)" : "var(--bg)",
-                  border: `1px solid ${isFavourite ? "rgba(255,60,100,0.45)" : "var(--border)"}`,
-                  color: isFavourite ? "#ff3c64" : "var(--muted)",
+                  background: isLiked ? "rgba(255,60,100,0.12)" : "var(--bg)",
+                  border: `1px solid ${isLiked ? "rgba(255,60,100,0.45)" : "var(--border)"}`,
+                  color: isLiked ? "#ff3c64" : "var(--muted)",
                   borderRadius: 6,
                   cursor: "pointer",
                   fontSize: "0.875rem",
-                  fontWeight: isFavourite ? 600 : 400,
+                  fontWeight: isLiked ? 600 : 400,
                 }}
               >
-                {isFavourite ? "♥ Favourited" : "♡ Add to Favourites"}
+                {isLiked ? "♥ Liked" : "♡ Like"}
               </button>
 
               {saveError && <p style={{ color: "#f55", fontSize: "0.8rem", margin: 0 }}>{saveError}</p>}

@@ -23,7 +23,7 @@ export interface GameLogRow {
   status: GameStatus;
   rating: number | null; // 1–10
   review: string | null;
-  is_favourite: boolean;
+  is_liked: boolean;
   created_at: string;
   updated_at: string;
 }

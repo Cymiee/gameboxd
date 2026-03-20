@@ -56,7 +56,7 @@ export interface Database {
           status: GameStatus;
           rating: number | null;
           review: string | null;
-          is_favourite: boolean;
+          is_liked: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -67,7 +67,7 @@ export interface Database {
           status: GameStatus;
           rating?: number | null;
           review?: string | null;
-          is_favourite?: boolean;
+          is_liked?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -75,7 +75,7 @@ export interface Database {
           status?: GameStatus;
           rating?: number | null;
           review?: string | null;
-          is_favourite?: boolean;
+          is_liked?: boolean;
           updated_at?: string;
         };
         Relationships: [];

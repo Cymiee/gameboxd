@@ -17,8 +17,8 @@ export default function ProfilePage() {
   const [topGames, setTopGames] = useState<TopGameRow[]>([]);
   const [topGameData, setTopGameData] = useState<Map<number, IGDBGame>>(new Map());
   const [logs, setLogs] = useState<GameLogRow[]>([]);
-  const [favouriteGames, setFavouriteGames] = useState<Map<number, IGDBGame>>(new Map());
-  const [favouriteLogs, setFavouriteLogs] = useState<GameLogRow[]>([]);
+  const [likedGames, setFavouriteGames] = useState<Map<number, IGDBGame>>(new Map());
+  const [likedLogs, setFavouriteLogs] = useState<GameLogRow[]>([]);
   const [activities, setActivities] = useState<ActivityRow[]>([]);
   const [activityGames, setActivityGames] = useState<Map<number, Pick<IGDBGame, "id" | "name" | "cover">>>(new Map());
   const [loading, setLoading] = useState(true);
@@ -52,11 +52,11 @@ export default function ProfilePage() {
         setTopGames(tops);
         setLogs(gameLogs);
 
-        // Fetch IGDB data for favourite games
-        const favLogs = gameLogs.filter((l) => l.is_favourite).slice(0, 5);
-        setFavouriteLogs(favLogs);
-        if (favLogs.length > 0) {
-          const favData = await getGames(favLogs.map((l) => l.game_igdb_id));
+        // Fetch IGDB data for liked games
+        const likedLogs = gameLogs.filter((l) => l.is_liked).slice(0, 5);
+        setFavouriteLogs(likedLogs);
+        if (likedLogs.length > 0) {
+          const favData = await getGames(likedLogs.map((l) => l.game_igdb_id));
           const fm = new Map<number, IGDBGame>();
           for (const g of favData) fm.set(g.id, g);
           setFavouriteGames(fm);
@@ -337,15 +337,15 @@ export default function ProfilePage() {
         ))}
       </div>
 
-      {/* Favourites */}
-      {favouriteLogs.length > 0 && (
+      {/* Liked Games */}
+      {likedLogs.length > 0 && (
         <section style={{ marginBottom: "2rem" }}>
           <h2 style={{ fontSize: "1rem", fontWeight: 600, marginBottom: "1rem", color: "var(--muted)" }}>
-            FAVOURITES
+            LIKED GAMES
           </h2>
           <div style={{ display: "flex", gap: "0.75rem" }}>
-            {favouriteLogs.map((log) => {
-              const g = favouriteGames.get(log.game_igdb_id);
+            {likedLogs.map((log) => {
+              const g = likedGames.get(log.game_igdb_id);
               if (!g) return null;
               return (
                 <Link key={log.id} to={`/game/${g.id}`} style={{ textDecoration: "none", flex: "0 0 auto" }}>

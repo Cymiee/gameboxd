@@ -194,7 +194,7 @@ export default function HomePage() {
     async function loadReviews() {
       const { data: logRows } = await supabase
         .from("game_logs")
-        .select("id, user_id, game_igdb_id, rating, review, updated_at, status, is_favourite, created_at")
+        .select("*")
         .not("review", "is", null)
         .order("updated_at", { ascending: false })
         .limit(6);
@@ -253,7 +253,7 @@ export default function HomePage() {
             letterSpacing: "0.04em",
           }}
         >
-          Gameboxd
+          PlayLog
         </h1>
         <p style={{ color: "var(--muted)", marginTop: "0.75rem", fontSize: "1rem" }}>
           Track, rate, and discover games with your friends.

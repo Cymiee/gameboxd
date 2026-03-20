@@ -15,6 +15,7 @@ import FriendsPage from "./pages/FriendsPage";
 import GamePage from "./pages/GamePage";
 import GamesPage from "./pages/GamesPage";
 import SettingsPage from "./pages/SettingsPage";
+import WantToPlayPage from "./pages/WantToPlayPage";
 
 export default function App() {
   const { userId, initialized, setUserId, setProfile, setInitialized } = useAuthStore();
@@ -76,6 +77,7 @@ export default function App() {
           <Route path="/profile/:userId" element={<ProfilePage />} />
           <Route path="/friends" element={<FriendsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/want-to-play" element={<WantToPlayPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

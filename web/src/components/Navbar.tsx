@@ -81,7 +81,7 @@ export default function Navbar() {
           letterSpacing: "0.02em",
         }}
       >
-        Gameboxd
+        PlayLog
       </Link>
 
       {/* Push right group to the right */}
@@ -170,6 +170,7 @@ export default function Navbar() {
             >
               {[
                 { label: "Profile", to: `/profile/${profile.id}` },
+                { label: "Want to Play", to: "/want-to-play" },
                 { label: "Friends", to: "/friends" },
                 { label: "Settings", to: "/settings" },
               ].map((item) => (

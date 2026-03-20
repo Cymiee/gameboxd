@@ -12,10 +12,11 @@ export { signUp, signIn, signOut, getProfile, updateProfile } from "./supabase/a
 export {
   upsertGameLog,
   getUserGameLogs,
+  deleteGameLog,
   getTopGames,
   setTopGame,
   removeTopGame,
-  toggleFavourite,
+  toggleLike,
 } from "./supabase/games.js";
 
 // Friends helpers

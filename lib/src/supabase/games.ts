@@ -96,15 +96,28 @@ export async function setTopGame(
   });
 }
 
-export async function toggleFavourite(
+export async function deleteGameLog(
   client: SupabaseClient<Database>,
   userId: string,
-  gameIgdbId: number,
-  isFavourite: boolean
+  gameIgdbId: number
 ): Promise<void> {
   const { error } = await client
     .from("game_logs")
-    .update({ is_favourite: isFavourite })
+    .delete()
+    .eq("user_id", userId)
+    .eq("game_igdb_id", gameIgdbId);
+  if (error) throw error;
+}
+
+export async function toggleLike(
+  client: SupabaseClient<Database>,
+  userId: string,
+  gameIgdbId: number,
+  isLiked: boolean
+): Promise<void> {
+  const { error } = await client
+    .from("game_logs")
+    .update({ is_liked: isLiked })
     .eq("user_id", userId)
     .eq("game_igdb_id", gameIgdbId);
   if (error) throw error;
