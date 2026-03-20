@@ -24,7 +24,7 @@ function GameRow({ games, loading }: { games: IGDBGame[]; loading: boolean }) {
     <div
       style={{
         display: "grid",
-        gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))",
+        gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
         gap: "0.75rem",
       }}
     >

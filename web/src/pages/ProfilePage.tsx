@@ -163,7 +163,9 @@ export default function ProfilePage() {
   if (!profile) return null;
 
   return (
-    <div style={{ padding: "2rem", maxWidth: 800, margin: "0 auto" }}>
+    <div style={{ padding: "2rem", maxWidth: 1400, margin: "0 auto" }}>
+    <div style={{ display: "grid", gridTemplateColumns: activities.length > 0 ? "1fr 380px" : "1fr", gap: "2.5rem", alignItems: "flex-start" }}>
+    <div>
       {/* Profile header */}
       <div style={{ display: "flex", alignItems: "flex-start", gap: "1.5rem", marginBottom: "2rem" }}>
         <div
@@ -544,28 +546,40 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Recent activity */}
-      {activities.length > 0 && (
-        <section>
-          <h2 style={{ fontSize: "1rem", fontWeight: 600, marginBottom: "1rem", color: "var(--muted)" }}>
-            RECENT ACTIVITY
-          </h2>
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-            {activities.map((activity) => {
-              const game = activityGames.get(activity.game_igdb_id);
-              if (!game) return null;
-              return (
-                <ActivityCard
-                  key={activity.id}
-                  activity={activity}
-                  user={profile}
-                  game={game}
-                />
-              );
-            })}
-          </div>
-        </section>
-      )}
+    </div>{/* end left column */}
+
+    {/* Right column: Recent activity */}
+    {activities.length > 0 && (
+      <div style={{ position: "sticky", top: 80 }}>
+        <h2 style={{ fontSize: "1rem", fontWeight: 600, marginBottom: "1rem", color: "var(--muted)" }}>
+          RECENT ACTIVITY
+        </h2>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.75rem",
+            maxHeight: "calc(100vh - 120px)",
+            overflowY: "auto",
+            scrollbarWidth: "none",
+          }}
+        >
+          {activities.map((activity) => {
+            const game = activityGames.get(activity.game_igdb_id);
+            if (!game) return null;
+            return (
+              <ActivityCard
+                key={activity.id}
+                activity={activity}
+                user={profile}
+                game={game}
+              />
+            );
+          })}
+        </div>
+      </div>
+    )}
+    </div>{/* end grid */}
     </div>
   );
 }

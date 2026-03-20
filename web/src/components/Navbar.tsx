@@ -62,7 +62,7 @@ export default function Navbar() {
       {/* Inner container */}
       <div
         style={{
-          maxWidth: 1100,
+          maxWidth: 1500,
           margin: "0 auto",
           padding: "0.55rem 1.5rem",
           display: "flex",

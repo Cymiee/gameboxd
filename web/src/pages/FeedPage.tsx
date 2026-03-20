@@ -73,9 +73,15 @@ export default function FeedPage() {
   }
 
   return (
-    <div style={{ padding: "2rem", maxWidth: 640, margin: "0 auto" }}>
+    <div style={{ padding: "2rem", maxWidth: 1400, margin: "0 auto" }}>
       <h1 style={{ marginBottom: "1.5rem" }}>Activity Feed</h1>
-      <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(400px, 1fr))",
+          gap: "0.75rem",
+        }}
+      >
         {activities.map((activity) => {
           const user = users.get(activity.user_id);
           const game = games.get(activity.game_igdb_id);
