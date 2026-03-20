@@ -84,7 +84,7 @@ export default function Navbar() {
         <img src={joystickIcon} alt="Shelved" style={{ width: 28, height: 28, objectFit: "contain" }} />
         <span
           style={{
-            fontFamily: "Audiowide, sans-serif",
+            fontFamily: "Orbitron, sans-serif",
             fontSize: "1.35rem",
             color: "var(--accent)",
             letterSpacing: "0.02em",

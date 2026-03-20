@@ -239,22 +239,24 @@ export default function HomePage() {
           backgroundSize: "cover",
           backgroundPosition: "center",
           borderBottom: "1px solid var(--border)",
-          padding: "3.5rem 2rem 3rem",
+          padding: "7rem 2rem 6rem",
           textAlign: "center",
         }}
       >
         <h1
           style={{
-            fontFamily: "Audiowide, sans-serif",
-            fontSize: "2.8rem",
-            color: "var(--accent)",
+            fontFamily: "Orbitron, sans-serif",
+            fontSize: "4rem",
+            fontWeight: 700,
+            color: "#fff",
             margin: 0,
-            letterSpacing: "0.04em",
+            letterSpacing: "0.06em",
+            textShadow: "0 2px 24px rgba(108,99,255,0.5)",
           }}
         >
           Shelved
         </h1>
-        <p style={{ color: "var(--muted)", marginTop: "0.75rem", fontSize: "1rem" }}>
+        <p style={{ color: "#d0d0d0", marginTop: "1rem", fontSize: "1.1rem", fontWeight: 600, letterSpacing: "0.03em" }}>
           Track, rate, and discover games with your friends.
         </p>
       </div>
