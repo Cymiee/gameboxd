@@ -8,7 +8,7 @@ const PROXY_URL = `${SUPABASE_URL}/functions/v1/igdb-proxy`;
 export type SortMode = "trending" | "top_rated" | "new_releases" | "az";
 
 const GAME_FIELDS =
-  "fields id,name,summary,first_release_date,rating,rating_count,total_rating,hypes,similar_games," +
+  "fields id,name,summary,first_release_date,rating,rating_count,total_rating,total_rating_count,hypes,similar_games," +
   "cover.id,cover.image_id,cover.url,genres.id,genres.name,platforms.id,platforms.name," +
   "involved_companies.company.id,involved_companies.company.name,involved_companies.developer;";
 
@@ -101,13 +101,34 @@ export async function getBrowseGames({
   if (genreId !== undefined) conditions.push(`genres = ${genreId}`);
   if (themeId !== undefined) conditions.push(`themes = ${themeId}`);
 
+  if (sort === "top_rated") {
+    // Fetch a larger pool, then sort client-side by Bayesian average so that
+    // games with few reviews can't outrank well-reviewed titles.
+    const poolConditions = [
+      ...conditions,
+      "total_rating != null",
+      "total_rating_count > 50",
+    ];
+    const whereClause = `where ${poolConditions.join(" & ")}; `;
+    const body = `${GAME_FIELDS} ${whereClause}sort total_rating desc; limit 200;`;
+    const pool = await callProxy("/games", body);
+
+    // Bayesian average: score = (v*R + m*C) / (v + m)
+    // C = prior mean rating (~72 on IGDB's 0-100 scale)
+    // m = confidence threshold (200 votes to reach full weight)
+    const C = 72;
+    const m = 200;
+    const bayesian = (game: IGDBGame) => {
+      const v = game.total_rating_count ?? 0;
+      const R = game.total_rating ?? 0;
+      return (v * R + m * C) / (v + m);
+    };
+
+    return pool.sort((a, b) => bayesian(b) - bayesian(a)).slice(0, limit);
+  }
+
   let sortClause: string;
   switch (sort) {
-    case "top_rated":
-      conditions.push("total_rating != null");
-      conditions.push("rating_count > 20");
-      sortClause = "sort total_rating desc";
-      break;
     case "new_releases":
       sortClause = "sort first_release_date desc";
       break;
