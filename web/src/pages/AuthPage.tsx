@@ -8,22 +8,35 @@ export default function AuthPage() {
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [confirmationSent, setConfirmationSent] = useState(false);
 
   const { login, register, loading } = useAuthStore();
   const navigate = useNavigate();
 
+  function extractMessage(err: unknown): string {
+    if (err instanceof Error) return err.message;
+    if (err && typeof err === "object" && "message" in err) return String((err as { message: unknown }).message);
+    return "Something went wrong. Please try again.";
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setConfirmationSent(false);
     try {
       if (mode === "login") {
         await login(email, password);
+        navigate("/");
       } else {
-        await register(email, password, username);
+        const { needsConfirmation } = await register(email, password, username);
+        if (needsConfirmation) {
+          setConfirmationSent(true);
+        } else {
+          navigate("/");
+        }
       }
-      navigate("/");
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(extractMessage(err));
     }
   }
 
@@ -117,6 +130,12 @@ export default function AuthPage() {
 
           {error && (
             <p style={{ color: "var(--danger)", fontSize: "0.875rem", margin: 0 }}>{error}</p>
+          )}
+
+          {confirmationSent && (
+            <p style={{ color: "#4ade80", fontSize: "0.875rem", margin: 0, lineHeight: 1.5 }}>
+              Check your email to confirm your account, then sign in.
+            </p>
           )}
 
           <button

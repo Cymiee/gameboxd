@@ -7,24 +7,28 @@ export async function signUp(
   email: string,
   password: string,
   username: string
-): Promise<{ userId: string }> {
-  console.log("[signUp] calling auth.signUp...");
-  const { data, error } = await client.auth.signUp({ email, password });
-  console.log("[signUp] auth.signUp result:", { user: data.user?.id, session: !!data.session, error });
+): Promise<{ userId: string; needsConfirmation: boolean }> {
+  const { data, error } = await client.auth.signUp({
+    email,
+    password,
+    options: { data: { username } },
+  });
   if (error) throw error;
   if (!data.user) throw new Error("Signup succeeded but no user returned");
 
-  console.log("[signUp] inserting into users table...");
-  const { error: profileError } = await client.from("users").insert({
-    id: data.user.id,
-    username,
-    bio: null,
-    avatar_url: null,
-  });
-  console.log("[signUp] users insert result:", { profileError });
-  if (profileError) throw profileError;
+  // Only insert the users row if we have a live session (email confirmation disabled).
+  // When confirmation is required, session is null — we create the row on first sign-in instead.
+  if (data.session) {
+    const { error: profileError } = await client.from("users").insert({
+      id: data.user.id,
+      username,
+      bio: null,
+      avatar_url: null,
+    });
+    if (profileError) throw profileError;
+  }
 
-  return { userId: data.user.id };
+  return { userId: data.user.id, needsConfirmation: !data.session };
 }
 
 export async function signIn(
@@ -32,11 +36,28 @@ export async function signIn(
   email: string,
   password: string
 ): Promise<{ userId: string }> {
-  console.log("[signIn] calling signInWithPassword...");
   const { data, error } = await client.auth.signInWithPassword({ email, password });
-  console.log("[signIn] result:", { userId: data?.user?.id, error });
   if (error) throw error;
   if (!data.user) throw new Error("Sign-in succeeded but no user returned");
+
+  // Ensure the users row exists — it may be missing if the user signed up with
+  // email confirmation enabled and this is their first sign-in after confirming.
+  const { data: existingUser } = await client
+    .from("users")
+    .select("id")
+    .eq("id", data.user.id)
+    .maybeSingle();
+
+  if (!existingUser) {
+    const username = (data.user.user_metadata?.username as string | undefined) ?? email.split("@")[0] ?? "user";
+    await client.from("users").insert({
+      id: data.user.id,
+      username,
+      bio: null,
+      avatar_url: null,
+    });
+  }
+
   return { userId: data.user.id };
 }
 

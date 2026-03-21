@@ -12,7 +12,7 @@ interface AuthStore {
   setUserId: (id: string | null) => void;
   setInitialized: () => void;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, username: string) => Promise<void>;
+  register: (email: string, password: string, username: string) => Promise<{ needsConfirmation: boolean }>;
   logout: () => Promise<void>;
 }
 
@@ -36,8 +36,9 @@ export const useAuthStore = create<AuthStore>((set) => ({
   register: async (email, password, username) => {
     set({ loading: true });
     try {
-      const { userId } = await signUp(supabase, email, password, username);
-      set({ userId });
+      const { userId, needsConfirmation } = await signUp(supabase, email, password, username);
+      if (!needsConfirmation) set({ userId });
+      return { needsConfirmation };
     } finally {
       set({ loading: false });
     }
