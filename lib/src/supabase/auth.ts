@@ -68,6 +68,29 @@ export async function signOut(
   if (error) throw error;
 }
 
+export async function ensureProfile(
+  client: SupabaseClient<Database>,
+  userId: string,
+  fallbackUsername: string
+): Promise<UserRow> {
+  const { data: existing } = await client
+    .from("users")
+    .select("*")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (existing) return existing;
+
+  const { data, error } = await client
+    .from("users")
+    .insert({ id: userId, username: fallbackUsername, bio: null, avatar_url: null })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
 export async function getProfile(
   client: SupabaseClient<Database>,
   userId: string

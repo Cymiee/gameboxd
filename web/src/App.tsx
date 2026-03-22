@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { supabase } from "./lib/supabase";
 import { useAuthStore } from "./store/auth";
-import { getProfile } from "@gameboxd/lib";
+import { ensureProfile } from "@gameboxd/lib";
 import Spinner from "./components/Spinner";
 
 import Layout from "./components/Layout";
@@ -25,7 +25,10 @@ export default function App() {
       const user = data.session?.user ?? null;
       setUserId(user?.id ?? null);
       if (user) {
-        getProfile(supabase, user.id)
+        const username = (user.user_metadata?.username as string | undefined)
+          ?? user.email?.split("@")[0]
+          ?? "user";
+        ensureProfile(supabase, user.id, username)
           .then(setProfile)
           .catch(() => setProfile(null))
           .finally(setInitialized);
@@ -40,7 +43,10 @@ export default function App() {
         setUserId(user?.id ?? null);
         if (user) {
           try {
-            const profile = await getProfile(supabase, user.id);
+            const username = (user.user_metadata?.username as string | undefined)
+              ?? user.email?.split("@")[0]
+              ?? "user";
+            const profile = await ensureProfile(supabase, user.id, username);
             setProfile(profile);
           } catch {
             setProfile(null);

@@ -6,7 +6,7 @@ export { getSupabaseClient } from "./supabase/client.js";
 export type { Database, SupabaseClient } from "./supabase/client.js";
 
 // Auth helpers
-export { signUp, signIn, signOut, getProfile, updateProfile } from "./supabase/auth.js";
+export { signUp, signIn, signOut, getProfile, updateProfile, ensureProfile } from "./supabase/auth.js";
 
 // Game helpers
 export {
