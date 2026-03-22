@@ -91,7 +91,7 @@ export default function Navbar() {
             flexShrink: 0,
           }}
         >
-          <img src={joystickIcon} alt="Shelved" style={{ width: 26, height: 26, objectFit: "contain" }} />
+          <img src={joystickIcon} alt="Shelved" style={{ width: 38, height: 38, objectFit: "contain" }} />
           <span
             style={{
               fontFamily: "Syne, sans-serif",
