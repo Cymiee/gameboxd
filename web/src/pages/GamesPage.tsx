@@ -61,24 +61,21 @@ const THEMES_ALL: { id: number; name: string }[] = [
 const THEMES = THEMES_ALL.filter((t) => t.id !== 42);
 
 const SORT_OPTIONS: { value: SortMode; label: string }[] = [
-  { value: "trending",     label: "Trending" },
-  { value: "top_rated",   label: "Top Rated" },
+  { value: "trending",      label: "Trending" },
+  { value: "top_rated",    label: "Top Rated" },
   { value: "new_releases", label: "New Releases" },
-  { value: "az",          label: "A–Z" },
 ];
 
 const SORT_TITLES: Record<SortMode, string> = {
   trending:     "Trending Games",
   top_rated:    "Top Rated Games",
   new_releases: "New Releases",
-  az:           "Games A–Z",
 };
 
 const SORT_SUBTITLES: Record<SortMode, string> = {
   trending:     "What the community is playing right now",
   top_rated:    "Highest rated games of all time",
   new_releases: "The latest releases",
-  az:           "Browsing all games alphabetically",
 };
 
 // ── FilterPill ────────────────────────────────────────────────────────────────

@@ -5,7 +5,7 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
 const PROXY_URL = `${SUPABASE_URL}/functions/v1/igdb-proxy`;
 
-export type SortMode = "trending" | "top_rated" | "new_releases" | "az";
+export type SortMode = "trending" | "top_rated" | "new_releases";
 
 const GAME_FIELDS =
   "fields id,name,summary,first_release_date,rating,rating_count,total_rating,total_rating_count,hypes,similar_games," +
@@ -128,16 +128,13 @@ export async function getBrowseGames({
   }
 
   let sortClause: string;
-  switch (sort) {
-    case "new_releases":
-      sortClause = "sort first_release_date desc";
-      break;
-    case "az":
-      sortClause = "sort name asc";
-      break;
-    default:
-      conditions.push("rating_count > 10");
-      sortClause = "sort hypes desc";
+  if (sort === "new_releases") {
+    const now = Math.floor(Date.now() / 1000);
+    conditions.push(`first_release_date <= ${now}`);
+    sortClause = "sort first_release_date desc";
+  } else {
+    conditions.push("rating_count > 10");
+    sortClause = "sort hypes desc";
   }
 
   const whereClause = conditions.length > 0 ? `where ${conditions.join(" & ")}; ` : "";
