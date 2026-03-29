@@ -7,7 +7,7 @@ import type { ReviewWithUser, ListWithMeta } from '@gameboxd/lib';
 import { getTrendingGameIds, getMostPlayedThisWeek, getRecentReviews, getPopularListsWithMeta } from '@gameboxd/lib';
 import { useAuthStore } from '../../store/auth';
 import { supabase } from '../../lib/supabase';
-import { getGames, getNewReleases, getTopRated } from '../../lib/igdb';
+import { getGames, getNewReleases, getTopRated, getTrendingGames } from '../../lib/igdb';
 import ScreenHeader from '../../components/ScreenHeader';
 import HorizontalGameScroll from '../../components/HorizontalGameScroll';
 import { Colors } from '../../constants/colors';
@@ -37,10 +37,14 @@ export default function DiscoverScreen() {
         getPopularListsWithMeta(supabase, 4),
       ]);
 
-      const [trendingGames, mostPlayedGames] = await Promise.all([
+      let [trendingGames, mostPlayedGames] = await Promise.all([
         getGames(trendingIds.map((t) => t.gameIgdbId)),
         getGames(mostPlayedIds.map((t) => t.gameIgdbId)),
       ]);
+
+      if (mostPlayedGames.length === 0) {
+        mostPlayedGames = await getTrendingGames(10);
+      }
 
       setTrending(trendingGames);
       setMostPlayed(mostPlayedGames);
@@ -96,9 +100,11 @@ export default function DiscoverScreen() {
           <HorizontalGameScroll games={trending} onPress={goToGame} />
         </Section>
 
-        <Section label="MOST PLAYED THIS WEEK">
-          <HorizontalGameScroll games={mostPlayed} onPress={goToGame} />
-        </Section>
+        {mostPlayed.length > 0 && (
+          <Section label="MOST PLAYED THIS WEEK">
+            <HorizontalGameScroll games={mostPlayed} onPress={goToGame} />
+          </Section>
+        )}
 
         <Section
           label="DISCOVER SOMETHING NEW"
@@ -179,7 +185,7 @@ const sectionStyles = StyleSheet.create({
   subtitle: {
     fontFamily: 'Inter_400Regular',
     fontSize: 10,
-    color: Colors.textMuted,
+    color: Colors.textSecondary,
     paddingHorizontal: 16,
     marginBottom: 8,
   },

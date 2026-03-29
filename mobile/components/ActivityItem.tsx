@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     borderBottomWidth: 0.5,
-    borderColor: Colors.surface,
+    borderColor: Colors.border,
     gap: 10,
   },
   avatar: {

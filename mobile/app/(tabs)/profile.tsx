@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { ScrollView, View, Text, Pressable, Image, StyleSheet, ActivityIndicator } from 'react-native';
+import { ScrollView, View, Text, Pressable, Image, StyleSheet, ActivityIndicator, Alert, Platform, ToastAndroid } from 'react-native';
 import { useRouter } from 'expo-router';
 import type { IGDBGame, TopGameRow } from '@gameboxd/lib';
 import { getCoverUrl, getTopGames } from '@gameboxd/lib';
@@ -97,7 +97,16 @@ export default function ProfileScreen() {
               <Text style={styles.bio} numberOfLines={2}>{profile.bio}</Text>
             ) : null}
           </View>
-          <Pressable onPress={() => router.push('/settings')} style={styles.editBtn}>
+          <Pressable
+            onPress={() => {
+              if (Platform.OS === 'android') {
+                ToastAndroid.show('Profile editing coming soon', ToastAndroid.SHORT);
+              } else {
+                Alert.alert('Coming soon', 'Profile editing is not yet available.');
+              }
+            }}
+            style={styles.editBtn}
+          >
             <Text style={styles.editBtnText}>Edit</Text>
           </Pressable>
         </View>
@@ -138,6 +147,7 @@ export default function ProfileScreen() {
                   ) : (
                     <View style={[styles.topGameCover, styles.topGameEmpty]}>
                       <Text style={styles.topGamePlus}>+</Text>
+                      <Text style={styles.topGameAddLabel}>Add</Text>
                     </View>
                   )}
                   <Text style={styles.topGamePos}>0{pos}</Text>
@@ -237,6 +247,7 @@ const styles = StyleSheet.create({
   topGameCover: { width: '100%', aspectRatio: 2 / 3, borderRadius: 8, borderWidth: 0.5, borderColor: Colors.border },
   topGameEmpty: { backgroundColor: Colors.surfaceElevated, justifyContent: 'center', alignItems: 'center' },
   topGamePlus: { fontSize: 20, color: Colors.textMuted },
+  topGameAddLabel: { fontFamily: 'Inter_400Regular', fontSize: 10, color: Colors.textMuted, marginTop: 4 },
   topGamePos: {
     position: 'absolute',
     bottom: 6,

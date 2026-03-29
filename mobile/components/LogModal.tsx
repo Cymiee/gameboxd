@@ -185,12 +185,17 @@ export default function LogModal() {
                 style={styles.reviewInput}
               />
 
+              {!userId && (
+                <Text style={styles.signInNote}>Sign in to save games to your shelf</Text>
+              )}
               <Pressable
                 onPress={handleSave}
-                disabled={saving}
-                style={[styles.saveBtn, saving && { opacity: 0.6 }]}
+                disabled={saving || !userId}
+                style={[styles.saveBtn, (saving || !userId) && styles.saveBtnDisabled]}
               >
-                <Text style={styles.saveBtnText}>{saving ? 'Saving…' : 'Save to shelf'}</Text>
+                <Text style={[styles.saveBtnText, !userId && styles.saveBtnTextDisabled]}>
+                  {saving ? 'Saving…' : 'Save to shelf'}
+                </Text>
               </Pressable>
             </View>
           )}
@@ -201,7 +206,7 @@ export default function LogModal() {
 }
 
 function SearchRow({ game, onPress }: { game: IGDBGame; onPress: (g: IGDBGame) => void }) {
-  const coverUrl = game.cover ? getCoverUrl(game.cover.image_id, 'cover_small') : null;
+  const coverUrl = game.cover ? getCoverUrl(game.cover.image_id, 'cover_big') : null;
   const year = game.first_release_date
     ? new Date(game.first_release_date * 1000).getFullYear()
     : null;
@@ -237,10 +242,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 8,
   },
-  resultRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 },
-  resultCover: { width: 32, height: 43, borderRadius: 4 },
-  resultTitle: { fontFamily: 'Inter_500Medium', fontSize: 13, color: Colors.textPrimary },
-  resultMeta: { fontFamily: 'Inter_400Regular', fontSize: 11, color: Colors.textMuted, marginTop: 2 },
+  resultRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8 },
+  resultCover: { width: 52, height: 69, borderRadius: 6 },
+  resultTitle: { fontFamily: 'Inter_500Medium', fontSize: 14, color: Colors.textPrimary },
+  resultMeta: { fontFamily: 'Inter_400Regular', fontSize: 12, color: Colors.textMuted, marginTop: 3 },
   backBtn: { marginBottom: 12 },
   backText: { fontFamily: 'Inter_400Regular', fontSize: 13, color: Colors.textSecondary },
   gameHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 20 },
@@ -270,9 +275,22 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary, fontFamily: 'Inter_400Regular', fontSize: 13,
     textAlignVertical: 'top', minHeight: 72, marginBottom: 16,
   },
+  signInNote: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 12,
+    color: Colors.textMuted,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
   saveBtn: {
     backgroundColor: Colors.accent, borderRadius: 10, height: 48,
     justifyContent: 'center', alignItems: 'center',
   },
+  saveBtnDisabled: {
+    backgroundColor: Colors.surfaceElevated,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+  },
   saveBtnText: { fontFamily: 'Syne_700Bold', fontSize: 15, color: '#111' },
+  saveBtnTextDisabled: { color: Colors.textMuted },
 });

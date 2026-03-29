@@ -48,18 +48,25 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   }
 
   return (
-    <View style={[s.bar, { paddingBottom: insets.bottom }]}>
-      {visibleRoutes.map(renderTab)}
+    <View style={[s.barOuter, { paddingBottom: insets.bottom }]}>
+      <View style={s.hairline} />
+      <View style={s.bar}>
+        {visibleRoutes.map(renderTab)}
+      </View>
     </View>
   );
 }
 
 const s = StyleSheet.create({
+  barOuter: {
+    backgroundColor: '#111111',
+  },
+  hairline: {
+    height: 0.5,
+    backgroundColor: '#1e1e1e',
+  },
   bar: {
     flexDirection: 'row',
-    backgroundColor: '#111111',
-    borderTopWidth: 0.5,
-    borderTopColor: '#1e1e1e',
     height: 64,
     alignItems: 'center',
   },

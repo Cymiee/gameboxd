@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import {
   View, Text, TextInput, FlatList, Pressable,
-  Image, ScrollView, StyleSheet, ActivityIndicator,
+  Image, ScrollView, StyleSheet, ActivityIndicator, Alert, Platform, ToastAndroid,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import type { IGDBGame } from '@gameboxd/lib';
@@ -59,9 +59,13 @@ export default function ExploreScreen() {
 
   function goToGame(game: IGDBGame) { router.push(`/game/${game.id}`); }
 
-  const goToGenre = useCallback((genreId: number) => {
-    router.push(`/games?genre=${genreId}`);
-  }, [router]);
+  const goToGenre = useCallback((_genreId: number) => {
+    if (Platform.OS === 'android') {
+      ToastAndroid.show('Browse by genre coming soon', ToastAndroid.SHORT);
+    } else {
+      Alert.alert('Coming soon', 'Browse by genre is not yet available.');
+    }
+  }, []);
 
   return (
     <View style={styles.screen}>
@@ -145,7 +149,7 @@ export default function ExploreScreen() {
 }
 
 function SearchResultRow({ game, onPress }: { game: IGDBGame; onPress: (g: IGDBGame) => void }) {
-  const coverUrl = game.cover ? getCoverUrl(game.cover.image_id, 'cover_small') : null;
+  const coverUrl = game.cover ? getCoverUrl(game.cover.image_id, 'cover_big') : null;
   const year = game.first_release_date
     ? new Date(game.first_release_date * 1000).getFullYear()
     : null;
@@ -172,10 +176,10 @@ function SearchResultRow({ game, onPress }: { game: IGDBGame; onPress: (g: IGDBG
 }
 
 const rowStyles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, paddingHorizontal: 16 },
-  cover: { width: 32, height: 43, borderRadius: 4, flexShrink: 0 },
-  title: { fontFamily: 'Inter_500Medium', fontSize: 13, color: Colors.textPrimary },
-  meta: { fontFamily: 'Inter_400Regular', fontSize: 11, color: Colors.textMuted },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8, paddingHorizontal: 16 },
+  cover: { width: 52, height: 69, borderRadius: 6, flexShrink: 0 },
+  title: { fontFamily: 'Inter_500Medium', fontSize: 14, color: Colors.textPrimary },
+  meta: { fontFamily: 'Inter_400Regular', fontSize: 12, color: Colors.textMuted },
   genrePill: {
     paddingHorizontal: 6,
     paddingVertical: 2,
