@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { Colors } from '../../constants/colors';
+import { useAuthStore } from '../../store/auth';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -17,14 +18,18 @@ const TAB_CONFIG: Record<string, { label: string; icon: IconName; activeIcon: Ic
 
 function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
+  const { userId } = useAuthStore();
 
-  const visibleRoutes = state.routes.filter((r) => TAB_CONFIG[r.name]);
+  const visibleRoutes = state.routes.filter((r) => {
+    if (!userId && r.name === 'profile') return false;
+    return !!TAB_CONFIG[r.name];
+  });
 
   function renderTab(route: typeof state.routes[0]) {
     const cfg = TAB_CONFIG[route.name];
     if (!cfg) return null;
     const focused = state.routes[state.index]?.name === route.name;
-    const color = focused ? Colors.accent : '#555555';
+    const color = focused ? Colors.accent : 'rgba(255,255,255,0.35)';
 
     return (
       <Pressable
@@ -41,16 +46,20 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
           }
         }}
       >
-        <Ionicons name={focused ? cfg.activeIcon : cfg.icon} size={22} color={color} />
-        <Text style={[s.label, { color }]}>{cfg.label}</Text>
+        <View style={[s.tabInner, focused && s.tabInnerActive]}>
+          <Ionicons name={focused ? cfg.activeIcon : cfg.icon} size={20} color={color} />
+          <Text style={[s.label, { color }]}>{cfg.label}</Text>
+        </View>
       </Pressable>
     );
   }
 
   return (
-    <View style={[s.barOuter, { paddingBottom: insets.bottom }]}>
-      <View style={s.hairline} />
-      <View style={s.bar}>
+    <View
+      style={[s.floatOuter, { bottom: insets.bottom + 8 }]}
+      pointerEvents="box-none"
+    >
+      <View style={s.pill} pointerEvents="auto">
         {visibleRoutes.map(renderTab)}
       </View>
     </View>
@@ -58,24 +67,37 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
 }
 
 const s = StyleSheet.create({
-  barOuter: {
-    backgroundColor: '#111111',
+  floatOuter: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
   },
-  hairline: {
-    height: 0.5,
-    backgroundColor: '#1e1e1e',
-  },
-  bar: {
+  pill: {
     flexDirection: 'row',
+    backgroundColor: 'rgba(15,15,15,0.85)',
+    borderRadius: 24,
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.08)',
     height: 64,
     alignItems: 'center',
+    overflow: 'hidden',
   },
   tab: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 3,
     height: '100%',
+  },
+  tabInner: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 3,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  tabInnerActive: {
+    backgroundColor: 'rgba(180,255,0,0.08)',
   },
   label: {
     fontFamily: 'Inter_400Regular',

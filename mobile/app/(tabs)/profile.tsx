@@ -10,6 +10,7 @@ import { supabase } from '../../lib/supabase';
 import { getGames } from '../../lib/igdb';
 import ScreenHeader from '../../components/ScreenHeader';
 import ActivityItem from '../../components/ActivityItem';
+import StarRating from '../../components/StarRating';
 import { Colors } from '../../constants/colors';
 import { useLogModal } from '../../store/logModal';
 
@@ -85,7 +86,7 @@ export default function ProfileScreen() {
   return (
     <View style={styles.screen}>
       <ScreenHeader />
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 90 }}>
         {/* Profile header */}
         <View style={styles.profileHeader}>
           <View style={styles.avatar}>
@@ -114,17 +115,24 @@ export default function ProfileScreen() {
         {/* Stats row */}
         {stats && (
           <View style={styles.statsRow}>
-            {[
-              { label: 'Logged', value: String(stats.logged), accent: false },
-              { label: 'Avg', value: stats.avgRating != null ? stats.avgRating.toFixed(1) : '—', accent: true },
-              { label: 'Reviews', value: String(stats.reviews), accent: false },
-              { label: 'Friends', value: String(stats.friends), accent: false },
-            ].map((s, idx) => (
-              <View key={s.label} style={[styles.statCell, idx < 3 && styles.statBorder]}>
-                <Text style={[styles.statValue, s.accent && { color: Colors.accent }]}>{s.value}</Text>
+            {([
+              { label: 'Logged', value: String(stats.logged) },
+              { label: 'Reviews', value: String(stats.reviews) },
+              { label: 'Friends', value: String(stats.friends) },
+            ] as { label: string; value: string }[]).map((s, idx) => (
+              <View key={s.label} style={[styles.statCell, styles.statBorder]}>
+                <Text style={styles.statValue}>{s.value}</Text>
                 <Text style={styles.statLabel}>{s.label}</Text>
               </View>
             ))}
+            <View style={styles.statCell}>
+              {stats.avgRating != null ? (
+                <StarRating rating={stats.avgRating} size={13} />
+              ) : (
+                <Text style={styles.statValue}>—</Text>
+              )}
+              <Text style={styles.statLabel}>Avg</Text>
+            </View>
           </View>
         )}
 

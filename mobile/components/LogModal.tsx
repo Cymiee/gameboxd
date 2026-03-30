@@ -10,6 +10,7 @@ import { useLogModal } from '../store/logModal';
 import { useAuthStore } from '../store/auth';
 import { supabase } from '../lib/supabase';
 import { searchGames } from '../lib/igdb';
+import StarRatingInput from './StarRatingInput';
 import { Colors } from '../constants/colors';
 
 const STATUSES: { label: string; value: GameStatus }[] = [
@@ -117,7 +118,6 @@ export default function LogModal() {
                 onChangeText={setQuery}
                 placeholder="Search games..."
                 placeholderTextColor={Colors.textMuted}
-                autoFocus
                 style={styles.searchInput}
               />
               {searching ? (
@@ -158,19 +158,8 @@ export default function LogModal() {
               {showRating && (
                 <>
                   <Text style={styles.label}>RATING</Text>
-                  <View style={styles.ratingRow}>
-                    {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
-                      <Pressable
-                        key={n}
-                        onPress={() => setRating(rating === n ? null : n)}
-                        style={[styles.ratingBtn, rating === n && styles.ratingBtnActive]}
-                      >
-                        <Text style={[styles.ratingBtnText, rating === n && styles.ratingBtnTextActive]}>
-                          {n}
-                        </Text>
-                      </Pressable>
-                    ))}
-                  </View>
+                  <StarRatingInput value={rating} onChange={setRating} />
+                  <View style={{ height: 12 }} />
                 </>
               )}
 
@@ -261,15 +250,6 @@ const styles = StyleSheet.create({
   pillActive: { backgroundColor: Colors.accent, borderColor: Colors.accent },
   pillText: { fontFamily: 'Inter_400Regular', fontSize: 13, color: Colors.textMuted },
   pillTextActive: { color: '#111' },
-  ratingRow: { flexDirection: 'row', gap: 6, marginBottom: 16 },
-  ratingBtn: {
-    flex: 1, height: 32, borderRadius: 6,
-    backgroundColor: Colors.surfaceElevated,
-    justifyContent: 'center', alignItems: 'center',
-  },
-  ratingBtnActive: { backgroundColor: Colors.accent },
-  ratingBtnText: { fontFamily: 'Inter_500Medium', fontSize: 13, color: Colors.textMuted },
-  ratingBtnTextActive: { color: '#111' },
   reviewInput: {
     backgroundColor: Colors.surfaceElevated, borderRadius: 8, padding: 10,
     color: Colors.textPrimary, fontFamily: 'Inter_400Regular', fontSize: 13,

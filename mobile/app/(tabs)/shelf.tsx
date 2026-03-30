@@ -63,11 +63,29 @@ export default function ShelfScreen() {
     return (
       <View style={styles.screen}>
         <ScreenHeader />
-        <View style={styles.centred}>
-          <Text style={styles.emptyTitle}>Sign in to view your shelf</Text>
-          <Pressable onPress={() => router.push('/auth')} style={styles.loginBtn}>
-            <Text style={styles.loginBtnText}>Log in</Text>
+        <View style={unauth.body}>
+          {/* Decorative stacked game-case graphic */}
+          <View style={unauth.decorContainer}>
+            <View style={[unauth.card, { backgroundColor: Colors.surface, transform: [{ rotate: '-8deg' }] }]} />
+            <View style={[unauth.card, { backgroundColor: Colors.surfaceElevated, transform: [{ rotate: '0deg' }] }]} />
+            <View style={[unauth.card, { backgroundColor: Colors.surface, transform: [{ rotate: '8deg' }] }]} />
+          </View>
+
+          <Text style={unauth.title}>Your shelf, your story.</Text>
+          <Text style={unauth.subtitle}>
+            Organise and showcase every game you've played, dropped, or want to try.
+          </Text>
+
+          <Pressable onPress={() => router.push('/auth')} style={unauth.signUpBtn}>
+            <Text style={unauth.signUpText}>Sign Up</Text>
           </Pressable>
+
+          <View style={unauth.signInRow}>
+            <Text style={unauth.signInText}>Already a member? </Text>
+            <Pressable onPress={() => router.push('/auth')}>
+              <Text style={[unauth.signInText, { color: Colors.accent }]}>Sign in</Text>
+            </Pressable>
+          </View>
         </View>
       </View>
     );
@@ -87,7 +105,7 @@ export default function ShelfScreen() {
   return (
     <View style={styles.screen}>
       <ScreenHeader />
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 90 }}>
         {STATUS_SECTIONS.map(({ status, label }, idx) => {
           const sectionLogs = logs.filter((l) => l.status === status);
           return (
@@ -139,17 +157,60 @@ export default function ShelfScreen() {
   );
 }
 
+const unauth = StyleSheet.create({
+  body: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+    paddingBottom: 40,
+  },
+  decorContainer: {
+    height: 180,
+    width: 160,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 32,
+  },
+  card: {
+    position: 'absolute',
+    width: 120,
+    height: 160,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+  },
+  title: {
+    fontFamily: 'Syne_700Bold',
+    fontSize: 22,
+    color: Colors.textPrimary,
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  subtitle: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 14,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 32,
+  },
+  signUpBtn: {
+    backgroundColor: Colors.accent,
+    borderRadius: 14,
+    paddingVertical: 16,
+    alignSelf: 'stretch',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  signUpText: { fontFamily: 'Syne_700Bold', fontSize: 15, color: '#0e0e10' },
+  signInRow: { flexDirection: 'row', justifyContent: 'center' },
+  signInText: { fontFamily: 'Inter_400Regular', fontSize: 13, color: Colors.textSecondary },
+});
+
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: Colors.background },
-  centred: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 16 },
-  emptyTitle: { fontFamily: 'Syne_700Bold', fontSize: 16, color: Colors.textPrimary },
-  loginBtn: {
-    backgroundColor: Colors.accent,
-    paddingHorizontal: 24,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  loginBtnText: { fontFamily: 'Syne_700Bold', fontSize: 14, color: '#111' },
+  centred: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 16 }, // loading state
   statusHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',

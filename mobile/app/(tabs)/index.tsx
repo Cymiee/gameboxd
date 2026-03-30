@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { ScrollView, View, Text, Pressable, Image, RefreshControl, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import type { IGDBGame } from '@gameboxd/lib';
 import { getCoverUrl } from '@gameboxd/lib';
 import type { ActivityWithUser } from '@gameboxd/lib';
@@ -8,9 +9,8 @@ import { getFriendsActivity } from '@gameboxd/lib';
 import { useAuthStore } from '../../store/auth';
 import { useLogModal } from '../../store/logModal';
 import { supabase } from '../../lib/supabase';
-import { getTrendingGames, getNewReleases, getGames, getGamesByGenre } from '../../lib/igdb';
+import { getTrendingGames, getGames, getGamesByGenre } from '../../lib/igdb';
 import ScreenHeader from '../../components/ScreenHeader';
-import HorizontalGameScroll from '../../components/HorizontalGameScroll';
 import ActivityItem from '../../components/ActivityItem';
 import { Colors } from '../../constants/colors';
 
@@ -29,7 +29,6 @@ export default function HomeScreen() {
   const [activity, setActivity] = useState<ActivityWithUser[]>([]);
   const [activityGames, setActivityGames] = useState<Map<number, IGDBGame>>(new Map());
   const [trending, setTrending] = useState<IGDBGame[]>([]);
-  const [newReleases, setNewReleases] = useState<IGDBGame[]>([]);
   const [genreGames, setGenreGames] = useState<IGDBGame[][]>([]);
   const [loadingActivity, setLoadingActivity] = useState(false);
   const [loadingTrending, setLoadingTrending] = useState(true);
@@ -56,13 +55,11 @@ export default function HomeScreen() {
   const loadFeed = useCallback(async () => {
     setLoadingTrending(true);
     try {
-      const [t, n, ...genreResults] = await Promise.all([
-        getTrendingGames(10),
-        getNewReleases(10),
+      const [t, ...genreResults] = await Promise.all([
+        getTrendingGames(5),
         ...GENRE_PICKS.map((g) => getGamesByGenre(g.id, [], 1)),
       ]);
       setTrending(t);
-      setNewReleases(n);
       setGenreGames(genreResults);
     } catch {
       // silent
@@ -82,27 +79,69 @@ export default function HomeScreen() {
     setRefreshing(false);
   }, [loadFeed, loadActivity]);
 
-  function goToGame(game: IGDBGame) { router.push(`/game/${game.id}`); }
+  // ── Unauthenticated hero ────────────────────────────────────────────────
+  if (!userId) {
+    return (
+      <View style={hero.screen}>
+        <ScreenHeader />
+        <View style={hero.body}>
+          <Text style={hero.heading}>{'Find your next\nfavourite game.'}</Text>
+          <Text style={hero.sub}>Track, rate and share the games you play.</Text>
 
+          <View style={hero.coversWrapper}>
+            <View style={hero.coversRow}>
+              {trending.slice(0, 5).map((game, idx) => {
+                const url = game.cover ? getCoverUrl(game.cover.image_id, 'cover_big') : null;
+                return url ? (
+                  <Image
+                    key={game.id}
+                    source={{ uri: url }}
+                    style={[hero.cover, idx > 0 && { marginLeft: -12 }]}
+                    resizeMode="cover"
+                  />
+                ) : null;
+              })}
+            </View>
+            <LinearGradient
+              colors={[Colors.background, 'transparent']}
+              start={{ x: 0, y: 0.5 }}
+              end={{ x: 1, y: 0.5 }}
+              style={hero.fadeLeft}
+            />
+            <LinearGradient
+              colors={['transparent', Colors.background]}
+              start={{ x: 0, y: 0.5 }}
+              end={{ x: 1, y: 0.5 }}
+              style={hero.fadeRight}
+            />
+          </View>
+
+          <Pressable onPress={() => router.push('/auth')} style={hero.signUpBtn}>
+            <Text style={hero.signUpText}>Sign Up</Text>
+          </Pressable>
+
+          <View style={hero.signInRow}>
+            <Text style={hero.signInText}>Already have an account? </Text>
+            <Pressable onPress={() => router.push('/auth')}>
+              <Text style={[hero.signInText, { color: Colors.accent }]}>Sign in</Text>
+            </Pressable>
+          </View>
+        </View>
+      </View>
+    );
+  }
+
+  // ── Authenticated feed ──────────────────────────────────────────────────
   return (
     <View style={styles.screen}>
       <ScreenHeader />
       <ScrollView
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 90 }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.accent} />
         }
       >
-        <View style={styles.section}>
-          <Text style={[styles.label, styles.padH]}>TRENDING NOW</Text>
-          <HorizontalGameScroll games={trending} loading={loadingTrending} onPress={goToGame} />
-        </View>
-
-        <View style={styles.section}>
-          <Text style={[styles.label, styles.padH]}>NEW RELEASES</Text>
-          <HorizontalGameScroll games={newReleases} loading={loadingTrending} onPress={goToGame} />
-        </View>
-
         {genreGames.some((g) => g.length > 0) && (
           <View style={styles.section}>
             <Text style={[styles.label, styles.padH]}>PICK YOUR GENRE</Text>
@@ -116,9 +155,7 @@ export default function HomeScreen() {
                     genreName={genre.name}
                     game={game}
                     onPress={() => router.push(`/game/${game.id}`)}
-                    onQuickLog={() => {
-                      if (userId) { open(game); } else { router.push('/auth'); }
-                    }}
+                    onQuickLog={() => open(game)}
                   />
                 );
               })}
@@ -128,13 +165,7 @@ export default function HomeScreen() {
 
         <View style={[styles.section, { marginBottom: 32 }]}>
           <Text style={styles.label}>FRIENDS ACTIVITY</Text>
-          {!userId ? (
-            <Pressable onPress={() => router.push('/auth')} style={styles.signInBanner}>
-              <Text style={styles.bannerText}>
-                <Text style={{ color: Colors.accent }}>Sign in</Text>{' '}to see what your friends are playing
-              </Text>
-            </Pressable>
-          ) : loadingActivity ? null : activity.length === 0 ? (
+          {loadingActivity ? null : activity.length === 0 ? (
             <Text style={styles.emptyText}>No activity from friends yet.</Text>
           ) : (
             <View style={styles.padH}>
@@ -179,6 +210,80 @@ function GenreCard({
     </Pressable>
   );
 }
+
+// ── Styles ──────────────────────────────────────────────────────────────────
+
+const hero = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: Colors.background },
+  body: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    paddingBottom: 40,
+  },
+  heading: {
+    fontFamily: 'Syne_700Bold',
+    fontSize: 38,
+    color: Colors.textPrimary,
+    lineHeight: 44,
+  },
+  sub: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 15,
+    color: Colors.textSecondary,
+    marginTop: 12,
+  },
+  coversWrapper: {
+    marginVertical: 36,
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  coversRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cover: {
+    width: 70,
+    height: 100,
+    borderRadius: 10,
+  },
+  fadeLeft: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 60,
+  },
+  fadeRight: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: 60,
+  },
+  signUpBtn: {
+    backgroundColor: Colors.accent,
+    borderRadius: 14,
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  signUpText: {
+    fontFamily: 'Syne_700Bold',
+    fontSize: 15,
+    color: '#0e0e10',
+  },
+  signInRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 16,
+  },
+  signInText: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 13,
+    color: Colors.textSecondary,
+  },
+});
 
 const g = StyleSheet.create({
   card: {
@@ -229,14 +334,5 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     paddingHorizontal: 16,
   },
-  signInBanner: {
-    marginHorizontal: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    backgroundColor: Colors.surfaceElevated,
-    alignItems: 'center',
-  },
-  bannerText: { fontFamily: 'Inter_400Regular', fontSize: 13, color: Colors.textSecondary },
   emptyText: { fontFamily: 'Inter_400Regular', fontSize: 13, color: Colors.textMuted, paddingHorizontal: 16 },
 });

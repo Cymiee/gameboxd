@@ -107,7 +107,7 @@ export default function ExploreScreen() {
           />
         )
       ) : (
-        <ScrollView showsVerticalScrollIndicator={false}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 90 }}>
           <Text style={styles.label}>BROWSE BY GENRE</Text>
           <View style={styles.pillWrap}>
             {GENRES.map((g) => (

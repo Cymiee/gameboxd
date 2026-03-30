@@ -95,7 +95,7 @@ export default function DiscoverScreen() {
   return (
     <View style={styles.screen}>
       <ScreenHeader />
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 90 }}>
         <Section label="TRENDING WITH SHELVED GAMERS">
           <HorizontalGameScroll games={trending} onPress={goToGame} />
         </Section>

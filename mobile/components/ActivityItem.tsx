@@ -2,6 +2,7 @@ import { View, Text, Image, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import type { ActivityWithUser } from '@gameboxd/lib';
 import { getCoverUrl } from '@gameboxd/lib';
+import StarRating from './StarRating';
 import { Colors } from '../constants/colors';
 
 interface Props {
@@ -41,10 +42,10 @@ export default function ActivityItem({ item, gameCover, gameName }: Props) {
         <Text style={styles.line} numberOfLines={2}>
           <Text style={styles.username}>{item.user.username}</Text>
           <Text style={styles.action}> {buildActionText()}</Text>
-          {rating != null && (
-            <Text style={styles.ratingTag}> {rating}/10</Text>
-          )}
         </Text>
+        {rating != null && (
+          <StarRating rating={rating} size={12} />
+        )}
       </View>
       {gameCover ? (
         <Image source={{ uri: gameCover }} style={styles.thumb} resizeMode="cover" />
@@ -82,7 +83,6 @@ const styles = StyleSheet.create({
   line: { fontFamily: 'Inter_400Regular', fontSize: 13, color: Colors.textSecondary },
   username: { fontFamily: 'Inter_500Medium', color: Colors.textPrimary },
   action: { color: Colors.textSecondary },
-  ratingTag: { fontFamily: 'Inter_500Medium', color: Colors.accent },
   thumb: {
     width: 18,
     height: 24,

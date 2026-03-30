@@ -11,6 +11,7 @@ import { useLogModal } from '../../store/logModal';
 import { supabase } from '../../lib/supabase';
 import { getGame, getGames } from '../../lib/igdb';
 import HorizontalGameScroll from '../../components/HorizontalGameScroll';
+import StarRating from '../../components/StarRating';
 import { Colors } from '../../constants/colors';
 
 export default function GameDetailScreen() {
@@ -96,7 +97,7 @@ export default function GameDetailScreen() {
     ? new Date(game.first_release_date * 1000).getFullYear()
     : null;
   const developer = game.involved_companies?.find((c) => c.developer)?.company.name;
-  const communityRating = game.rating != null ? (game.rating / 10).toFixed(1) : null;
+  const igdbRating = game.rating != null ? Math.round(game.rating / 10) : null;
 
   return (
     <View style={styles.screen}>
@@ -132,8 +133,8 @@ export default function GameDetailScreen() {
                 </View>
               )}
               {year && <Text style={styles.year}>{year}</Text>}
-              {communityRating && (
-                <Text style={styles.rating}>{communityRating}</Text>
+              {igdbRating != null && (
+                <StarRating rating={igdbRating} size={20} />
               )}
             </View>
           </View>
@@ -141,21 +142,32 @@ export default function GameDetailScreen() {
 
         <View style={styles.body}>
           {/* Log button */}
-          <Pressable
-            onPress={() => open(game)}
-            style={styles.logBtn}
-          >
-            <Text style={styles.logBtnText}>
-              {existingLog && existingLog.status !== 'want_to_play' ? 'Edit log' : 'Log this game'}
-            </Text>
-          </Pressable>
+          {userId ? (
+            <Pressable onPress={() => open(game)} style={styles.logBtn}>
+              <Text style={styles.logBtnText}>
+                {existingLog && existingLog.status !== 'want_to_play' ? 'Edit log' : 'Log this game'}
+              </Text>
+            </Pressable>
+          ) : (
+            <View style={styles.signInPrompt}>
+              <View style={styles.logBtnDisabled}>
+                <Text style={styles.logBtnTextDisabled}>Log this game</Text>
+              </View>
+              <Text style={styles.signInNote}>Sign in to log games</Text>
+              <Pressable onPress={() => router.push('/auth')} style={styles.signInBtn}>
+                <Text style={styles.signInBtnText}>Sign in</Text>
+              </Pressable>
+            </View>
+          )}
 
           {/* Existing log summary */}
           {existingLog && existingLog.status !== 'want_to_play' && (
             <View style={styles.logCard}>
               <Text style={styles.logStatus}>{existingLog.status.replace('_', ' ')}</Text>
               {existingLog.rating != null && (
-                <Text style={styles.logRating}>{existingLog.rating}/10</Text>
+                <View style={{ marginBottom: 4 }}>
+                  <StarRating rating={existingLog.rating} size={14} />
+                </View>
               )}
               {existingLog.review && (
                 <Text style={styles.logReview} numberOfLines={3}>{existingLog.review}</Text>
@@ -191,7 +203,7 @@ export default function GameDetailScreen() {
                 {friendRatings.map((fr) => (
                   <View key={fr.username} style={styles.friendChip}>
                     <Text style={styles.friendName}>{fr.username}</Text>
-                    <Text style={styles.friendRating}>{fr.rating}/10</Text>
+                    <StarRating rating={fr.rating} size={12} />
                   </View>
                 ))}
               </View>
@@ -263,6 +275,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logBtnText: { fontFamily: 'Syne_700Bold', fontSize: 14, color: '#111' },
+  signInPrompt: { gap: 8 },
+  logBtnDisabled: {
+    borderRadius: 10,
+    height: 46,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: Colors.surfaceElevated,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+  },
+  logBtnTextDisabled: { fontFamily: 'Syne_700Bold', fontSize: 14, color: Colors.textMuted },
+  signInNote: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 12,
+    color: Colors.textMuted,
+    textAlign: 'center',
+  },
+  signInBtn: {
+    borderRadius: 10,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.accent,
+  },
+  signInBtnText: { fontFamily: 'Syne_700Bold', fontSize: 14, color: Colors.accent },
   logCard: {
     backgroundColor: Colors.surface,
     borderRadius: 10,
