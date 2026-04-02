@@ -1,6 +1,8 @@
-import { useEffect, useState, useCallback } from 'react';
-import { ScrollView, View, Text, Pressable, Image, StyleSheet, ActivityIndicator } from 'react-native';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { ScrollView, View, Text, Pressable, Image, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import type { IGDBGame } from '@gameboxd/lib';
 import { getCoverUrl } from '@gameboxd/lib';
 import type { ReviewWithUser, ListWithMeta } from '@gameboxd/lib';
@@ -10,6 +12,7 @@ import { supabase } from '../../lib/supabase';
 import { getGames, getNewReleases, getTopRated, getTrendingGames } from '../../lib/igdb';
 import ScreenHeader from '../../components/ScreenHeader';
 import HorizontalGameScroll from '../../components/HorizontalGameScroll';
+import Skeleton from '../../components/Skeleton';
 import { Colors } from '../../constants/colors';
 
 export default function DiscoverScreen() {
@@ -25,8 +28,10 @@ export default function DiscoverScreen() {
   const [reviews, setReviews] = useState<ReviewWithUser[]>([]);
   const [reviewGames, setReviewGames] = useState<Map<number, IGDBGame>>(new Map());
   const [loading, setLoading] = useState(true);
+  const cancelledRef = useRef(false);
 
   const load = useCallback(async () => {
+    cancelledRef.current = false;
     setLoading(true);
     try {
       const [trendingIds, mostPlayedIds, releasesGames, topRated, lists] = await Promise.all([
@@ -46,38 +51,45 @@ export default function DiscoverScreen() {
         mostPlayedGames = await getTrendingGames(10);
       }
 
+      if (cancelledRef.current) return;
+
       setTrending(trendingGames);
       setMostPlayed(mostPlayedGames);
       setNewReleases(releasesGames);
       setForYou(topRated);
       setPopularLists(lists);
 
-      // Fetch covers for list preview tiles
       const allListGameIds = [...new Set(lists.flatMap((l) => l.coverGameIds))];
       if (allListGameIds.length > 0) {
         const coverGames = await getGames(allListGameIds);
-        const coverMap = new Map<number, string>();
-        for (const g of coverGames) {
-          if (g.cover) coverMap.set(g.id, getCoverUrl(g.cover.image_id, 'cover_small'));
+        if (!cancelledRef.current) {
+          const coverMap = new Map<number, string>();
+          for (const g of coverGames) {
+            if (g.cover) coverMap.set(g.id, getCoverUrl(g.cover.image_id, 'cover_small'));
+          }
+          setListCovers(coverMap);
         }
-        setListCovers(coverMap);
       }
 
       const recentReviews = await getRecentReviews(supabase, 5);
+      if (cancelledRef.current) return;
       setReviews(recentReviews);
       const reviewGameIds = [...new Set(recentReviews.map((r) => r.game_igdb_id))];
       if (reviewGameIds.length > 0) {
         const rGames = await getGames(reviewGameIds);
-        setReviewGames(new Map(rGames.map((g) => [g.id, g])));
+        if (!cancelledRef.current) setReviewGames(new Map(rGames.map((g) => [g.id, g])));
       }
-    } catch {
-      // silent
+    } catch (e) {
+      if (__DEV__) console.error('[Discover] load error:', e);
     } finally {
-      setLoading(false);
+      if (!cancelledRef.current) setLoading(false);
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+    return () => { cancelledRef.current = true; };
+  }, [load]);
 
   function goToGame(game: IGDBGame) { router.push(`/game/${game.id}`); }
 
@@ -85,9 +97,19 @@ export default function DiscoverScreen() {
     return (
       <View style={styles.screen}>
         <ScreenHeader />
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <ActivityIndicator color={Colors.accent} />
-        </View>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 90 }}>
+          {userId && <Skeleton height={220} borderRadius={0} style={{ marginBottom: 20 }} />}
+          {[140, 160, 120].map((labelW, i) => (
+            <View key={i} style={{ marginBottom: 20 }}>
+              <Skeleton height={11} width={labelW} borderRadius={4} style={{ marginHorizontal: 16, marginBottom: 12 }} />
+              <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 16 }}>
+                {[0, 1, 2, 3].map((j) => (
+                  <Skeleton key={j} width={110} height={165} borderRadius={8} />
+                ))}
+              </View>
+            </View>
+          ))}
+        </ScrollView>
       </View>
     );
   }
@@ -96,6 +118,10 @@ export default function DiscoverScreen() {
     <View style={styles.screen}>
       <ScreenHeader />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 90 }}>
+        {userId && trending.length > 0 && (
+          <FeaturedHero game={trending[0]} onPress={() => goToGame(trending[0])} />
+        )}
+
         <Section label="TRENDING WITH SHELVED GAMERS">
           <HorizontalGameScroll games={trending} onPress={goToGame} />
         </Section>
@@ -158,6 +184,103 @@ export default function DiscoverScreen() {
   );
 }
 
+function FeaturedHero({ game, onPress }: { game: IGDBGame; onPress: () => void }) {
+  const coverUrl = game.cover ? getCoverUrl(game.cover.image_id, 'cover_big') : null;
+  const opacity = useSharedValue(0);
+  const translateY = useSharedValue(20);
+
+  useEffect(() => {
+    opacity.value = withTiming(1, { duration: 500 });
+    translateY.value = withTiming(0, { duration: 500 });
+  }, []);
+
+  const animStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateY: translateY.value }],
+  }));
+
+  const genre = game.genres?.[0]?.name;
+
+  return (
+    <Animated.View style={[heroStyles.container, animStyle]}>
+      {coverUrl && (
+        <Image
+          source={{ uri: coverUrl }}
+          style={StyleSheet.absoluteFillObject}
+          blurRadius={18}
+          resizeMode="cover"
+        />
+      )}
+      <LinearGradient
+        colors={['rgba(14,14,16,0.15)', 'rgba(14,14,16,0.95)']}
+        style={StyleSheet.absoluteFillObject}
+        locations={[0, 0.85]}
+      />
+      <View style={heroStyles.content}>
+        {coverUrl && (
+          <Image source={{ uri: coverUrl }} style={heroStyles.coverCard} resizeMode="cover" />
+        )}
+        <View style={heroStyles.info}>
+          <Text style={heroStyles.title} numberOfLines={2}>{game.name}</Text>
+          {genre && (
+            <View style={heroStyles.genrePill}>
+              <Text style={heroStyles.genreText}>{genre}</Text>
+            </View>
+          )}
+          <Pressable style={heroStyles.viewBtn} onPress={onPress}>
+            <Text style={heroStyles.viewBtnText}>View Game</Text>
+          </Pressable>
+        </View>
+      </View>
+    </Animated.View>
+  );
+}
+
+const heroStyles = StyleSheet.create({
+  container: {
+    height: 220,
+    overflow: 'hidden',
+    marginBottom: 20,
+  },
+  content: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 14,
+    padding: 16,
+  },
+  coverCard: {
+    width: 100,
+    height: 133,
+    borderRadius: 8,
+    borderWidth: 0.5,
+    borderColor: Colors.border,
+  },
+  info: { flex: 1, gap: 8 },
+  title: {
+    fontFamily: 'Syne_700Bold',
+    fontSize: 20,
+    color: '#fff',
+    lineHeight: 26,
+  },
+  genrePill: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    backgroundColor: 'rgba(228,255,26,0.15)',
+  },
+  genreText: { fontFamily: 'Inter_500Medium', fontSize: 12, color: Colors.accent },
+  viewBtn: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: Colors.accent,
+  },
+  viewBtnText: { fontFamily: 'Syne_700Bold', fontSize: 13, color: '#111' },
+});
+
 function Section({ label, subtitle, children }: {
   label: string;
   subtitle?: string;
@@ -174,10 +297,10 @@ function Section({ label, subtitle, children }: {
 
 const sectionStyles = StyleSheet.create({
   label: {
-    fontFamily: 'Inter_400Regular',
-    fontSize: 9,
+    fontFamily: 'Inter_500Medium',
+    fontSize: 11,
     color: Colors.textMuted,
-    letterSpacing: 1.2,
+    letterSpacing: 1.0,
     textTransform: 'uppercase',
     marginBottom: 4,
     paddingHorizontal: 16,

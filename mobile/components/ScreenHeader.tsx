@@ -33,6 +33,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     backgroundColor: Colors.background,
+    borderBottomWidth: 0.5,
+    borderBottomColor: Colors.border,
   },
   wordmark: {
     fontFamily: 'Syne_700Bold',

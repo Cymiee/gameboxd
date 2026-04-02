@@ -25,9 +25,13 @@ export {
   acceptFriendRequest,
   getFriends,
   getPendingRequests,
+  getFriendshipStatus,
+  declineFriendRequest,
+  removeFriend,
   getFriendsActivityFeed,
   getPopularAmongFriends,
 } from "./supabase/friends.js";
+export type { FriendStatusResult } from "./supabase/friends.js";
 
 // Activity helpers
 export {

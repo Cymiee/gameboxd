@@ -90,6 +90,8 @@ export interface IGDBGame {
   hypes?: number;
   total_rating?: number;
   total_rating_count?: number;
+  artworks?: { id: number; image_id: string; width?: number; height?: number }[];
+  screenshots?: { id: number; image_id: string; width?: number; height?: number }[];
 }
 
 export interface IGDBCover {

@@ -90,6 +90,57 @@ export async function getPopularAmongFriends(
     .map(([gameIgdbId, count]) => ({ gameIgdbId, count }));
 }
 
+export interface FriendStatusResult {
+  status: 'none' | 'pending_sent' | 'pending_received' | 'accepted';
+  friendshipId: string | null;
+}
+
+export async function getFriendshipStatus(
+  client: SupabaseClient<Database>,
+  userId: string,
+  otherUserId: string,
+): Promise<FriendStatusResult> {
+  const { data, error } = await client
+    .from('friendships')
+    .select('id, requester_id, addressee_id, status')
+    .or(
+      `and(requester_id.eq.${userId},addressee_id.eq.${otherUserId}),` +
+      `and(requester_id.eq.${otherUserId},addressee_id.eq.${userId})`,
+    )
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return { status: 'none', friendshipId: null };
+  if (data.status === 'accepted') return { status: 'accepted', friendshipId: data.id };
+  if (data.requester_id === userId) return { status: 'pending_sent', friendshipId: data.id };
+  return { status: 'pending_received', friendshipId: data.id };
+}
+
+export async function declineFriendRequest(
+  client: SupabaseClient<Database>,
+  friendshipId: string,
+  addresseeId: string,
+): Promise<void> {
+  const { error } = await client
+    .from('friendships')
+    .delete()
+    .eq('id', friendshipId)
+    .eq('addressee_id', addresseeId);
+  if (error) throw error;
+}
+
+export async function removeFriend(
+  client: SupabaseClient<Database>,
+  friendshipId: string,
+  userId: string,
+): Promise<void> {
+  const { error } = await client
+    .from('friendships')
+    .delete()
+    .eq('id', friendshipId)
+    .or(`requester_id.eq.${userId},addressee_id.eq.${userId}`);
+  if (error) throw error;
+}
+
 export async function getFriendsActivityFeed(
   client: SupabaseClient<Database>,
   userId: string,

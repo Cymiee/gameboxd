@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback } from 'react';
-import { ScrollView, View, Text, Pressable, Image, StyleSheet, ActivityIndicator, Alert, Platform, ToastAndroid } from 'react-native';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { ScrollView, View, Text, Pressable, Image, FlatList, StyleSheet, Alert, Platform, ToastAndroid } from 'react-native';
 import { useRouter } from 'expo-router';
 import type { IGDBGame, TopGameRow } from '@gameboxd/lib';
 import { getCoverUrl, getTopGames } from '@gameboxd/lib';
@@ -11,6 +11,7 @@ import { getGames } from '../../lib/igdb';
 import ScreenHeader from '../../components/ScreenHeader';
 import ActivityItem from '../../components/ActivityItem';
 import StarRating from '../../components/StarRating';
+import Skeleton from '../../components/Skeleton';
 import { Colors } from '../../constants/colors';
 import { useLogModal } from '../../store/logModal';
 
@@ -28,16 +29,19 @@ export default function ProfileScreen() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [showAll, setShowAll] = useState(false);
   const [loading, setLoading] = useState(true);
+  const cancelledRef = useRef(false);
 
   const load = useCallback(async () => {
     if (!userId) return;
+    cancelledRef.current = false;
     setLoading(true);
     try {
       const [top, acts, userStats] = await Promise.all([
         getTopGames(supabase, userId),
-        getUserActivity(supabase, userId, showAll ? 50 : 10),
+        getUserActivity(supabase, userId, 50),
         getUserStats(supabase, userId),
       ]);
+      if (cancelledRef.current) return;
       setTopGames(top);
       setStats(userStats);
       const seen = new Set<string>();
@@ -54,18 +58,23 @@ export default function ProfileScreen() {
       const allIds = [...new Set([...topIds, ...actIds])];
       if (allIds.length > 0) {
         const games = await getGames(allIds);
-        const map = new Map(games.map((g) => [g.id, g]));
-        setTopGamesMap(map);
-        setActivityGames(map);
+        if (!cancelledRef.current) {
+          const map = new Map(games.map((g) => [g.id, g]));
+          setTopGamesMap(map);
+          setActivityGames(map);
+        }
       }
-    } catch {
-      // silent
+    } catch (e) {
+      if (__DEV__) console.error('[Profile] load error:', e);
     } finally {
-      setLoading(false);
+      if (!cancelledRef.current) setLoading(false);
     }
-  }, [userId, showAll]);
+  }, [userId]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+    return () => { cancelledRef.current = true; };
+  }, [load]);
 
   if (!userId || !profile) {
     return (
@@ -112,35 +121,15 @@ export default function ProfileScreen() {
           </Pressable>
         </View>
 
-        {/* Stats row */}
-        {stats && (
-          <View style={styles.statsRow}>
-            {([
-              { label: 'Logged', value: String(stats.logged) },
-              { label: 'Reviews', value: String(stats.reviews) },
-              { label: 'Friends', value: String(stats.friends) },
-            ] as { label: string; value: string }[]).map((s, idx) => (
-              <View key={s.label} style={[styles.statCell, styles.statBorder]}>
-                <Text style={styles.statValue}>{s.value}</Text>
-                <Text style={styles.statLabel}>{s.label}</Text>
-              </View>
-            ))}
-            <View style={styles.statCell}>
-              {stats.avgRating != null ? (
-                <StarRating rating={stats.avgRating} size={13} />
-              ) : (
-                <Text style={styles.statValue}>—</Text>
-              )}
-              <Text style={styles.statLabel}>Avg</Text>
-            </View>
-          </View>
-        )}
-
-        {/* Favourite games */}
+        {/* Favourite games — centrepiece above stats */}
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>FAVOURITE GAMES</Text>
+          <Text style={styles.favouritesLabel}>Favourites</Text>
           <View style={styles.topGamesRow}>
-            {[1, 2, 3].map((pos) => {
+            {loading && topGames.length === 0 ? (
+              [0, 1, 2].map((i) => (
+                <Skeleton key={i} height={130} borderRadius={10} style={{ flex: 1 }} />
+              ))
+            ) : [1, 2, 3].map((pos) => {
               const slot = topGames.find((t) => t.position === pos);
               const game = slot ? topGamesMap.get(slot.game_igdb_id) : null;
               const coverUrl = game?.cover ? getCoverUrl(game.cover.image_id, 'cover_big') : null;
@@ -165,25 +154,63 @@ export default function ProfileScreen() {
           </View>
         </View>
 
+        {/* Stats row */}
+        {stats && (
+          <View style={styles.statsRow}>
+            {([
+              { label: 'Logged', value: String(stats.logged) },
+              { label: 'Reviews', value: String(stats.reviews) },
+              { label: 'Friends', value: String(stats.friends) },
+            ] as { label: string; value: string }[]).map((s) => (
+              <View key={s.label} style={[styles.statCell, styles.statBorder]}>
+                <Text style={styles.statValue}>{s.value}</Text>
+                <Text style={styles.statLabel}>{s.label}</Text>
+              </View>
+            ))}
+            <View style={styles.statCell}>
+              {stats.avgRating != null ? (
+                <StarRating rating={stats.avgRating} size={13} />
+              ) : (
+                <Text style={styles.statValue}>—</Text>
+              )}
+              <Text style={styles.statLabel}>Avg</Text>
+            </View>
+          </View>
+        )}
+
         {/* Recent activity */}
         <View style={[styles.section, { marginBottom: 32 }]}>
           <Text style={styles.sectionLabel}>RECENT ACTIVITY</Text>
           <View style={styles.padH}>
             {loading ? (
-              <ActivityIndicator color={Colors.accent} />
+              <View style={{ gap: 12 }}>
+                {[0, 1, 2, 3].map((i) => (
+                  <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <Skeleton width={26} height={26} borderRadius={13} />
+                    <Skeleton height={32} borderRadius={6} style={{ flex: 1 }} />
+                    <Skeleton width={18} height={24} borderRadius={3} />
+                  </View>
+                ))}
+              </View>
             ) : (
-              displayedActivity.map((item) => (
-                <ActivityItem
-                  key={item.id}
-                  item={item}
-                  gameName={activityGames.get(item.game_igdb_id)?.name}
-                />
-              ))
-            )}
-            {!showAll && activity.length > 10 && (
-              <Pressable onPress={() => setShowAll(true)} style={{ marginTop: 12 }}>
-                <Text style={styles.loadMore}>Load more</Text>
-              </Pressable>
+              <FlatList
+                data={displayedActivity}
+                keyExtractor={(item) => item.id}
+                scrollEnabled={false}
+                renderItem={({ item }) => (
+                  <ActivityItem
+                    item={item}
+                    gameName={activityGames.get(item.game_igdb_id)?.name}
+                  />
+                )}
+                ListFooterComponent={
+                  !showAll && activity.length > 10 ? (
+                    <Pressable onPress={() => setShowAll(true)} style={{ marginTop: 12 }}>
+                      <Text style={styles.loadMore}>Load more</Text>
+                    </Pressable>
+                  ) : null
+                }
+              />
             )}
           </View>
         </View>
@@ -217,6 +244,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surfaceElevated,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(228,255,26,0.35)',
   },
   avatarText: { fontFamily: 'Syne_700Bold', fontSize: 18, color: Colors.accent },
   username: { fontFamily: 'Syne_700Bold', fontSize: 15, color: Colors.textPrimary },
@@ -241,20 +270,39 @@ const styles = StyleSheet.create({
   statValue: { fontFamily: 'Syne_700Bold', fontSize: 15, color: Colors.textPrimary },
   statLabel: { fontFamily: 'Inter_400Regular', fontSize: 9, color: Colors.textMuted, textTransform: 'uppercase' },
   section: { marginTop: 20 },
+  favouritesLabel: {
+    fontFamily: 'Syne_700Bold',
+    fontSize: 14,
+    color: Colors.textPrimary,
+    letterSpacing: 0.4,
+    marginBottom: 12,
+    paddingHorizontal: 16,
+  },
   sectionLabel: {
-    fontFamily: 'Inter_400Regular',
-    fontSize: 9,
+    fontFamily: 'Inter_500Medium',
+    fontSize: 11,
     color: Colors.textMuted,
-    letterSpacing: 1.2,
+    letterSpacing: 1.0,
     textTransform: 'uppercase',
     marginBottom: 8,
     paddingHorizontal: 16,
   },
-  topGamesRow: { flexDirection: 'row', gap: 6, paddingHorizontal: 16 },
+  topGamesRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16 },
   topGameSlot: { flex: 1, position: 'relative' },
-  topGameCover: { width: '100%', aspectRatio: 2 / 3, borderRadius: 8, borderWidth: 0.5, borderColor: Colors.border },
+  topGameCover: {
+    width: '100%',
+    aspectRatio: 2 / 3,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(228,255,26,0.25)',
+    shadowColor: Colors.accent,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 4,
+  },
   topGameEmpty: { backgroundColor: Colors.surfaceElevated, justifyContent: 'center', alignItems: 'center' },
-  topGamePlus: { fontSize: 20, color: Colors.textMuted },
+  topGamePlus: { fontSize: 22, color: Colors.textMuted },
   topGameAddLabel: { fontFamily: 'Inter_400Regular', fontSize: 10, color: Colors.textMuted, marginTop: 4 },
   topGamePos: {
     position: 'absolute',

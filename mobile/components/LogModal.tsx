@@ -1,9 +1,9 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
 import {
-  View, Text, TextInput, Pressable, Image,
+  View, Text, Pressable, Image,
   KeyboardAvoidingView, Platform, StyleSheet, ActivityIndicator,
 } from 'react-native';
-import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import BottomSheet, { BottomSheetScrollView, BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import type { IGDBGame, GameStatus } from '@gameboxd/lib';
 import { getCoverUrl, upsertGameLog } from '@gameboxd/lib';
 import { useLogModal } from '../store/logModal';
@@ -34,6 +34,7 @@ export default function LogModal() {
   const [rating, setRating] = useState<number | null>(null);
   const [review, setReview] = useState('');
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -73,11 +74,13 @@ export default function LogModal() {
   async function handleSave() {
     if (!userId || !selectedGame) return;
     setSaving(true);
+    setSaveError(null);
     try {
       await upsertGameLog(supabase, userId, selectedGame.id, status, rating, review || null);
       handleClose();
-    } catch {
-      // silent fail — user can retry
+    } catch (e) {
+      if (__DEV__) console.error('[LogModal] save error:', e);
+      setSaveError('Failed to save. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -91,6 +94,7 @@ export default function LogModal() {
     setSelectedGame(null);
     setRating(null);
     setReview('');
+    setSaveError(null);
   }, [close]);
 
   const showRating = status === 'completed' || status === 'dropped';
@@ -113,7 +117,7 @@ export default function LogModal() {
           {step === 'search' && (
             <View>
               <Text style={styles.stepTitle}>Log a game</Text>
-              <TextInput
+              <BottomSheetTextInput
                 value={query}
                 onChangeText={setQuery}
                 placeholder="Search games..."
@@ -164,7 +168,7 @@ export default function LogModal() {
               )}
 
               <Text style={styles.label}>REVIEW</Text>
-              <TextInput
+              <BottomSheetTextInput
                 value={review}
                 onChangeText={setReview}
                 placeholder="Write a review..."
@@ -176,6 +180,9 @@ export default function LogModal() {
 
               {!userId && (
                 <Text style={styles.signInNote}>Sign in to save games to your shelf</Text>
+              )}
+              {saveError && (
+                <Text style={styles.saveError}>{saveError}</Text>
               )}
               <Pressable
                 onPress={handleSave}
@@ -273,4 +280,11 @@ const styles = StyleSheet.create({
   },
   saveBtnText: { fontFamily: 'Syne_700Bold', fontSize: 15, color: '#111' },
   saveBtnTextDisabled: { color: Colors.textMuted },
+  saveError: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 12,
+    color: Colors.danger,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
 });

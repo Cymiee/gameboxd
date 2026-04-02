@@ -20,22 +20,27 @@ export default function ListDetailScreen() {
 
   useEffect(() => {
     if (!id) return;
+    let cancelled = false;
+
     (async () => {
       setLoading(true);
       try {
         const listData = await getListWithGames(supabase, id);
+        if (cancelled) return;
         setList(listData);
         const ids = listData.games.map((g) => g.game_igdb_id);
         if (ids.length > 0) {
           const games = await getGames(ids);
-          setGamesMap(new Map(games.map((g) => [g.id, g])));
+          if (!cancelled) setGamesMap(new Map(games.map((g) => [g.id, g])));
         }
       } catch (e) {
-        setError(e instanceof Error ? e.message : 'Failed to load list');
+        if (!cancelled) setError(e instanceof Error ? e.message : 'Failed to load list');
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     })();
+
+    return () => { cancelled = true; };
   }, [id]);
 
   return (

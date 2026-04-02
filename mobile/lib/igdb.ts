@@ -8,7 +8,13 @@ const PROXY_URL = `${SUPABASE_URL}/functions/v1/igdb-proxy`;
 const GAME_FIELDS =
   'fields id,name,summary,first_release_date,rating,rating_count,total_rating,total_rating_count,hypes,similar_games,' +
   'cover.id,cover.image_id,cover.url,genres.id,genres.name,platforms.id,platforms.name,' +
-  'involved_companies.company.id,involved_companies.company.name,involved_companies.developer;';
+  'involved_companies.company.id,involved_companies.company.name,involved_companies.developer,' +
+  'artworks.id,artworks.image_id,artworks.width,artworks.height,' +
+  'screenshots.id,screenshots.image_id,screenshots.width,screenshots.height;';
+
+export function getArtworkUrl(image_id: string): string {
+  return `https://images.igdb.com/igdb/image/upload/t_screenshot_big/${image_id}.jpg`;
+}
 
 async function callProxy(endpoint: string, body: string): Promise<IGDBGame[]> {
   const res = await fetch(PROXY_URL, {
@@ -25,7 +31,7 @@ async function callProxy(endpoint: string, body: string): Promise<IGDBGame[]> {
 
 export async function searchGames(query: string, limit = 20): Promise<IGDBGame[]> {
   const escaped = query.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-  const body = `${GAME_FIELDS} where name ~ *"${escaped}"* & rating_count != null; sort rating_count desc; limit ${limit};`;
+  const body = `search "${escaped}"; ${GAME_FIELDS} limit ${limit};`;
   return callProxy('/games', body);
 }
 

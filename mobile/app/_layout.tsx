@@ -15,15 +15,20 @@ export default function RootLayout() {
   const [fontsLoaded] = useFonts({ Syne_700Bold, Inter_400Regular, Inter_500Medium });
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
+    async function init() {
+      const { data } = await supabase.auth.getSession();
       const user = data.session?.user ?? null;
       setUserId(user?.id ?? null);
       if (user) {
-        getProfile(supabase, user.id)
-          .then(setProfile)
-          .catch(() => setProfile(null));
+        try {
+          const profile = await getProfile(supabase, user.id);
+          setProfile(profile);
+        } catch {
+          setProfile(null);
+        }
       }
-    });
+    }
+    void init();
 
     const { data: listener } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
@@ -50,14 +55,15 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <View style={{ flex: 1 }}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="auth" options={{ headerShown: false }} />
-        <Stack.Screen name="game/[id]" options={{ headerShown: false }} />
-        <Stack.Screen name="shelf/[status]" options={{ headerShown: false }} />
-        <Stack.Screen name="list/[id]" options={{ headerShown: false }} />
-      </Stack>
-      <LogModal />
+        <Stack>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="auth" options={{ headerShown: false }} />
+          <Stack.Screen name="game/[id]" options={{ headerShown: false }} />
+          <Stack.Screen name="shelf/[status]" options={{ headerShown: false }} />
+          <Stack.Screen name="list/[id]" options={{ headerShown: false }} />
+          <Stack.Screen name="user/[id]" options={{ headerShown: false }} />
+        </Stack>
+        <LogModal />
       </View>
     </GestureHandlerRootView>
   );

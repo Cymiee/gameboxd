@@ -1,7 +1,7 @@
 import { View, Text, Image, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import type { ActivityWithUser } from '@gameboxd/lib';
-import { getCoverUrl } from '@gameboxd/lib';
+import { useAuthStore } from '../store/auth';
 import StarRating from './StarRating';
 import { Colors } from '../constants/colors';
 
@@ -13,6 +13,7 @@ interface Props {
 
 export default function ActivityItem({ item, gameCover, gameName }: Props) {
   const router = useRouter();
+  const { userId: currentUserId } = useAuthStore();
   const initial = item.user.username[0]?.toUpperCase() ?? '?';
 
   const meta = item.metadata as Record<string, unknown> | null;
@@ -40,7 +41,15 @@ export default function ActivityItem({ item, gameCover, gameName }: Props) {
       </View>
       <View style={styles.textBlock}>
         <Text style={styles.line} numberOfLines={2}>
-          <Text style={styles.username}>{item.user.username}</Text>
+          <Text
+            style={styles.username}
+            suppressHighlighting
+            onPress={() => {
+              if (item.user.id !== currentUserId) router.push(`/user/${item.user.id}`);
+            }}
+          >
+            {item.user.username}
+          </Text>
           <Text style={styles.action}> {buildActionText()}</Text>
         </Text>
         {rating != null && (

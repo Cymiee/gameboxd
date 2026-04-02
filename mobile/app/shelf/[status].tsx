@@ -17,8 +17,11 @@ const STATUS_LABELS: Record<GameStatus, string> = {
 };
 
 export default function ShelfStatusScreen() {
-  const { status } = useLocalSearchParams<{ status: string }>();
-  const { userId } = useAuthStore();
+  // userId param is passed when viewing another user's shelf from their profile
+  const { status, userId: userIdParam } = useLocalSearchParams<{ status: string; userId?: string }>();
+  const { userId: authUserId } = useAuthStore();
+  // Prefer the param (another user's shelf) over own auth userId
+  const effectiveUserId = userIdParam ?? authUserId;
   const router = useRouter();
 
   const [logs, setLogs] = useState<GameLogRow[]>([]);
@@ -26,25 +29,30 @@ export default function ShelfStatusScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!userId || !status) return;
+    if (!effectiveUserId || !status) return;
+    let cancelled = false;
+
     (async () => {
       setLoading(true);
       try {
-        const allLogs = await getUserGameLogs(supabase, userId);
+        const allLogs = await getUserGameLogs(supabase, effectiveUserId);
         const filtered = allLogs.filter((l) => l.status === status);
+        if (cancelled) return;
         setLogs(filtered);
         const ids = filtered.map((l) => l.game_igdb_id);
         if (ids.length > 0) {
           const games = await getGames(ids);
-          setGamesMap(new Map(games.map((g) => [g.id, g])));
+          if (!cancelled) setGamesMap(new Map(games.map((g) => [g.id, g])));
         }
-      } catch {
-        // silent
+      } catch (e) {
+        if (__DEV__) console.error('[ShelfStatus] load error:', e);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     })();
-  }, [userId, status]);
+
+    return () => { cancelled = true; };
+  }, [effectiveUserId, status]);
 
   const label = STATUS_LABELS[status as GameStatus] ?? status;
 
