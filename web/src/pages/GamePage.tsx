@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { PageSpinner } from "../components/Spinner";
-import type { IGDBGame, GameLogRow, GameStatus, UserRow } from "@gameboxd/lib";
-import { getCoverUrl, getUserGameLogs, toggleLike, deleteGameLog, getFriends } from "@gameboxd/lib";
+import type { IGDBGame, GameLogRow, GameStatus, FriendRating } from "@gameboxd/lib";
+import { getCoverUrl, getUserGameLogs, toggleLike, deleteGameLog, getFriendRatingsForGame } from "@gameboxd/lib";
 import { getGame, getGames } from "../lib/igdb";
 import { supabase } from "../lib/supabase";
 import { useAuthStore } from "../store/auth";
@@ -10,11 +10,6 @@ import { useGamesStore } from "../store/games";
 import LogGameModal from "../components/LogGameModal";
 import GameCard from "../components/GameCard";
 import { useIsMobile } from "../hooks/useIsMobile";
-
-interface FriendRating {
-  user: Pick<UserRow, "id" | "username">;
-  rating: number;
-}
 
 export default function GamePage() {
   const { id } = useParams<{ id: string }>();
@@ -65,33 +60,8 @@ export default function GamePage() {
 
         // Friends' ratings
         if (userId) {
-          const friendIds = await getFriends(supabase, userId);
-          if (friendIds.length > 0) {
-            const { data: friendLogs } = await supabase
-              .from("game_logs")
-              .select("user_id, rating")
-              .in("user_id", friendIds)
-              .eq("game_igdb_id", Number(id))
-              .not("rating", "is", null);
-
-            if (friendLogs && friendLogs.length > 0 && !cancelled) {
-              const uniqueUserIds = friendLogs.map((r) => r.user_id);
-              const { data: userRows } = await supabase
-                .from("users")
-                .select("id, username")
-                .in("id", uniqueUserIds);
-
-              const userMap = new Map((userRows ?? []).map((u) => [u.id, u]));
-              const ratings: FriendRating[] = [];
-              for (const row of friendLogs) {
-                const user = userMap.get(row.user_id);
-                if (user && row.rating != null) {
-                  ratings.push({ user, rating: row.rating });
-                }
-              }
-              setFriendRatings(ratings);
-            }
-          }
+          const ratings = await getFriendRatingsForGame(supabase, userId, Number(id));
+          if (!cancelled) setFriendRatings(ratings);
         }
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : "Failed to load game");

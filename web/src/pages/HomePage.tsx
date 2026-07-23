@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import type { IGDBGame, ActivityRow, UserRow } from "@gameboxd/lib";
-import { getCoverUrl, getFriendsActivityFeed, getPopularAmongFriends } from "@gameboxd/lib";
+import { getCoverUrl, getFriendsActivityFeed, getPopularAmongFriends, getUsersByIds } from "@gameboxd/lib";
 import { supabase } from "../lib/supabase";
 import { useAuthStore } from "../store/auth";
 import { getTrendingGames, getGames, getNewReleases } from "../lib/igdb";
@@ -249,13 +249,13 @@ export default function HomePage() {
       const uniqueGameIds = [...new Set(feed.map((a) => a.game_igdb_id))];
       const uniqueUserIds = [...new Set(feed.map((a) => a.user_id))];
 
-      const [igdbGames, { data: userRows }] = await Promise.all([
+      const [igdbGames, userRows] = await Promise.all([
         getGames(uniqueGameIds),
-        supabase.from("users").select("id, username").in("id", uniqueUserIds),
+        getUsersByIds(supabase, uniqueUserIds),
       ]);
 
       const gameMap = new Map(igdbGames.map((g) => [g.id, g]));
-      const userMap = new Map((userRows ?? []).map((u) => [u.id, u]));
+      const userMap = new Map(userRows.map((u) => [u.id, u]));
 
       const items: FeedItem[] = [];
       for (const activity of feed) {

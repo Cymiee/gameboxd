@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getFriendsActivityFeed } from "@gameboxd/lib";
+import { getFriendsActivityFeed, getUsersByIds } from "@gameboxd/lib";
 import type { ActivityRow, UserRow, IGDBGame } from "@gameboxd/lib";
 import { supabase } from "../lib/supabase";
 import { useAuthStore } from "../store/auth";
@@ -30,9 +30,9 @@ export default function FeedPage() {
         const uniqueGameIds = [...new Set(feed.map((a) => a.game_igdb_id))];
         const uniqueUserIds = [...new Set(feed.map((a) => a.user_id))];
 
-        const [igdbGames, { data: userRows }] = await Promise.all([
+        const [igdbGames, userRows] = await Promise.all([
           getGames(uniqueGameIds),
-          supabase.from("users").select("id, username, avatar_url").in("id", uniqueUserIds),
+          getUsersByIds(supabase, uniqueUserIds),
         ]);
 
         const gameMap = new Map<number, Pick<IGDBGame, "id" | "name" | "cover">>();
@@ -40,7 +40,7 @@ export default function FeedPage() {
         setGames(gameMap);
 
         const userMap = new Map<string, Pick<UserRow, "id" | "username" | "avatar_url">>();
-        for (const u of userRows ?? []) userMap.set(u.id, u);
+        for (const u of userRows) userMap.set(u.id, u);
         setUsers(userMap);
       } catch (e) {
         const msg = e instanceof Error ? e.message : (e as { message?: string })?.message ?? JSON.stringify(e);

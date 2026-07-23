@@ -1,7 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import type { UserRow, FriendshipRow } from "@gameboxd/lib";
-import { getFriends, getPendingRequests, sendFriendRequest, acceptFriendRequest } from "@gameboxd/lib";
+import {
+  getFriends,
+  getPendingRequests,
+  sendFriendRequest,
+  acceptFriendRequest,
+  getUsersByIds,
+  getUserByUsername,
+} from "@gameboxd/lib";
 import { supabase } from "../lib/supabase";
 import { useAuthStore } from "../store/auth";
 
@@ -30,20 +37,15 @@ export default function FriendsPage() {
         getPendingRequests(supabase, userId),
       ]);
 
-      if (friendIds.length > 0) {
-        const { data } = await supabase.from("users").select("*").in("id", friendIds);
-        setFriendProfiles((data ?? []) as UserRow[]);
-      } else {
-        setFriendProfiles([]);
-      }
+      setFriendProfiles(await getUsersByIds(supabase, friendIds));
 
       setPendingRequests(pending);
 
       if (pending.length > 0) {
         const requesterIds = pending.map((p) => p.requester_id);
-        const { data } = await supabase.from("users").select("*").in("id", requesterIds);
+        const requesters = await getUsersByIds(supabase, requesterIds);
         const m = new Map<string, UserRow>();
-        for (const u of (data ?? []) as UserRow[]) m.set(u.id, u);
+        for (const u of requesters) m.set(u.id, u);
         setRequesterProfiles(m);
       }
     } finally {
@@ -68,23 +70,19 @@ export default function FriendsPage() {
     setAddSuccess(null);
     setAdding(true);
     try {
-      const { data } = await supabase
-        .from("users")
-        .select("id, username")
-        .eq("username", addUsername.trim())
-        .maybeSingle();
+      const target = await getUserByUsername(supabase, addUsername.trim());
 
-      if (!data) {
+      if (!target) {
         setAddError(`No user found with username "${addUsername.trim()}"`);
         return;
       }
-      if (data.id === userId) {
+      if (target.id === userId) {
         setAddError("You can't add yourself.");
         return;
       }
 
-      await sendFriendRequest(supabase, userId, data.id);
-      setAddSuccess(`Friend request sent to ${data.username}!`);
+      await sendFriendRequest(supabase, userId, target.id);
+      setAddSuccess(`Friend request sent to ${target.username}!`);
       setAddUsername("");
     } catch (e) {
       setAddError(e instanceof Error ? e.message : "Failed to send request");

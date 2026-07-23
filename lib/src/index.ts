@@ -6,7 +6,16 @@ export { getSupabaseClient } from "./supabase/client.js";
 export type { Database, SupabaseClient } from "./supabase/client.js";
 
 // Auth helpers
-export { signUp, signIn, signOut, getProfile, updateProfile, ensureProfile } from "./supabase/auth.js";
+export {
+  signUp,
+  signIn,
+  signOut,
+  getProfile,
+  updateProfile,
+  ensureProfile,
+  getUsersByIds,
+  getUserByUsername,
+} from "./supabase/auth.js";
 
 // Game helpers
 export {
@@ -30,8 +39,9 @@ export {
   removeFriend,
   getFriendsActivityFeed,
   getPopularAmongFriends,
+  getFriendRatingsForGame,
 } from "./supabase/friends.js";
-export type { FriendStatusResult } from "./supabase/friends.js";
+export type { FriendStatusResult, FriendRating } from "./supabase/friends.js";
 
 // Activity helpers
 export {
@@ -60,8 +70,3 @@ export type { ListWithMeta, ListWithGames } from "./supabase/lists.js";
 export { createIGDBClient, getCoverUrl } from "./igdb/client.js";
 export type { CoverSize } from "./igdb/client.js";
 export { fetchIGDBAccessToken } from "./igdb/token.js";
-
-// Hooks
-export { useAuth } from "./hooks/useAuth.js";
-export type { UseAuthReturn } from "./hooks/useAuth.js";
-export { useGameLog } from "./hooks/useGameLog.js";

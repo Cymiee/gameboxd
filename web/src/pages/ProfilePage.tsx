@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import type { UserRow, TopGameRow, GameLogRow, IGDBGame, ActivityRow } from "@gameboxd/lib";
 import {
-  getProfile, getTopGames, getUserGameLogs, updateProfile,
-  setTopGame, removeTopGame, getCoverUrl, getFriends, sendFriendRequest,
+  getProfile, getTopGames, getUserGameLogs, updateProfile, setTopGame,
+  removeTopGame, getCoverUrl, sendFriendRequest, getUserActivity, getFriendshipStatus,
 } from "@gameboxd/lib";
 import { supabase } from "../lib/supabase";
 import { useAuthStore } from "../store/auth";
@@ -112,16 +112,11 @@ export default function ProfilePage() {
         }
 
         // Fetch activity
-        const { data: actRows } = await supabase
-          .from("activity")
-          .select("*")
-          .eq("user_id", paramUserId!)
-          .order("created_at", { ascending: false })
-          .limit(20);
+        const actRows = await getUserActivity(supabase, paramUserId!, 20);
 
-        if (actRows && actRows.length > 0) {
-          setActivities(actRows as ActivityRow[]);
-          const actGameIds = [...new Set((actRows as ActivityRow[]).map((a) => a.game_igdb_id))];
+        if (actRows.length > 0) {
+          setActivities(actRows);
+          const actGameIds = [...new Set(actRows.map((a) => a.game_igdb_id))];
           const actGames = await getGames(actGameIds);
           const gm = new Map<number, Pick<IGDBGame, "id" | "name" | "cover">>();
           for (const g of actGames) gm.set(g.id, g);
@@ -130,17 +125,9 @@ export default function ProfilePage() {
 
         // Check friendship (if not own profile)
         if (!isOwn && myUserId) {
-          const friendIds = await getFriends(supabase, myUserId);
-          setIsFriend(friendIds.includes(paramUserId!));
-          // Check for pending request
-          const { data: pending } = await supabase
-            .from("friendships")
-            .select("id")
-            .eq("requester_id", myUserId)
-            .eq("addressee_id", paramUserId!)
-            .eq("status", "pending")
-            .maybeSingle();
-          setFriendRequestSent(!!pending);
+          const friendship = await getFriendshipStatus(supabase, myUserId, paramUserId!);
+          setIsFriend(friendship.status === "accepted");
+          setFriendRequestSent(friendship.status === "pending_sent");
         }
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load profile");

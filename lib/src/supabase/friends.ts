@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "./client.js";
-import type { FriendshipRow, ActivityRow } from "../types/index.js";
+import type { FriendshipRow, ActivityRow, UserRow } from "../types/index.js";
 
 export async function sendFriendRequest(
   client: SupabaseClient<Database>,
@@ -88,6 +88,37 @@ export async function getPopularAmongFriends(
     .sort((a, b) => b[1] - a[1])
     .slice(0, limit)
     .map(([gameIgdbId, count]) => ({ gameIgdbId, count }));
+}
+
+export type FriendRating = {
+  user: Pick<UserRow, "id" | "username">;
+  rating: number;
+};
+
+export async function getFriendRatingsForGame(
+  client: SupabaseClient<Database>,
+  userId: string,
+  gameIgdbId: number
+): Promise<FriendRating[]> {
+  const friendIds = await getFriends(client, userId);
+  if (friendIds.length === 0) return [];
+
+  const { data, error } = await client
+    .from("game_logs")
+    .select("rating, user:users!game_logs_user_id_fkey(id, username)")
+    .in("user_id", friendIds)
+    .eq("game_igdb_id", gameIgdbId)
+    .not("rating", "is", null);
+  if (error) throw error;
+
+  const rows = (data ?? []) as unknown as {
+    rating: number | null;
+    user: Pick<UserRow, "id" | "username"> | null;
+  }[];
+
+  return rows
+    .filter((r) => r.rating != null && r.user != null)
+    .map((r) => ({ user: r.user as Pick<UserRow, "id" | "username">, rating: r.rating as number }));
 }
 
 export interface FriendStatusResult {

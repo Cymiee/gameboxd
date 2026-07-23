@@ -104,6 +104,32 @@ export async function getProfile(
   return data;
 }
 
+export async function getUsersByIds(
+  client: SupabaseClient<Database>,
+  userIds: string[]
+): Promise<UserRow[]> {
+  if (userIds.length === 0) return [];
+  const { data, error } = await client
+    .from("users")
+    .select("*")
+    .in("id", userIds);
+  if (error) throw error;
+  return data;
+}
+
+export async function getUserByUsername(
+  client: SupabaseClient<Database>,
+  username: string
+): Promise<UserRow | null> {
+  const { data, error } = await client
+    .from("users")
+    .select("*")
+    .eq("username", username)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
 export async function updateProfile(
   client: SupabaseClient<Database>,
   userId: string,
