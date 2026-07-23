@@ -158,9 +158,9 @@ function SkeletonCard() {
   );
 }
 
-// ── GamesPage ─────────────────────────────────────────────────────────────────
+// ── ExplorePage ─────────────────────────────────────────────────────────────────
 
-export default function GamesPage() {
+export default function ExplorePage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -336,8 +336,9 @@ export default function GamesPage() {
 
         {/* ── Main content ── */}
         <div style={{ flex: 1, minWidth: 0 }}>
-          {/* Heading */}
+          {/* Heading — "Explore" is the page identity; the h1 stays contextual */}
           <div style={{ marginBottom: "1.5rem" }}>
+            <div className="label" style={{ marginBottom: "var(--space-2)" }}>Explore</div>
             <h1
               style={{
                 fontFamily: "var(--font-display)",

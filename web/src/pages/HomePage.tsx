@@ -6,7 +6,7 @@ import { supabase } from "../lib/supabase";
 import { useAuthStore } from "../store/auth";
 import { getTrendingGames, getGames, getNewReleases } from "../lib/igdb";
 import GameCard from "../components/GameCard";
-import GameCover from "../components/GameCover";
+import ActivityCard from "../components/ActivityCard";
 import LogGameModal from "../components/LogGameModal";
 import Spinner from "../components/Spinner";
 import Shelf, { ShelfHeader } from "../components/Shelf";
@@ -84,108 +84,32 @@ function timeAgo(dateStr: string): string {
   return `${days}d ago`;
 }
 
-// ── Friends activity strip ────────────────────────────────────────────────────
+// ── Friends activity ─────────────────────────────────────────────────────────
 
 interface FeedItem {
   activity: ActivityRow;
-  user: Pick<UserRow, "id" | "username">;
+  user: Pick<UserRow, "id" | "username" | "avatar_url">;
   game: Pick<IGDBGame, "id" | "name" | "cover">;
 }
 
-function FriendsStrip({ items }: { items: FeedItem[] }) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  if (items.length === 0) return null;
-
+/** Full activity list — merged in from the former standalone /feed page. */
+function FriendsActivity({ items }: { items: FeedItem[] }) {
   return (
     <div
-      ref={scrollRef}
-      className="no-scrollbar"
       style={{
-        display: "flex",
+        display: "grid",
+        // min(100%, …) keeps single-column on narrow screens instead of overflowing
+        gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 380px), 1fr))",
         gap: space[3],
-        overflowX: "auto",
-        paddingBottom: space[2],
       }}
     >
       {items.map((item) => (
-        <Link
+        <ActivityCard
           key={item.activity.id}
-          to={`/game/${item.game.id}`}
-          style={{
-            flex: "0 0 auto",
-            background: color.bgCard,
-            border: `1px solid ${color.border}`,
-            borderRadius: "var(--radius-md)",
-            padding: space[3],
-            display: "flex",
-            alignItems: "center",
-            gap: space[3],
-            textDecoration: "none",
-            minWidth: 230,
-            maxWidth: 270,
-            transition: "border-color var(--transition)",
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.borderColor = color.accentRing)}
-          onMouseLeave={(e) => (e.currentTarget.style.borderColor = color.border)}
-        >
-          {/* Avatar */}
-          <div
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: "50%",
-              background: color.accentDim,
-              border: `1px solid ${color.accentRing}`,
-              color: color.accent,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontWeight: 600,
-              fontSize: "var(--text-xs)",
-              flexShrink: 0,
-              fontFamily: font.display,
-            }}
-          >
-            {item.user.username[0]?.toUpperCase()}
-          </div>
-
-          {/* Text */}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div
-              style={{
-                fontSize: "var(--text-sm)",
-                color: color.text,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-            >
-              <span style={{ fontWeight: 600 }}>{item.user.username}</span>
-              {" "}
-              <span style={{ color: color.textMuted }}>
-                {item.activity.type === "rated" ? "rated" :
-                 item.activity.type === "reviewed" ? "reviewed" :
-                 item.activity.type === "topped" ? "topped" : "logged"}
-              </span>
-              {" "}
-              <span style={{ fontWeight: 500, fontFamily: font.display }}>{item.game.name}</span>
-            </div>
-            <div style={{ fontSize: "var(--text-xs)", color: color.textMuted, marginTop: 2 }}>
-              {timeAgo(item.activity.created_at)}
-            </div>
-          </div>
-
-          {/* Game cover */}
-          <div style={{ width: 30, flexShrink: 0 }}>
-            <GameCover
-              name={item.game.name}
-              imageId={item.game.cover?.image_id}
-              size="thumb"
-              rounding="sm"
-            />
-          </div>
-        </Link>
+          activity={item.activity}
+          user={item.user}
+          game={item.game}
+        />
       ))}
     </div>
   );
@@ -235,7 +159,8 @@ export default function HomePage() {
 
     setFriendsFeedLoading(true);
     async function loadFriendsFeed() {
-      const feed = await getFriendsActivityFeed(supabase, userId!, 10);
+      // Larger limit than the old compact strip — this is now the main surface.
+      const feed = await getFriendsActivityFeed(supabase, userId!, 24);
       if (feed.length === 0) { setFriendsFeedLoading(false); return; }
 
       const uniqueGameIds = [...new Set(feed.map((a) => a.game_igdb_id))];
@@ -284,9 +209,10 @@ export default function HomePage() {
 
   return (
     <div style={{ paddingBottom: "4rem" }}>
-      {/* ── Hero ──
+      {/* ── Hero — signed-out only. Signed in, friend activity leads instead. ──
           Flat gradient + faint amber bloom rather than art: the old illustration
           was lime-green and fought the amber accent (and weighed 2.9 MB). */}
+      {!userId && (
       <div
         style={{
           backgroundImage:
@@ -350,23 +276,32 @@ export default function HomePage() {
             onMouseEnter={(e) => (e.currentTarget.style.background = color.accentHover)}
             onMouseLeave={(e) => (e.currentTarget.style.background = color.accent)}
           >
-            {userId ? "Go to your shelf" : "Start your shelf"}
+            Start your shelf
           </Link>
         </div>
       </div>
+      )}
 
       <div style={{ maxWidth: 1280, margin: "0 auto", padding: isMobile ? "1.5rem 16px 0" : "2.5rem 24px 0" }}>
 
-        {/* ── Friends Activity Strip ── */}
-        {userId && (friendsFeedLoading || friendsFeed.length > 0) && (
+        {/* ── Friend activity — the primary surface when signed in ── */}
+        {userId && (
           <section style={{ marginBottom: space[7] }}>
-            <ShelfHeader title="From Your Friends" />
+            <ShelfHeader
+              title="From Your Friends"
+              {...(friendsFeed.length > 0 ? { count: friendsFeed.length } : {})}
+            />
             {friendsFeedLoading ? (
-              <div style={{ height: 80, display: "flex", alignItems: "center" }}>
+              <div style={{ height: 120, display: "flex", alignItems: "center" }}>
                 <Spinner />
               </div>
+            ) : friendsFeed.length > 0 ? (
+              <FriendsActivity items={friendsFeed} />
             ) : (
-              <FriendsStrip items={friendsFeed} />
+              <p style={{ color: color.textMuted, fontSize: "var(--text-sm)" }}>
+                <Link to="/friends" style={{ color: color.accent }}>Add friends</Link>{" "}
+                to see what they're playing here.
+              </p>
             )}
           </section>
         )}

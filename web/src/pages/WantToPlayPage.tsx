@@ -65,7 +65,7 @@ export default function WantToPlayPage() {
       {logs.length === 0 ? (
         <p style={{ color: "var(--text-muted)", fontSize: "var(--text-sm)" }}>
           No games in your backlog yet.{" "}
-          <Link to="/games" style={{ color: "var(--accent)" }}>
+          <Link to="/explore" style={{ color: "var(--accent)" }}>
             Browse games
           </Link>{" "}
           and add some!

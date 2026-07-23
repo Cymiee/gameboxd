@@ -11,9 +11,8 @@ import { getGames, searchGames } from "../lib/igdb";
 import ActivityCard from "../components/ActivityCard";
 import Spinner from "../components/Spinner";
 import GameCover from "../components/GameCover";
-import Shelf from "../components/Shelf";
+import ShelfLibrary from "../components/ShelfLibrary";
 import { useIsMobile } from "../hooks/useIsMobile";
-import { STATUS_META, STATUS_ORDER } from "../theme";
 
 type ProfileTab = "logs" | "reviews" | "lists";
 
@@ -737,73 +736,14 @@ export default function ProfilePage() {
                   transition: "color 0.15s, border-color 0.15s",
                 }}
               >
-                {tab === "logs" ? `Logs (${logs.length})` :
+                {tab === "logs" ? `${isOwn ? "Shelf" : `${profile.username}'s Shelf`} (${logs.length})` :
                  tab === "reviews" ? `Reviews (${reviewLogs.length})` : "Lists"}
               </button>
             ))}
           </div>
 
-          {/* Logs tab — grouped into status shelves */}
-          {activeTab === "logs" && (
-            logs.length === 0 ? (
-              <p style={{ color: "var(--text-muted)", fontSize: "var(--text-sm)" }}>No games logged yet.</p>
-            ) : (
-              <>
-                {STATUS_ORDER.map((status) => {
-                  const shelfLogs = logs.filter((l) => l.status === status);
-                  if (shelfLogs.length === 0) return null;
-                  const meta = STATUS_META[status];
-
-                  return (
-                    <Shelf
-                      key={status}
-                      title={meta.label}
-                      count={shelfLogs.length}
-                      accent={meta.color}
-                      layout="grid"
-                      itemWidth={116}
-                    >
-                      {shelfLogs.map((log) => {
-                        const game = logGameData.get(log.game_igdb_id);
-                        if (!game) return null;
-                        return (
-                          <GameCover
-                            key={log.id}
-                            name={game.name}
-                            imageId={game.cover?.image_id}
-                            rounding="md"
-                            interactive
-                            onClick={() => navigate(`/game/${log.game_igdb_id}`)}
-                          >
-                            {log.rating != null && (
-                              <span
-                                style={{
-                                  position: "absolute",
-                                  top: 6,
-                                  right: 6,
-                                  background: "rgba(0,0,0,0.78)",
-                                  color: "var(--accent)",
-                                  border: "1px solid var(--accent-ring)",
-                                  borderRadius: "var(--radius-full)",
-                                  fontSize: "0.6875rem",
-                                  fontWeight: 600,
-                                  padding: "1px 7px",
-                                  lineHeight: 1.5,
-                                  fontVariantNumeric: "tabular-nums",
-                                }}
-                              >
-                                {log.rating}
-                              </span>
-                            )}
-                          </GameCover>
-                        );
-                      })}
-                    </Shelf>
-                  );
-                })}
-              </>
-            )
-          )}
+          {/* Shelf tab — the same library view as /shelf */}
+          {activeTab === "logs" && <ShelfLibrary logs={logs} games={logGameData} />}
 
           {/* Reviews tab */}
           {activeTab === "reviews" && (

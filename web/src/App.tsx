@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { supabase } from "./lib/supabase";
 import { useAuthStore } from "./store/auth";
 import { ensureProfile } from "@gameboxd/lib";
@@ -8,14 +8,20 @@ import Spinner from "./components/Spinner";
 import Layout from "./components/Layout";
 import AuthPage from "./pages/AuthPage";
 import HomePage from "./pages/HomePage";
-import FeedPage from "./pages/FeedPage";
 import SearchPage from "./pages/SearchPage";
 import ProfilePage from "./pages/ProfilePage";
+import ShelfPage from "./pages/ShelfPage";
 import FriendsPage from "./pages/FriendsPage";
 import GamePage from "./pages/GamePage";
-import GamesPage from "./pages/GamesPage";
+import ExplorePage from "./pages/ExplorePage";
 import SettingsPage from "./pages/SettingsPage";
 import WantToPlayPage from "./pages/WantToPlayPage";
+
+/** /games → /explore, preserving any ?q= search term from old links. */
+function LegacyGamesRedirect() {
+  const { search } = useLocation();
+  return <Navigate to={`/explore${search}`} replace />;
+}
 
 export default function App() {
   const { userId, initialized, setUserId, setProfile, setInitialized } = useAuthStore();
@@ -76,7 +82,7 @@ export default function App() {
         {/* Public — rendered with Navbar for everyone */}
         <Route element={<Layout />}>
           <Route path="/" element={<HomePage />} />
-          <Route path="/games" element={<GamesPage />} />
+          <Route path="/explore" element={<ExplorePage />} />
           <Route path="/game/:id" element={<GamePage />} />
           <Route path="/profile/:userId" element={<ProfilePage />} />
           <Route path="/search" element={<SearchPage />} />
@@ -84,11 +90,15 @@ export default function App() {
 
         {/* Protected — redirect to /auth if not logged in */}
         <Route element={userId ? <Layout /> : <Navigate to="/auth" replace />}>
-          <Route path="/feed" element={<FeedPage />} />
+          <Route path="/shelf" element={<ShelfPage />} />
           <Route path="/friends" element={<FriendsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/want-to-play" element={<WantToPlayPage />} />
         </Route>
+
+        {/* Legacy redirects — keep old links and bookmarks alive */}
+        <Route path="/feed" element={<Navigate to="/" replace />} />
+        <Route path="/games" element={<LegacyGamesRedirect />} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

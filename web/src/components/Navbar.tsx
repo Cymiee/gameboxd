@@ -34,7 +34,7 @@ export default function Navbar() {
     e.preventDefault();
     const q = searchQuery.trim();
     if (!q) return;
-    navigate(`/games?q=${encodeURIComponent(q)}`);
+    navigate(`/explore?q=${encodeURIComponent(q)}`);
   };
 
   const openDropdown = () => {
@@ -151,9 +151,17 @@ export default function Navbar() {
           />
         </form>
 
-        {/* Nav links */}
-        <NavLink to="/games" style={navLinkStyle}>Games</NavLink>
-        <NavLink to="/feed" style={navLinkStyle}>Feed</NavLink>
+        {/* Primary nav — desktop only; mobile uses the fixed BottomNav */}
+        {!isMobile && (
+          <>
+            <NavLink to="/" end style={navLinkStyle}>Home</NavLink>
+            <NavLink to="/explore" style={navLinkStyle}>Explore</NavLink>
+            {profile && <NavLink to="/shelf" style={navLinkStyle}>My Shelf</NavLink>}
+            {profile && (
+              <NavLink to={`/profile/${profile.id}`} style={navLinkStyle}>Profile</NavLink>
+            )}
+          </>
+        )}
 
         {/* Auth buttons (logged out).
             On mobile "Log in" drops its chrome to a plain text link — the
@@ -280,8 +288,9 @@ export default function Navbar() {
                 }}
               >
                 {[
-                  { label: "Profile", to: `/profile/${profile.id}` },
-                  { label: "Want to Play", to: "/want-to-play" },
+                  // Profile and My Shelf live in the primary nav now, so the
+                  // dropdown carries only the secondary destinations.
+                  { label: "Wishlist", to: "/want-to-play" },
                   { label: "Friends", to: "/friends" },
                   { label: "Settings", to: "/settings" },
                 ].map((item) => (
