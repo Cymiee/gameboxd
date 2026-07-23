@@ -1,6 +1,3 @@
--- ── Extensions ────────────────────────────────────────────────────────────────
-create extension if not exists "uuid-ossp";
-
 -- ── users ─────────────────────────────────────────────────────────────────────
 -- Mirrors auth.users (1:1). Row is inserted on signup via the app.
 create table public.users (
@@ -37,7 +34,7 @@ create policy "own top_games delete"  on public.top_games for delete using (auth
 create type game_status as enum ('playing', 'completed', 'dropped', 'want_to_play');
 
 create table public.game_logs (
-  id            uuid primary key default uuid_generate_v4(),
+  id            uuid primary key default gen_random_uuid(),
   user_id       uuid not null references public.users(id) on delete cascade,
   game_igdb_id  integer not null,
   status        game_status not null,
@@ -74,7 +71,7 @@ create trigger game_logs_updated_at
 create type friendship_status as enum ('pending', 'accepted');
 
 create table public.friendships (
-  id            uuid primary key default uuid_generate_v4(),
+  id            uuid primary key default gen_random_uuid(),
   requester_id  uuid not null references public.users(id) on delete cascade,
   addressee_id  uuid not null references public.users(id) on delete cascade,
   status        friendship_status not null default 'pending',
@@ -113,7 +110,7 @@ create policy "parties can delete"
 create type activity_type as enum ('logged', 'rated', 'reviewed', 'topped');
 
 create table public.activity (
-  id            uuid primary key default uuid_generate_v4(),
+  id            uuid primary key default gen_random_uuid(),
   user_id       uuid not null references public.users(id) on delete cascade,
   type          activity_type not null,
   game_igdb_id  integer not null,

@@ -1,6 +1,6 @@
 -- ── lists ─────────────────────────────────────────────────────────────────────
 create table public.lists (
-  id           uuid primary key default uuid_generate_v4(),
+  id           uuid primary key default gen_random_uuid(),
   user_id      uuid not null references public.users(id) on delete cascade,
   title        text not null,
   description  text,
@@ -25,7 +25,7 @@ create trigger lists_updated_at
 
 -- ── list_games ─────────────────────────────────────────────────────────────────
 create table public.list_games (
-  id            uuid primary key default uuid_generate_v4(),
+  id            uuid primary key default gen_random_uuid(),
   list_id       uuid not null references public.lists(id) on delete cascade,
   game_igdb_id  integer not null,
   position      integer not null,
