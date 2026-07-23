@@ -10,6 +10,7 @@ import { useAuthStore } from "../store/auth";
 import { getGames, searchGames } from "../lib/igdb";
 import ActivityCard from "../components/ActivityCard";
 import Spinner from "../components/Spinner";
+import { useIsMobile } from "../hooks/useIsMobile";
 
 type ProfileTab = "logs" | "reviews" | "lists";
 
@@ -45,6 +46,7 @@ export default function ProfilePage() {
   const { userId: paramUserId } = useParams<{ userId: string }>();
   const { userId: myUserId, profile: myProfile, setProfile } = useAuthStore();
   const isOwn = paramUserId === myUserId;
+  const isMobile = useIsMobile();
 
   const [profile, setPageProfile] = useState<UserRow | null>(null);
   const [topGames, setTopGames] = useState<TopGameRow[]>([]);
@@ -246,15 +248,15 @@ export default function ProfilePage() {
       style={{
         maxWidth: 1280,
         margin: "0 auto",
-        padding: "2.5rem 24px 4rem",
+        padding: isMobile ? "1.5rem 16px 3rem" : "2.5rem 24px 4rem",
         display: "grid",
-        gridTemplateColumns: "280px 1fr",
-        gap: "3rem",
+        gridTemplateColumns: isMobile ? "1fr" : "280px 1fr",
+        gap: isMobile ? "2rem" : "3rem",
         alignItems: "start",
       }}
     >
-      {/* ── Left column ── */}
-      <div style={{ position: "sticky", top: 76 }}>
+      {/* ── Left column (stacks above content on mobile) ── */}
+      <div style={isMobile ? {} : { position: "sticky", top: 76 }}>
 
         {/* Avatar + user info */}
         <div style={{ marginBottom: "1.5rem" }}>

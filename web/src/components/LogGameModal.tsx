@@ -46,6 +46,7 @@ export default function LogGameModal({ game, existingLog, onClose, onSave }: Pro
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
+        padding: "1rem",
         zIndex: 200,
       }}
     >
@@ -56,7 +57,9 @@ export default function LogGameModal({ game, existingLog, onClose, onSave }: Pro
           border: "1px solid var(--border)",
           borderRadius: 12,
           padding: "1.5rem",
-          width: "min(500px, 92vw)",
+          width: "min(500px, 100%)",
+          maxHeight: "90dvh",
+          overflowY: "auto",
           display: "flex",
           flexDirection: "column",
           gap: "1.25rem",

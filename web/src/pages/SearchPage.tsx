@@ -27,7 +27,7 @@ export default function SearchPage() {
   };
 
   return (
-    <div style={{ padding: "2rem", maxWidth: 960, margin: "0 auto" }}>
+    <div style={{ padding: "2rem clamp(16px, 3vw, 2rem)", maxWidth: 960, margin: "0 auto" }}>
       <form onSubmit={handleSearch} style={{ display: "flex", gap: "0.75rem", marginBottom: "1.75rem" }}>
         <input
           value={query}
@@ -50,7 +50,7 @@ export default function SearchPage() {
             padding: "0.65rem 1.5rem",
             background: "var(--accent)",
             border: "none",
-            color: "#fff",
+            color: "#0e0e10",
             borderRadius: 8,
             cursor: searching ? "not-allowed" : "pointer",
             fontWeight: 600,

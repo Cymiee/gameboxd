@@ -4,6 +4,7 @@ import type { IGDBGame } from "@gameboxd/lib";
 import { searchGames, getBrowseGames } from "../lib/igdb";
 import type { SortMode } from "../lib/igdb";
 import GameCard from "../components/GameCard";
+import { useIsMobile } from "../hooks/useIsMobile";
 
 // ── Static filter data ────────────────────────────────────────────────────────
 
@@ -173,6 +174,7 @@ function SkeletonCard() {
 export default function GamesPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const q = searchParams.get("q") ?? "";
 
   const [selectedGenre, setSelectedGenre] = useState<number | null>(null);
@@ -247,8 +249,19 @@ export default function GamesPage() {
     ? `Browsing ${headingParts.join(" · ")}`
     : SORT_SUBTITLES[sort];
 
+  // Mobile: filters become horizontally-scrollable rows above the results
+  const pillRowStyle: React.CSSProperties = isMobile
+    ? { display: "flex", gap: "0.35rem", overflowX: "auto", paddingBottom: "0.35rem", scrollbarWidth: "none" }
+    : { display: "flex", flexWrap: "wrap", gap: "0.35rem" };
+
+  const gridStyle: React.CSSProperties = {
+    display: "grid",
+    gridTemplateColumns: isMobile ? "repeat(3, minmax(0, 1fr))" : "repeat(4, minmax(0, 1fr))",
+    gap: isMobile ? 12 : 24,
+  };
+
   return (
-    <div style={{ maxWidth: 1280, margin: "0 auto", padding: "2rem 24px" }}>
+    <div style={{ maxWidth: 1280, margin: "0 auto", padding: isMobile ? "1.25rem 16px" : "2rem 24px" }}>
       <style>{`
         @keyframes skeletonPulse {
           0%, 100% { opacity: 0.35; }
@@ -256,18 +269,29 @@ export default function GamesPage() {
         }
       `}</style>
 
-      <div style={{ display: "flex", gap: "2rem", alignItems: "flex-start" }}>
-        {/* ── Sidebar ── */}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: isMobile ? "column" : "row",
+          gap: isMobile ? "1.25rem" : "2rem",
+          alignItems: isMobile ? "stretch" : "flex-start",
+        }}
+      >
+        {/* ── Sidebar (filter rows on mobile) ── */}
         <div
-          style={{
-            width: 200,
-            flexShrink: 0,
-            position: "sticky",
-            top: 24,
-            maxHeight: "calc(100vh - 48px)",
-            overflowY: "auto",
-            scrollbarWidth: "none",
-          }}
+          style={
+            isMobile
+              ? { width: "100%" }
+              : {
+                  width: 200,
+                  flexShrink: 0,
+                  position: "sticky",
+                  top: 24,
+                  maxHeight: "calc(100vh - 48px)",
+                  overflowY: "auto",
+                  scrollbarWidth: "none",
+                }
+          }
         >
           {hasFilters && (
             <button
@@ -294,9 +318,9 @@ export default function GamesPage() {
           )}
 
           {/* Genres */}
-          <div style={{ marginBottom: "1.25rem" }}>
+          <div style={{ marginBottom: isMobile ? "0.75rem" : "1.25rem" }}>
             <SidebarLabel>Genres</SidebarLabel>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem" }}>
+            <div style={pillRowStyle}>
               {GENRES.map((g) => (
                 <FilterPill
                   key={g.id}
@@ -309,12 +333,12 @@ export default function GamesPage() {
           </div>
 
           {/* Divider */}
-          <div style={{ height: 1, background: "#27272a", marginBottom: "1.25rem" }} />
+          {!isMobile && <div style={{ height: 1, background: "#27272a", marginBottom: "1.25rem" }} />}
 
           {/* Themes */}
-          <div style={{ marginBottom: "1.5rem" }}>
+          <div style={{ marginBottom: isMobile ? 0 : "1.5rem" }}>
             <SidebarLabel>Themes</SidebarLabel>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem" }}>
+            <div style={pillRowStyle}>
               {THEMES.map((t) => (
                 <FilterPill
                   key={t.id}
@@ -362,8 +386,9 @@ export default function GamesPage() {
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
+              flexWrap: "wrap",
               marginBottom: "1.5rem",
-              gap: "1rem",
+              gap: "0.75rem 1rem",
             }}
           >
             <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
@@ -397,14 +422,8 @@ export default function GamesPage() {
 
           {/* Grid — skeleton / empty / results */}
           {loading ? (
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-                gap: 24,
-              }}
-            >
-              {Array.from({ length: 4 }).map((_, i) => (
+            <div style={gridStyle}>
+              {Array.from({ length: isMobile ? 6 : 4 }).map((_, i) => (
                 <SkeletonCard key={i} />
               ))}
             </div>
@@ -442,13 +461,7 @@ export default function GamesPage() {
               </p>
             </div>
           ) : (
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-                gap: 24,
-              }}
-            >
+            <div style={gridStyle}>
               {results.map((game) => (
                 <GameCard
                   key={game.id}

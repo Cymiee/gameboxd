@@ -9,6 +9,7 @@ import { useAuthStore } from "../store/auth";
 import { useGamesStore } from "../store/games";
 import LogGameModal from "../components/LogGameModal";
 import GameCard from "../components/GameCard";
+import { useIsMobile } from "../hooks/useIsMobile";
 
 interface FriendRating {
   user: Pick<UserRow, "id" | "username">;
@@ -20,6 +21,7 @@ export default function GamePage() {
   const { userId } = useAuthStore();
   const { logGame } = useGamesStore();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   const [game, setGame] = useState<IGDBGame | null>(null);
   const [loading, setLoading] = useState(true);
@@ -159,7 +161,7 @@ export default function GamePage() {
   return (
     <div>
       {/* ── Hero ── */}
-      <div style={{ position: "relative", height: 420, overflow: "hidden" }}>
+      <div style={{ position: "relative", overflow: "hidden" }}>
         {/* Blurred background */}
         {coverUrl && (
           <img
@@ -185,23 +187,25 @@ export default function GamePage() {
           }}
         />
 
-        {/* Hero content centred */}
+        {/* Hero content centred; stacks vertically on mobile */}
         <div
           style={{
-            position: "absolute",
-            inset: 0,
+            position: "relative",
+            minHeight: isMobile ? 0 : 420,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+            padding: isMobile ? "1.75rem 0 2rem" : 0,
           }}
         >
           <div
             style={{
               maxWidth: 1280,
               width: "100%",
-              padding: "0 24px",
+              padding: isMobile ? "0 16px" : "0 24px",
               display: "flex",
-              gap: "2rem",
+              flexDirection: isMobile ? "column" : "row",
+              gap: isMobile ? "1.25rem" : "2rem",
               alignItems: "center",
             }}
           >
@@ -210,7 +214,7 @@ export default function GamePage() {
                 src={coverUrl}
                 alt={game.name}
                 style={{
-                  width: 200,
+                  width: isMobile ? 150 : 200,
                   flexShrink: 0,
                   borderRadius: 10,
                   boxShadow: "0 10px 40px rgba(0,0,0,0.7)",
@@ -218,7 +222,7 @@ export default function GamePage() {
               />
             )}
 
-            <div>
+            <div style={{ width: isMobile ? "100%" : "auto" }}>
               <h1
                 style={{
                   fontFamily: "Syne, sans-serif",
@@ -332,7 +336,7 @@ export default function GamePage() {
       </div>
 
       {/* ── Body ── */}
-      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "2.5rem 24px 4rem" }}>
+      <div style={{ maxWidth: 1280, margin: "0 auto", padding: isMobile ? "1.75rem 16px 3rem" : "2.5rem 24px 4rem" }}>
 
         {/* Friends' ratings strip */}
         {userId && (
@@ -408,7 +412,14 @@ export default function GamePage() {
         )}
 
         {/* About section */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: "2.5rem", alignItems: "start" }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: isMobile ? "1fr" : "1fr 300px",
+            gap: isMobile ? "1.75rem" : "2.5rem",
+            alignItems: "start",
+          }}
+        >
           <div>
             {game.summary && (
               <p style={{ fontSize: "0.95rem", color: "var(--text)", lineHeight: 1.8, marginBottom: "1.5rem" }}>

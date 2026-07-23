@@ -9,6 +9,7 @@ import GameCard from "../components/GameCard";
 import LogGameModal from "../components/LogGameModal";
 import Spinner from "../components/Spinner";
 import { useGamesStore } from "../store/games";
+import { useIsMobile } from "../hooks/useIsMobile";
 import backgroundImg from "../assets/background.png";
 
 // ── Horizontal scroll row ────────────────────────────────────────────────────
@@ -19,6 +20,7 @@ function HScrollRow({ games, loading, onQuickLog }: {
   onQuickLog?: (game: IGDBGame) => void;
 }) {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   if (loading) {
     return (
       <div style={{ height: 200, display: "flex", alignItems: "center", paddingLeft: "0.5rem" }}>
@@ -29,19 +31,31 @@ function HScrollRow({ games, loading, onQuickLog }: {
   if (games.length === 0) return null;
   return (
     <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: `repeat(${games.length}, minmax(0, 1fr))`,
-        gap: "0.75rem",
-      }}
+      style={
+        isMobile
+          ? {
+              // Swipeable row on phones — equal-split columns get too small
+              display: "flex",
+              gap: "0.6rem",
+              overflowX: "auto",
+              paddingBottom: "0.5rem",
+              scrollbarWidth: "none",
+            }
+          : {
+              display: "grid",
+              gridTemplateColumns: `repeat(${games.length}, minmax(0, 1fr))`,
+              gap: "0.75rem",
+            }
+      }
     >
       {games.map((g) => (
-        <GameCard
-          key={g.id}
-          game={g}
-          onSelect={(game) => navigate(`/game/${game.id}`)}
-          {...(onQuickLog ? { onQuickLog } : {})}
-        />
+        <div key={g.id} style={isMobile ? { flex: "0 0 118px" } : undefined}>
+          <GameCard
+            game={g}
+            onSelect={(game) => navigate(`/game/${game.id}`)}
+            {...(onQuickLog ? { onQuickLog } : {})}
+          />
+        </div>
       ))}
     </div>
   );
@@ -191,6 +205,7 @@ export default function HomePage() {
   const { userId, profile } = useAuthStore();
   const { logGame } = useGamesStore();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   const [trending, setTrending] = useState<IGDBGame[]>([]);
   const [trendingLoading, setTrendingLoading] = useState(true);
@@ -284,19 +299,19 @@ export default function HomePage() {
           backgroundSize: "cover",
           backgroundPosition: "center",
           borderBottom: "1px solid var(--border)",
-          height: 420,
+          height: isMobile ? 320 : 420,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
           textAlign: "center",
-          padding: "0 2rem",
+          padding: "0 1.5rem",
         }}
       >
         <h1
           style={{
             fontFamily: "Syne, sans-serif",
-            fontSize: "clamp(3rem, 6vw, 4.5rem)",
+            fontSize: isMobile ? "2.5rem" : "clamp(3rem, 6vw, 4.5rem)",
             fontWeight: 800,
             color: "#fff",
             margin: 0,
@@ -358,7 +373,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "2.5rem 24px 0" }}>
+      <div style={{ maxWidth: 1280, margin: "0 auto", padding: isMobile ? "1.5rem 16px 0" : "2.5rem 24px 0" }}>
 
         {/* ── Friends Activity Strip ── */}
         {userId && (friendsFeedLoading || friendsFeed.length > 0) && (

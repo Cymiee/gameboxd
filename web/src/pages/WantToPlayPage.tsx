@@ -57,7 +57,7 @@ export default function WantToPlayPage() {
   if (loading) return <PageSpinner />;
 
   return (
-    <div style={{ maxWidth: 800, margin: "0 auto", padding: "2.5rem 24px" }}>
+    <div style={{ maxWidth: 800, margin: "0 auto", padding: "2.5rem clamp(16px, 3vw, 24px)" }}>
       <h1
         style={{
           fontFamily: "Syne, sans-serif",
@@ -93,7 +93,9 @@ export default function WantToPlayPage() {
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: "1rem",
+                  // Actions wrap below the title on narrow screens
+                  flexWrap: "wrap",
+                  gap: "0.6rem 1rem",
                   background: "var(--surface)",
                   border: "1px solid var(--border)",
                   borderRadius: 10,
@@ -121,7 +123,7 @@ export default function WantToPlayPage() {
                   />
                 )}
 
-                <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ flex: 1, minWidth: 140 }}>
                   <Link
                     to={`/game/${log.game_igdb_id}`}
                     style={{

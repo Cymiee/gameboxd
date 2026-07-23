@@ -2,6 +2,7 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  -webkit-tap-highlight-color: transparent;
 }
 
 :root {
@@ -14,12 +15,24 @@
   --danger: #ef4444;
 }
 
+html, body {
+  /* Safety net: no page-level horizontal scroll on narrow screens */
+  overflow-x: clip;
+}
+
 body {
   background: var(--bg);
   color: var(--text);
   font-family: Inter, system-ui, sans-serif;
   font-size: 16px;
   line-height: 1.6;
+}
+
+/* iOS Safari zooms into focused fields when their font-size is under 16px */
+@media (max-width: 640px) {
+  input, textarea, select {
+    font-size: 16px !important;
+  }
 }
 
 .syne {

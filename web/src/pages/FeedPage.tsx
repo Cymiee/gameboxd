@@ -78,7 +78,7 @@ export default function FeedPage() {
   }
 
   return (
-    <div style={{ maxWidth: 1280, margin: "0 auto", padding: "2rem 24px" }}>
+    <div style={{ maxWidth: 1280, margin: "0 auto", padding: "2rem clamp(16px, 3vw, 24px)" }}>
       <h1
         style={{
           fontFamily: "Syne, sans-serif",
@@ -93,7 +93,8 @@ export default function FeedPage() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(380px, 1fr))",
+          // min(100%, …) keeps single-column on narrow screens instead of overflowing
+          gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 380px), 1fr))",
           gap: "0.75rem",
         }}
       >

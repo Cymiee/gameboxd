@@ -106,7 +106,7 @@ export default function FriendsPage() {
   });
 
   return (
-    <div style={{ maxWidth: 1280, margin: "0 auto", padding: "2rem 24px" }}>
+    <div style={{ maxWidth: 1280, margin: "0 auto", padding: "2rem clamp(16px, 3vw, 24px)" }}>
       <h1
         style={{
           fontFamily: "Syne, sans-serif",
@@ -186,7 +186,7 @@ export default function FriendsPage() {
         friendProfiles.length === 0 ? (
           <p style={{ color: "var(--muted)" }}>No friends yet. Add some above!</p>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "0.75rem" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 320px), 1fr))", gap: "0.75rem" }}>
             {friendProfiles.map((u) => (
               <div
                 key={u.id}
@@ -247,7 +247,7 @@ export default function FriendsPage() {
         pendingRequests.length === 0 ? (
           <p style={{ color: "var(--muted)" }}>No pending requests.</p>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "0.75rem" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 320px), 1fr))", gap: "0.75rem" }}>
             {pendingRequests.map((req) => {
               const requester = requesterProfiles.get(req.requester_id);
               return (

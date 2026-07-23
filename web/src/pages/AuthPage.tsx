@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuthStore } from "../store/auth";
+import { useIsMobile } from "../hooks/useIsMobile";
 
 const COVER_IMAGES = [
   { id: "co4jni", name: "Elden Ring" },
@@ -29,6 +30,7 @@ export default function AuthPage() {
 
   const { login, register, loading } = useAuthStore();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   function extractMessage(err: unknown): string {
     if (err instanceof Error) return err.message;
@@ -77,8 +79,16 @@ export default function AuthPage() {
   };
 
   return (
-    <div style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
-      {/* ── Left panel ── */}
+    <div
+      style={{
+        display: "flex",
+        minHeight: "100vh",
+        height: isMobile ? "auto" : "100vh",
+        overflow: isMobile ? "visible" : "hidden",
+      }}
+    >
+      {/* ── Left panel (brand) — hidden on mobile ── */}
+      {!isMobile && (
       <div
         style={{
           flex: 1,
@@ -180,6 +190,7 @@ export default function AuthPage() {
           ))}
         </div>
       </div>
+      )}
 
       {/* ── Right panel ── */}
       <div
@@ -187,13 +198,28 @@ export default function AuthPage() {
           flex: 1,
           background: "#18181b",
           display: "flex",
-          alignItems: "center",
+          alignItems: isMobile ? "flex-start" : "center",
           justifyContent: "center",
-          padding: "2rem",
+          padding: isMobile ? "2.5rem 1.25rem" : "2rem",
           overflowY: "auto",
         }}
       >
         <div style={{ width: "100%", maxWidth: 360 }}>
+          {/* Compact wordmark replaces the hidden brand panel on mobile */}
+          {isMobile && (
+            <div
+              style={{
+                fontFamily: "Syne, sans-serif",
+                fontSize: "2rem",
+                fontWeight: 800,
+                color: "#e4ff1a",
+                marginBottom: "1.5rem",
+                lineHeight: 1,
+              }}
+            >
+              Shelved
+            </div>
+          )}
           {/* "Sign in to continue" banner */}
           {fromPath && (
             <div

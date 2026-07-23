@@ -1,11 +1,13 @@
 import { NavLink, useNavigate, Link } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import { useAuthStore } from "../store/auth";
+import { useIsMobile } from "../hooks/useIsMobile";
 import joystickIcon from "../assets/joystick-icon.png";
 
 export default function Navbar() {
   const { profile, logout } = useAuthStore();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [loggingOut, setLoggingOut] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -50,7 +52,8 @@ export default function Navbar() {
     textDecoration: "none",
     fontWeight: isActive ? 600 : 500,
     fontSize: "0.9rem",
-    padding: "0.25rem 0",
+    // Larger touch target on mobile
+    padding: isMobile ? "0.6rem 0.25rem" : "0.25rem 0",
     borderBottom: isActive ? "2px solid var(--accent)" : "2px solid transparent",
     transition: "color 0.15s, border-color 0.15s",
     whiteSpace: "nowrap",
@@ -73,11 +76,13 @@ export default function Navbar() {
         style={{
           maxWidth: 1280,
           margin: "0 auto",
-          padding: "0 24px",
-          height: 60,
+          padding: isMobile ? "0.5rem 16px" : "0 24px",
+          minHeight: 60,
           display: "flex",
           alignItems: "center",
-          gap: "1.25rem",
+          // On mobile the search form wraps onto its own full-width row
+          flexWrap: isMobile ? "wrap" : "nowrap",
+          gap: isMobile ? "0.75rem" : "1.25rem",
         }}
       >
         {/* Logo */}
@@ -91,22 +96,31 @@ export default function Navbar() {
             flexShrink: 0,
           }}
         >
-          <img src={joystickIcon} alt="Shelved" style={{ width: 38, height: 38, objectFit: "contain" }} />
-          <span
-            style={{
-              fontFamily: "Syne, sans-serif",
-              fontWeight: 700,
-              fontSize: "1.25rem",
-              color: "var(--accent)",
-              letterSpacing: "0.01em",
-            }}
-          >
-            Shelved
-          </span>
+          <img src={joystickIcon} alt="Shelved" style={{ width: isMobile ? 32 : 38, height: isMobile ? 32 : 38, objectFit: "contain" }} />
+          {!isMobile && (
+            <span
+              style={{
+                fontFamily: "Syne, sans-serif",
+                fontWeight: 700,
+                fontSize: "1.25rem",
+                color: "var(--accent)",
+                letterSpacing: "0.01em",
+              }}
+            >
+              Shelved
+            </span>
+          )}
         </Link>
 
-        {/* Search */}
-        <form onSubmit={handleSearchSubmit} style={{ flex: 1, maxWidth: 480, margin: "0 auto" }}>
+        {/* Search — full-width second row on mobile */}
+        <form
+          onSubmit={handleSearchSubmit}
+          style={
+            isMobile
+              ? { order: 10, flexBasis: "100%", margin: 0 }
+              : { flex: 1, maxWidth: 480, margin: "0 auto" }
+          }
+        >
           <input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -131,7 +145,7 @@ export default function Navbar() {
 
         {/* Auth buttons (logged out) */}
         {!profile && (
-          <div style={{ display: "flex", gap: "0.5rem", flexShrink: 0 }}>
+          <div style={{ display: "flex", gap: "0.5rem", flexShrink: 0, marginLeft: isMobile ? "auto" : 0 }}>
             <Link
               to="/auth"
               style={{
@@ -181,9 +195,11 @@ export default function Navbar() {
           <div
             onMouseEnter={openDropdown}
             onMouseLeave={closeDropdown}
-            style={{ position: "relative", flexShrink: 0 }}
+            style={{ position: "relative", flexShrink: 0, marginLeft: isMobile ? "auto" : 0 }}
           >
             <div
+              // Hover alone doesn't work on touch screens — tap toggles too
+              onClick={() => setDropdownOpen((o) => !o)}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -213,9 +229,11 @@ export default function Navbar() {
               >
                 {profile.username[0]?.toUpperCase()}
               </div>
-              <span style={{ color: "var(--text)", fontSize: "0.875rem" }}>
-                {profile.username}
-              </span>
+              {!isMobile && (
+                <span style={{ color: "var(--text)", fontSize: "0.875rem" }}>
+                  {profile.username}
+                </span>
+              )}
               <span style={{ color: "var(--muted)", fontSize: "0.6rem", marginLeft: 2 }}>▼</span>
             </div>
 

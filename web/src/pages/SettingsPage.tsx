@@ -104,7 +104,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div style={{ maxWidth: 540, margin: "0 auto", padding: "2.5rem 24px" }}>
+    <div style={{ maxWidth: 540, margin: "0 auto", padding: "2.5rem clamp(16px, 3vw, 24px)" }}>
       <h1
         style={{
           fontFamily: "Syne, sans-serif",
