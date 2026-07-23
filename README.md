@@ -1,8 +1,8 @@
 # Shelved
 
-A social app for tracking, rating, and discovering video games — inspired by Letterboxd.
+A social web app for tracking, rating, and discovering video games — inspired by Letterboxd.
 
-Log games you've played, write reviews, rate them, pin your top 3 to your profile, follow friends, and see what they've been playing.
+Log games you've played, write reviews, rate them, pin your top 3 to your profile, follow friends, and see what they've been playing. Works great on your phone's browser — the UI is mobile-first responsive.
 
 ## Features
 
@@ -20,25 +20,25 @@ Log games you've played, write reviews, rate them, pin your top 3 to your profil
 | Layer | Tool |
 |---|---|
 | Web | React + Vite + React Router |
-| Mobile | Expo (React Native) |
 | Shared logic | TypeScript `lib/` package (npm workspaces) |
 | Backend / Auth / DB | Supabase (Postgres + RLS) |
 | Game data | IGDB API |
 | State management | Zustand |
-| Web deploy | Vercel |
-| Mobile deploy | Expo EAS |
+| Deploy | Vercel |
+| CI | GitHub Actions (typecheck on push/PR) |
 
 ## Project Structure
 
 ```
 shelved/
-├── lib/        # Shared TypeScript logic — Supabase queries, IGDB client, hooks, types
-├── mobile/     # Expo (React Native) app
+├── lib/        # Shared TypeScript logic — Supabase queries, IGDB client, types
 ├── web/        # React + Vite web app
 └── supabase/   # Database migrations and edge functions
 ```
 
-All data-fetching logic lives in `lib/`. Neither `web/` nor `mobile/` talk to Supabase or IGDB directly.
+All data-fetching logic lives in `lib/` — `web/` doesn't talk to Supabase or IGDB directly.
+
+> The retired native mobile app (Expo) is preserved on the `archive/mobile-native` branch.
 
 ## Getting Started
 
@@ -65,7 +65,7 @@ VITE_SUPABASE_URL=your_supabase_project_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-Create `lib/.env` (or add to your Supabase edge functions config):
+Set the IGDB credentials as Supabase edge function secrets (used by the `igdb-proxy` function):
 
 ```env
 IGDB_CLIENT_ID=your_twitch_client_id
@@ -80,16 +80,10 @@ Push the migrations to your Supabase project:
 npx supabase db push
 ```
 
-### 4. Run the web app
+### 4. Run the app
 
 ```bash
-npm run dev:web
-```
-
-### 5. Run the mobile app
-
-```bash
-npm run dev:mobile
+npm run dev
 ```
 
 ## Database Schema
@@ -101,6 +95,7 @@ npm run dev:mobile
 | `top_games` | Up to 3 pinned games per user |
 | `friendships` | Friend requests and accepted connections |
 | `activity` | Event log for the activity feed |
+| `lists` / `list_games` | User-curated game lists (no web UI yet) |
 
 Row Level Security is enabled on all tables.
 
