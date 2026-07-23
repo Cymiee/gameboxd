@@ -1,10 +1,13 @@
 import { NavLink, useNavigate, Link } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import { useAuthStore } from "../store/auth";
+import { useNotificationsStore } from "../store/notifications";
 import { useIsMobile } from "../hooks/useIsMobile";
+import NotificationBadge from "./NotificationBadge";
 
 export default function Navbar() {
   const { profile, logout } = useAuthStore();
+  const pendingRequests = useNotificationsStore((s) => s.pendingRequests);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [loggingOut, setLoggingOut] = useState(false);
@@ -244,23 +247,25 @@ export default function Navbar() {
                 transition: "background 0.15s",
               }}
             >
-              <div
-                style={{
-                  width: 30,
-                  height: 30,
-                  borderRadius: "50%",
-                  background: "var(--accent)",
-                  color: "var(--on-accent)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontWeight: 600,
-                  fontSize: "0.8rem",
-                  flexShrink: 0,
-                  fontFamily: "var(--font-body)",
-                }}
-              >
-                {profile.username[0]?.toUpperCase()}
+              <div style={{ position: "relative", flexShrink: 0 }}>
+                <div
+                  style={{
+                    width: 30,
+                    height: 30,
+                    borderRadius: "50%",
+                    background: "var(--accent)",
+                    color: "var(--on-accent)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontWeight: 600,
+                    fontSize: "0.8rem",
+                    fontFamily: "var(--font-body)",
+                  }}
+                >
+                  {profile.username[0]?.toUpperCase()}
+                </div>
+                <NotificationBadge count={pendingRequests} floating />
               </div>
               {!isMobile && (
                 <span style={{ color: "var(--text-primary)", fontSize: "0.875rem" }}>
@@ -290,16 +295,19 @@ export default function Navbar() {
                 {[
                   // Profile and My Shelf live in the primary nav now, so the
                   // dropdown carries only the secondary destinations.
-                  { label: "Wishlist", to: "/want-to-play" },
-                  { label: "Friends", to: "/friends" },
-                  { label: "Settings", to: "/settings" },
+                  { label: "Wishlist", to: "/want-to-play", badge: 0 },
+                  { label: "Friends", to: "/friends", badge: pendingRequests },
+                  { label: "Settings", to: "/settings", badge: 0 },
                 ].map((item) => (
                   <Link
                     key={item.to}
                     to={item.to}
                     onClick={() => setDropdownOpen(false)}
                     style={{
-                      display: "block",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: "0.5rem",
                       padding: "0.6rem 1rem",
                       color: "var(--text-primary)",
                       textDecoration: "none",
@@ -310,6 +318,7 @@ export default function Navbar() {
                     onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                   >
                     {item.label}
+                    <NotificationBadge count={item.badge} />
                   </Link>
                 ))}
 

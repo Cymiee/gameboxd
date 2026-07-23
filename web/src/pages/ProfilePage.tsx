@@ -12,6 +12,7 @@ import ActivityCard from "../components/ActivityCard";
 import Spinner from "../components/Spinner";
 import GameCover from "../components/GameCover";
 import ShelfLibrary from "../components/ShelfLibrary";
+import UserLists from "../components/UserLists";
 import { useIsMobile } from "../hooks/useIsMobile";
 
 type ProfileTab = "logs" | "reviews" | "lists";
@@ -811,20 +812,8 @@ export default function ProfilePage() {
           )}
 
           {/* Lists tab */}
-          {activeTab === "lists" && (
-            <div
-              style={{
-                padding: "2rem",
-                background: "var(--bg-card)",
-                border: "1px solid var(--border)",
-                borderRadius: "var(--radius-sm)",
-                textAlign: "center",
-                color: "var(--text-muted)",
-                fontSize: "0.9rem",
-              }}
-            >
-              Coming soon — curated lists are on the way.
-            </div>
+          {activeTab === "lists" && paramUserId && (
+            <UserLists userId={paramUserId} isOwn={isOwn} />
           )}
         </div>
       </div>

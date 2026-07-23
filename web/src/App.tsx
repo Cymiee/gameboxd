@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { supabase } from "./lib/supabase";
 import { useAuthStore } from "./store/auth";
+import { useNotificationsStore } from "./store/notifications";
 import { ensureProfile } from "@gameboxd/lib";
 import Spinner from "./components/Spinner";
 
@@ -14,6 +15,7 @@ import ShelfPage from "./pages/ShelfPage";
 import FriendsPage from "./pages/FriendsPage";
 import GamePage from "./pages/GamePage";
 import ExplorePage from "./pages/ExplorePage";
+import ListPage from "./pages/ListPage";
 import SettingsPage from "./pages/SettingsPage";
 import WantToPlayPage from "./pages/WantToPlayPage";
 
@@ -25,6 +27,8 @@ function LegacyGamesRedirect() {
 
 export default function App() {
   const { userId, initialized, setUserId, setProfile, setInitialized } = useAuthStore();
+  const refreshNotifications = useNotificationsStore((s) => s.refresh);
+  const clearNotifications = useNotificationsStore((s) => s.clear);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -38,6 +42,7 @@ export default function App() {
           .then(setProfile)
           .catch(() => setProfile(null))
           .finally(setInitialized);
+        void refreshNotifications(user.id);
       } else {
         setInitialized();
       }
@@ -57,14 +62,16 @@ export default function App() {
           } catch {
             setProfile(null);
           }
+          void refreshNotifications(user.id);
         } else {
           setProfile(null);
+          clearNotifications();
         }
       }
     );
 
     return () => listener.subscription.unsubscribe();
-  }, [setUserId, setProfile]);
+  }, [setUserId, setProfile, setInitialized, refreshNotifications, clearNotifications]);
 
   if (!initialized) {
     return (
@@ -84,6 +91,7 @@ export default function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/explore" element={<ExplorePage />} />
           <Route path="/game/:id" element={<GamePage />} />
+          <Route path="/list/:id" element={<ListPage />} />
           <Route path="/profile/:userId" element={<ProfilePage />} />
           <Route path="/search" element={<SearchPage />} />
         </Route>

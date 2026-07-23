@@ -11,6 +11,7 @@ import { supabase } from "../lib/supabase";
 import { useAuthStore } from "../store/auth";
 import { useGamesStore } from "../store/games";
 import LogGameModal from "../components/LogGameModal";
+import AddToListModal from "../components/AddToListModal";
 import GameCard from "../components/GameCard";
 import { useIsMobile } from "../hooks/useIsMobile";
 
@@ -31,6 +32,7 @@ export default function GamePage() {
   const [saveError, setSaveError] = useState<string | null>(null);
 
   const [showLogModal, setShowLogModal] = useState(false);
+  const [showAddToList, setShowAddToList] = useState(false);
 
   const [friendRatings, setFriendRatings] = useState<FriendRating[]>([]);
   const [similarGames, setSimilarGames] = useState<IGDBGame[]>([]);
@@ -48,6 +50,7 @@ export default function GamePage() {
     setWantToPlay(false);
     setSaveError(null);
     setShowLogModal(false);
+    setShowAddToList(false);
     setFriendRatings([]);
     setSimilarGames([]);
 
@@ -315,6 +318,23 @@ export default function GamePage() {
                     {wantToPlay ? "✓ Want to Play" : "+ Want to Play"}
                   </button>
                 )}
+
+                {userId && (
+                  <button
+                    onClick={() => setShowAddToList(true)}
+                    style={{
+                      padding: "0.6rem 1.25rem",
+                      background: "transparent",
+                      border: "1px solid var(--border)",
+                      color: "var(--text-muted)",
+                      borderRadius: "var(--radius-sm)",
+                      cursor: "pointer",
+                      fontSize: "0.875rem",
+                    }}
+                  >
+                    + Add to list
+                  </button>
+                )}
               </div>
 
               {saveError && <p style={{ color: "var(--danger)", fontSize: "0.8rem", marginTop: "0.5rem" }}>{saveError}</p>}
@@ -531,6 +551,15 @@ export default function GamePage() {
           {...(existingLog ? { existingLog } : {})}
           onClose={() => setShowLogModal(false)}
           onSave={handleSaveLog}
+        />
+      )}
+
+      {showAddToList && userId && game && (
+        <AddToListModal
+          userId={userId}
+          gameIgdbId={game.id}
+          gameName={game.name}
+          onClose={() => setShowAddToList(false)}
         />
       )}
     </div>

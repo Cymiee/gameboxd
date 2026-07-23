@@ -59,8 +59,11 @@ export type { ActivityWithUser, TrendingGameEntry, ReviewWithUser } from "./supa
 // Lists helpers
 export {
   getPopularListsWithMeta,
+  getListsByUser,
   getListWithGames,
   createList,
+  updateList,
+  deleteList,
   addGameToList,
   removeGameFromList,
 } from "./supabase/lists.js";

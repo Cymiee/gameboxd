@@ -11,11 +11,13 @@ import {
 } from "@gameboxd/lib";
 import { supabase } from "../lib/supabase";
 import { useAuthStore } from "../store/auth";
+import { useNotificationsStore } from "../store/notifications";
 
 type Tab = "friends" | "pending";
 
 export default function FriendsPage() {
   const { userId } = useAuthStore();
+  const setPending = useNotificationsStore((s) => s.setPending);
   const [tab, setTab] = useState<Tab>("friends");
 
   const [friendProfiles, setFriendProfiles] = useState<UserRow[]>([]);
@@ -40,6 +42,7 @@ export default function FriendsPage() {
       setFriendProfiles(await getUsersByIds(supabase, friendIds));
 
       setPendingRequests(pending);
+      setPending(pending.length); // keep the nav badge in sync
 
       if (pending.length > 0) {
         const requesterIds = pending.map((p) => p.requester_id);
