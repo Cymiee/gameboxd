@@ -2,7 +2,6 @@ import { NavLink, useNavigate, Link } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import { useAuthStore } from "../store/auth";
 import { useIsMobile } from "../hooks/useIsMobile";
-import joystickIcon from "../assets/joystick-icon.png";
 
 export default function Navbar() {
   const { profile, logout } = useAuthStore();
@@ -48,12 +47,12 @@ export default function Navbar() {
   };
 
   const navLinkStyle = ({ isActive }: { isActive: boolean }): React.CSSProperties => ({
-    color: isActive ? "var(--accent)" : "var(--muted)",
+    color: isActive ? "var(--accent)" : "var(--text-muted)",
     textDecoration: "none",
     fontWeight: isActive ? 600 : 500,
-    fontSize: "0.9rem",
+    fontSize: "var(--text-sm)",
     // Larger touch target on mobile
-    padding: isMobile ? "0.6rem 0.25rem" : "0.25rem 0",
+    padding: isMobile ? "0.6rem 0.15rem" : "0.25rem 0",
     borderBottom: isActive ? "2px solid var(--accent)" : "2px solid transparent",
     transition: "color 0.15s, border-color 0.15s",
     whiteSpace: "nowrap",
@@ -62,7 +61,7 @@ export default function Navbar() {
   return (
     <nav
       style={{
-        background: scrolled ? "rgba(14,14,16,0.85)" : "#0e0e10",
+        background: scrolled ? "rgba(14, 13, 12, 0.82)" : "var(--bg-base)",
         backdropFilter: scrolled ? "blur(12px)" : "none",
         WebkitBackdropFilter: scrolled ? "blur(12px)" : "none",
         borderBottom: "1px solid var(--border)",
@@ -85,7 +84,7 @@ export default function Navbar() {
           gap: isMobile ? "0.75rem" : "1.25rem",
         }}
       >
-        {/* Logo */}
+        {/* Wordmark — typographic, no icon */}
         <Link
           to="/"
           style={{
@@ -96,20 +95,30 @@ export default function Navbar() {
             flexShrink: 0,
           }}
         >
-          <img src={joystickIcon} alt="Shelved" style={{ width: isMobile ? 32 : 38, height: isMobile ? 32 : 38, objectFit: "contain" }} />
-          {!isMobile && (
-            <span
-              style={{
-                fontFamily: "Syne, sans-serif",
-                fontWeight: 700,
-                fontSize: "1.25rem",
-                color: "var(--accent)",
-                letterSpacing: "0.01em",
-              }}
-            >
-              Shelved
-            </span>
-          )}
+          <span
+            style={{
+              fontFamily: "var(--font-display)",
+              fontWeight: 600,
+              fontSize: isMobile ? "var(--text-lg)" : "var(--text-xl)",
+              color: "var(--text-primary)",
+              letterSpacing: "-0.015em",
+            }}
+          >
+            Shelved
+          </span>
+          {/* Amber tittle — the single accent mark in the chrome */}
+          <span
+            aria-hidden
+            style={{
+              width: 5,
+              height: 5,
+              borderRadius: "50%",
+              background: "var(--accent)",
+              flexShrink: 0,
+              alignSelf: "flex-end",
+              marginBottom: isMobile ? 6 : 7,
+            }}
+          />
         </Link>
 
         {/* Search — full-width second row on mobile */}
@@ -127,15 +136,18 @@ export default function Navbar() {
             placeholder="Search games..."
             style={{
               width: "100%",
-              padding: "0.45rem 1rem",
-              background: "var(--surface)",
+              padding: "0.5rem 1rem",
+              background: "var(--bg-card)",
               border: "1px solid var(--border)",
-              color: "var(--text)",
-              borderRadius: 999,
-              fontSize: "0.875rem",
+              color: "var(--text-primary)",
+              borderRadius: "var(--radius-full)",
+              fontSize: "var(--text-sm)",
               outline: "none",
               boxSizing: "border-box",
+              transition: "border-color var(--transition)",
             }}
+            onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent-ring)")}
+            onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
           />
         </form>
 
@@ -143,29 +155,39 @@ export default function Navbar() {
         <NavLink to="/games" style={navLinkStyle}>Games</NavLink>
         <NavLink to="/feed" style={navLinkStyle}>Feed</NavLink>
 
-        {/* Auth buttons (logged out) */}
+        {/* Auth buttons (logged out).
+            On mobile "Log in" drops its chrome to a plain text link — the
+            bordered pair overflowed the 375px row. */}
         {!profile && (
-          <div style={{ display: "flex", gap: "0.5rem", flexShrink: 0, marginLeft: isMobile ? "auto" : 0 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: isMobile ? "0.6rem" : "0.5rem",
+              flexShrink: 0,
+              marginLeft: "auto",
+            }}
+          >
             <Link
               to="/auth"
               style={{
-                padding: "0.4rem 0.9rem",
+                padding: isMobile ? "0.25rem 0" : "0.4rem 0.9rem",
                 background: "transparent",
-                border: "1px solid #27272a",
-                color: "#71717a",
-                borderRadius: 8,
-                fontSize: "0.875rem",
+                border: isMobile ? "none" : "1px solid var(--border)",
+                color: "var(--text-secondary)",
+                borderRadius: "var(--radius-sm)",
+                fontSize: "var(--text-sm)",
                 textDecoration: "none",
-                transition: "border-color 0.15s, color 0.15s",
+                transition: "border-color var(--transition), color var(--transition)",
                 whiteSpace: "nowrap",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "#3f3f46";
-                e.currentTarget.style.color = "#fafafa";
+                if (!isMobile) e.currentTarget.style.borderColor = "var(--border-strong)";
+                e.currentTarget.style.color = "var(--text-primary)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "#27272a";
-                e.currentTarget.style.color = "#71717a";
+                if (!isMobile) e.currentTarget.style.borderColor = "var(--border)";
+                e.currentTarget.style.color = "var(--text-secondary)";
               }}
             >
               Log in
@@ -173,17 +195,20 @@ export default function Navbar() {
             <Link
               to="/auth?mode=signup"
               style={{
-                padding: "0.4rem 0.9rem",
-                background: "#e4ff1a",
+                padding: isMobile ? "0.4rem 0.8rem" : "0.4rem 0.9rem",
+                background: "var(--accent)",
                 border: "none",
-                color: "#0e0e10",
-                borderRadius: 8,
-                fontSize: "0.875rem",
-                fontWeight: 700,
+                color: "var(--on-accent)",
+                borderRadius: "var(--radius-sm)",
+                fontSize: "var(--text-sm)",
+                fontWeight: 600,
                 textDecoration: "none",
                 whiteSpace: "nowrap",
-                fontFamily: "Syne, sans-serif",
+                fontFamily: "var(--font-body)",
+                transition: "background var(--transition)",
               }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--accent-hover)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "var(--accent)")}
             >
               Sign up
             </Link>
@@ -206,8 +231,8 @@ export default function Navbar() {
                 gap: "0.5rem",
                 cursor: "pointer",
                 padding: "0.25rem 0.5rem",
-                borderRadius: 8,
-                background: dropdownOpen ? "var(--surface)" : "transparent",
+                borderRadius: "var(--radius-sm)",
+                background: dropdownOpen ? "var(--bg-card)" : "transparent",
                 transition: "background 0.15s",
               }}
             >
@@ -217,24 +242,24 @@ export default function Navbar() {
                   height: 30,
                   borderRadius: "50%",
                   background: "var(--accent)",
-                  color: "#0e0e10",
+                  color: "var(--on-accent)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  fontWeight: 700,
+                  fontWeight: 600,
                   fontSize: "0.8rem",
                   flexShrink: 0,
-                  fontFamily: "Syne, sans-serif",
+                  fontFamily: "var(--font-body)",
                 }}
               >
                 {profile.username[0]?.toUpperCase()}
               </div>
               {!isMobile && (
-                <span style={{ color: "var(--text)", fontSize: "0.875rem" }}>
+                <span style={{ color: "var(--text-primary)", fontSize: "0.875rem" }}>
                   {profile.username}
                 </span>
               )}
-              <span style={{ color: "var(--muted)", fontSize: "0.6rem", marginLeft: 2 }}>▼</span>
+              <span style={{ color: "var(--text-muted)", fontSize: "0.6rem", marginLeft: 2 }}>▼</span>
             </div>
 
             {dropdownOpen && (
@@ -245,9 +270,9 @@ export default function Navbar() {
                   position: "absolute",
                   top: "calc(100% + 6px)",
                   right: 0,
-                  background: "var(--surface)",
+                  background: "var(--bg-card)",
                   border: "1px solid var(--border)",
-                  borderRadius: 8,
+                  borderRadius: "var(--radius-sm)",
                   minWidth: 170,
                   boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
                   overflow: "hidden",
@@ -267,12 +292,12 @@ export default function Navbar() {
                     style={{
                       display: "block",
                       padding: "0.6rem 1rem",
-                      color: "var(--text)",
+                      color: "var(--text-primary)",
                       textDecoration: "none",
                       fontSize: "0.875rem",
                       transition: "background 0.1s",
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg)")}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-base)")}
                     onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                   >
                     {item.label}
@@ -296,7 +321,7 @@ export default function Navbar() {
                     cursor: loggingOut ? "not-allowed" : "pointer",
                     opacity: loggingOut ? 0.6 : 1,
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg)")}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-base)")}
                   onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
                 >
                   {loggingOut ? "Logging out..." : "Log out"}

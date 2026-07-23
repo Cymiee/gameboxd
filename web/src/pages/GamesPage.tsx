@@ -92,9 +92,9 @@ function FilterPill({
 }) {
   const [hovered, setHovered] = useState(false);
 
-  const bg     = active ? "#e4ff1a" : hovered ? "#18181b" : "transparent";
-  const color  = active ? "#0e0e10" : hovered ? "#fafafa" : "#71717a";
-  const border = active ? "1px solid #e4ff1a" : hovered ? "1px solid #3f3f46" : "1px solid #27272a";
+  const bg     = active ? "var(--accent)" : hovered ? "var(--bg-card)" : "transparent";
+  const color  = active ? "var(--on-accent)" : hovered ? "var(--text-primary)" : "var(--text-muted)";
+  const border = active ? "1px solid var(--accent)" : hovered ? "1px solid var(--border-strong)" : "1px solid var(--border)";
 
   return (
     <button
@@ -103,13 +103,13 @@ function FilterPill({
       onMouseLeave={() => setHovered(false)}
       style={{
         padding: "4px 12px",
-        borderRadius: 999,
+        borderRadius: "var(--radius-full)",
         border,
         background: bg,
         color,
         cursor: "pointer",
         fontSize: 13,
-        fontFamily: "Inter, sans-serif",
+        fontFamily: "var(--font-body)",
         whiteSpace: "nowrap",
         lineHeight: 1.5,
         transition: "border-color 0.12s, background 0.12s, color 0.12s",
@@ -124,17 +124,7 @@ function FilterPill({
 
 function SidebarLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div
-      style={{
-        fontSize: 10,
-        fontFamily: "Syne, sans-serif",
-        fontWeight: 700,
-        letterSpacing: "0.1em",
-        textTransform: "uppercase",
-        color: "#71717a",
-        marginBottom: "0.6rem",
-      }}
-    >
+    <div className="label" style={{ marginBottom: "var(--space-3)" }}>
       {children}
     </div>
   );
@@ -147,11 +137,10 @@ function SkeletonCard() {
     <div style={{ width: "100%" }}>
       <div
         style={{
-          position: "relative",
           width: "100%",
-          paddingBottom: "150%",
-          borderRadius: 8,
-          background: "#18181b",
+          aspectRatio: "3 / 4",
+          borderRadius: "var(--radius-lg)",
+          background: "var(--bg-card)",
           animation: "skeletonPulse 1.5s ease-in-out infinite",
         }}
       />
@@ -159,8 +148,8 @@ function SkeletonCard() {
         style={{
           height: 14,
           borderRadius: 4,
-          background: "#18181b",
-          marginTop: "0.5rem",
+          background: "var(--bg-card)",
+          marginTop: "var(--space-3)",
           width: "70%",
           animation: "skeletonPulse 1.5s ease-in-out infinite",
         }}
@@ -262,12 +251,6 @@ export default function GamesPage() {
 
   return (
     <div style={{ maxWidth: 1280, margin: "0 auto", padding: isMobile ? "1.25rem 16px" : "2rem 24px" }}>
-      <style>{`
-        @keyframes skeletonPulse {
-          0%, 100% { opacity: 0.35; }
-          50%       { opacity: 0.65; }
-        }
-      `}</style>
 
       <div
         style={{
@@ -302,16 +285,16 @@ export default function GamesPage() {
                 marginBottom: "1rem",
                 padding: "0.35rem",
                 background: "transparent",
-                border: "1px solid #27272a",
-                color: "#71717a",
-                borderRadius: 6,
+                border: "1px solid var(--border)",
+                color: "var(--text-muted)",
+                borderRadius: "var(--radius-sm)",
                 cursor: "pointer",
                 fontSize: 12,
-                fontFamily: "Inter, sans-serif",
+                fontFamily: "var(--font-body)",
                 transition: "border-color 0.12s",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#e4ff1a")}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#27272a")}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
+              onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
             >
               ✕ Clear filters
             </button>
@@ -333,7 +316,7 @@ export default function GamesPage() {
           </div>
 
           {/* Divider */}
-          {!isMobile && <div style={{ height: 1, background: "#27272a", marginBottom: "1.25rem" }} />}
+          {!isMobile && <div style={{ height: 1, background: "var(--border)", marginBottom: "1.25rem" }} />}
 
           {/* Themes */}
           <div style={{ marginBottom: isMobile ? 0 : "1.5rem" }}>
@@ -357,11 +340,12 @@ export default function GamesPage() {
           <div style={{ marginBottom: "1.5rem" }}>
             <h1
               style={{
-                fontFamily: "Syne, sans-serif",
-                fontSize: 28,
-                fontWeight: 700,
+                fontFamily: "var(--font-display)",
+                fontSize: "var(--text-2xl)",
+                fontWeight: 600,
+                letterSpacing: "-0.015em",
                 margin: 0,
-                color: "var(--text)",
+                color: "var(--text-primary)",
               }}
             >
               {pageTitle}
@@ -369,10 +353,10 @@ export default function GamesPage() {
             {subtitle && (
               <p
                 style={{
-                  fontFamily: "Inter, sans-serif",
-                  fontSize: 14,
-                  color: "var(--muted)",
-                  margin: "0.35rem 0 0",
+                  fontFamily: "var(--font-body)",
+                  fontSize: "var(--text-sm)",
+                  color: "var(--text-muted)",
+                  margin: "var(--space-2) 0 0",
                 }}
               >
                 {subtitle}
@@ -405,8 +389,8 @@ export default function GamesPage() {
               <span
                 style={{
                   fontSize: 13,
-                  color: "#71717a",
-                  fontFamily: "Inter, sans-serif",
+                  color: "var(--text-muted)",
+                  fontFamily: "var(--font-body)",
                   whiteSpace: "nowrap",
                   flexShrink: 0,
                 }}
@@ -417,7 +401,7 @@ export default function GamesPage() {
           </div>
 
           {error && (
-            <p style={{ color: "var(--danger)", fontFamily: "Inter, sans-serif" }}>{error}</p>
+            <p style={{ color: "var(--danger)", fontFamily: "var(--font-body)" }}>{error}</p>
           )}
 
           {/* Grid — skeleton / empty / results */}
@@ -440,10 +424,10 @@ export default function GamesPage() {
             >
               <p
                 style={{
-                  fontFamily: "Syne, sans-serif",
-                  fontSize: "1.25rem",
-                  fontWeight: 700,
-                  color: "var(--text)",
+                  fontFamily: "var(--font-display)",
+                  fontSize: "var(--text-xl)",
+                  fontWeight: 600,
+                  color: "var(--text-primary)",
                   margin: 0,
                 }}
               >
@@ -451,9 +435,9 @@ export default function GamesPage() {
               </p>
               <p
                 style={{
-                  fontFamily: "Inter, sans-serif",
+                  fontFamily: "var(--font-body)",
                   fontSize: 14,
-                  color: "var(--muted)",
+                  color: "var(--text-muted)",
                   marginTop: "0.5rem",
                 }}
               >

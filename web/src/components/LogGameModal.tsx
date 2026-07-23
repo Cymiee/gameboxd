@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { IGDBGame, GameLogRow, GameStatus } from "@gameboxd/lib";
-import { getCoverUrl } from "@gameboxd/lib";
+import GameCover from "./GameCover";
+import { STATUS_META, STATUS_ORDER } from "../theme";
 
 interface Props {
   game: IGDBGame;
@@ -8,13 +9,6 @@ interface Props {
   onClose: () => void;
   onSave: (status: GameStatus, rating?: number | null, review?: string | null) => Promise<void>;
 }
-
-const STATUS_OPTIONS: { value: GameStatus; label: string }[] = [
-  { value: "playing", label: "Playing" },
-  { value: "completed", label: "Completed" },
-  { value: "dropped", label: "Dropped" },
-  { value: "want_to_play", label: "Want to Play" },
-];
 
 export default function LogGameModal({ game, existingLog, onClose, onSave }: Props) {
   const [status, setStatus] = useState<GameStatus>(existingLog?.status ?? "playing");
@@ -53,9 +47,9 @@ export default function LogGameModal({ game, existingLog, onClose, onSave }: Pro
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: "var(--surface)",
+          background: "var(--bg-card)",
           border: "1px solid var(--border)",
-          borderRadius: 12,
+          borderRadius: "var(--radius-lg)",
           padding: "1.5rem",
           width: "min(500px, 100%)",
           maxHeight: "90dvh",
@@ -66,73 +60,88 @@ export default function LogGameModal({ game, existingLog, onClose, onSave }: Pro
         }}
       >
         {/* Header */}
-        <div style={{ display: "flex", gap: "1rem", alignItems: "flex-start" }}>
-          {game.cover && (
-            <img
-              src={getCoverUrl(game.cover.image_id, "cover_small")}
-              alt={game.name}
-              style={{ width: 56, borderRadius: 6, flexShrink: 0 }}
+        <div style={{ display: "flex", gap: "var(--space-4)", alignItems: "flex-start" }}>
+          <div style={{ width: 58, flexShrink: 0 }}>
+            <GameCover
+              name={game.name}
+              imageId={game.cover?.image_id}
+              size="cover_small"
+              rounding="md"
             />
-          )}
+          </div>
           <div>
-            <h2 style={{ fontSize: "1.05rem", fontWeight: 700, fontFamily: "Syne, sans-serif" }}>
+            <h2
+              style={{
+                fontSize: "var(--text-xl)",
+                fontWeight: 600,
+                fontFamily: "var(--font-display)",
+                letterSpacing: "-0.01em",
+                lineHeight: 1.25,
+              }}
+            >
               {game.name}
             </h2>
-            <p style={{ fontSize: "0.8rem", color: "var(--muted)", marginTop: 3 }}>
+            <p style={{ fontSize: "var(--text-xs)", color: "var(--text-muted)", marginTop: 4 }}>
               {existingLog ? "Update your log" : "Log this game"}
             </p>
           </div>
         </div>
 
-        {/* Status pills */}
+        {/* Status pills — each carries its own semantic hue */}
         <div>
-          <label style={{ fontSize: "0.75rem", color: "var(--muted)", display: "block", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+          <label className="label" style={{ display: "block", marginBottom: "var(--space-3)" }}>
             Status
           </label>
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            {STATUS_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                onClick={() => setStatus(opt.value)}
-                style={{
-                  padding: "0.35rem 0.9rem",
-                  borderRadius: 999,
-                  border: `1px solid ${status === opt.value ? "var(--accent)" : "var(--border)"}`,
-                  background: status === opt.value ? "var(--accent)" : "transparent",
-                  color: status === opt.value ? "#0e0e10" : "var(--muted)",
-                  cursor: "pointer",
-                  fontSize: "0.85rem",
-                  fontWeight: status === opt.value ? 600 : 400,
-                  transition: "all 0.12s",
-                }}
-              >
-                {opt.label}
-              </button>
-            ))}
+          <div style={{ display: "flex", gap: "var(--space-2)", flexWrap: "wrap" }}>
+            {STATUS_ORDER.map((value) => {
+              const meta = STATUS_META[value];
+              const active = status === value;
+              return (
+                <button
+                  key={value}
+                  onClick={() => setStatus(value)}
+                  style={{
+                    padding: "0.4rem 0.95rem",
+                    borderRadius: "var(--radius-full)",
+                    border: `1px solid ${active ? meta.color : "var(--border)"}`,
+                    background: active ? meta.dim : "transparent",
+                    color: active ? meta.color : "var(--text-muted)",
+                    cursor: "pointer",
+                    fontSize: "var(--text-sm)",
+                    fontWeight: active ? 600 : 400,
+                    transition: "all var(--transition)",
+                  }}
+                >
+                  {meta.label}
+                </button>
+              );
+            })}
           </div>
         </div>
 
         {/* Rating row */}
         <div>
-          <label style={{ fontSize: "0.75rem", color: "var(--muted)", display: "block", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+          <label className="label" style={{ display: "block", marginBottom: "var(--space-3)" }}>
             Rating {rating ? `· ${rating}/10` : "· none"}
           </label>
-          <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: "var(--space-1)", flexWrap: "wrap" }}>
             {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
               <button
                 key={n}
                 onClick={() => setRating(rating === n ? null : n)}
+                aria-label={`Rate ${n} out of 10`}
                 style={{
                   width: 36,
                   height: 36,
-                  borderRadius: 6,
+                  borderRadius: "var(--radius-sm)",
                   border: `1px solid ${rating === n ? "var(--accent)" : "var(--border)"}`,
-                  background: rating === n ? "var(--accent)" : "var(--bg)",
-                  color: rating === n ? "#0e0e10" : "var(--muted)",
+                  background: rating === n ? "var(--accent)" : "var(--bg-inset)",
+                  color: rating === n ? "var(--on-accent)" : "var(--text-muted)",
                   cursor: "pointer",
-                  fontWeight: rating === n ? 700 : 400,
-                  fontSize: "0.85rem",
-                  transition: "all 0.1s",
+                  fontWeight: rating === n ? 600 : 400,
+                  fontSize: "var(--text-sm)",
+                  fontVariantNumeric: "tabular-nums",
+                  transition: "all var(--transition)",
                 }}
               >
                 {n}
@@ -143,7 +152,7 @@ export default function LogGameModal({ game, existingLog, onClose, onSave }: Pro
 
         {/* Review */}
         <div>
-          <label style={{ fontSize: "0.75rem", color: "var(--muted)", display: "block", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+          <label className="label" style={{ display: "block", marginBottom: "var(--space-3)" }}>
             Review
           </label>
           <textarea
@@ -153,33 +162,33 @@ export default function LogGameModal({ game, existingLog, onClose, onSave }: Pro
             rows={4}
             style={{
               width: "100%",
-              padding: "0.6rem 0.75rem",
-              background: "var(--bg)",
+              padding: "var(--space-3)",
+              background: "var(--bg-inset)",
               border: "1px solid var(--border)",
-              color: "var(--text)",
-              borderRadius: 8,
-              fontSize: "0.9rem",
+              color: "var(--text-primary)",
+              borderRadius: "var(--radius-sm)",
+              fontSize: "var(--text-sm)",
               resize: "vertical",
-              fontFamily: "Inter, sans-serif",
-              lineHeight: 1.5,
+              fontFamily: "var(--font-body)",
+              lineHeight: 1.6,
             }}
           />
         </div>
 
-        {error && <p style={{ color: "var(--danger)", fontSize: "0.85rem" }}>{error}</p>}
+        {error && <p style={{ color: "var(--danger)", fontSize: "var(--text-sm)" }}>{error}</p>}
 
         {/* Actions */}
-        <div style={{ display: "flex", gap: "0.75rem", justifyContent: "flex-end" }}>
+        <div style={{ display: "flex", gap: "var(--space-3)", justifyContent: "flex-end" }}>
           <button
             onClick={onClose}
             style={{
-              padding: "0.55rem 1.25rem",
+              padding: "0.6rem 1.25rem",
               background: "none",
               border: "1px solid var(--border)",
-              color: "var(--muted)",
-              borderRadius: 8,
+              color: "var(--text-secondary)",
+              borderRadius: "var(--radius-sm)",
               cursor: "pointer",
-              fontSize: "0.9rem",
+              fontSize: "var(--text-sm)",
             }}
           >
             Cancel
@@ -188,16 +197,16 @@ export default function LogGameModal({ game, existingLog, onClose, onSave }: Pro
             onClick={handleSave}
             disabled={saving}
             style={{
-              padding: "0.55rem 1.5rem",
+              padding: "0.6rem 1.5rem",
               background: "var(--accent)",
               border: "none",
-              color: "#0e0e10",
-              borderRadius: 8,
+              color: "var(--on-accent)",
+              borderRadius: "var(--radius-sm)",
               cursor: saving ? "not-allowed" : "pointer",
-              fontSize: "0.9rem",
-              fontWeight: 700,
+              fontSize: "var(--text-sm)",
+              fontWeight: 600,
               opacity: saving ? 0.7 : 1,
-              fontFamily: "Syne, sans-serif",
+              fontFamily: "var(--font-body)",
             }}
           >
             {saving ? "Saving..." : existingLog ? "Update log" : "Save to log"}

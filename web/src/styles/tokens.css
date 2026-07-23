@@ -1,0 +1,91 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   Shelved design tokens — single source of truth.
+   Consume via var(--token) in inline styles, or via theme.ts for TS ergonomics.
+   Do not hardcode colors, radii, or spacing anywhere else.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* ── Background layers ──────────────────────────────────────────────────
+     Warm-tinted near-black. Subtle steps, never high contrast. */
+  --bg-base:     #0E0D0C;
+  --bg-raised:   #171614;
+  --bg-card:     #1E1C1A;
+  --bg-inset:    #131211;
+
+  /* Borders */
+  --border:        #2A2724;
+  --border-strong: #3A3632;
+
+  /* ── Text ─────────────────────────────────────────────────────────────── */
+  --text-primary:   #F5F3F0;
+  --text-secondary: #A8A29B;
+  --text-muted:     #6E6963;
+
+  /* ── Accent — amber/gold. The ONLY brand color. Use sparingly. ─────────── */
+  --accent:       #E0A82E;
+  --accent-hover: #EFBB47;
+  --accent-dim:   rgba(224, 168, 46, 0.12);
+  --accent-ring:  rgba(224, 168, 46, 0.55);
+  --on-accent:    #17140C;
+
+  /* ── Status colors — SEMANTIC ONLY, never brand. ──────────────────────── */
+  --status-playing:   #5B9DD9;
+  --status-completed: #4CA97E;
+  --status-dropped:   #C4685F;
+  --status-wishlist:  #A98CD9;
+  --status-favorite:  #C9788C;
+
+  /* Tinted backgrounds for status chips */
+  --status-playing-dim:   rgba(91, 157, 217, 0.14);
+  --status-completed-dim: rgba(76, 169, 126, 0.14);
+  --status-dropped-dim:   rgba(196, 104, 95, 0.14);
+  --status-wishlist-dim:  rgba(169, 140, 217, 0.14);
+  --status-favorite-dim:  rgba(201, 120, 140, 0.14);
+
+  /* Feedback */
+  --danger:  #C4685F;
+  --success: #4CA97E;
+
+  /* ── Radius scale ─────────────────────────────────────────────────────── */
+  --radius-sm:   8px;
+  --radius-md:   10px;
+  --radius-lg:   16px;
+  --radius-full: 999px;
+
+  /* ── Spacing scale — err toward generous ──────────────────────────────── */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  24px;
+  --space-6:  32px;
+  --space-7:  48px;
+  --space-8:  64px;
+  --space-9:  96px;
+
+  /* ── Typography ───────────────────────────────────────────────────────── */
+  --font-display: "Fraunces", Georgia, serif;
+  --font-body:    "Inter", system-ui, sans-serif;
+
+  --text-xs:      0.75rem;   /* 12px — meta, captions */
+  --text-sm:      0.875rem;  /* 14px — secondary body */
+  --text-base:    1rem;      /* 16px — body */
+  --text-lg:      1.125rem;  /* 18px */
+  --text-xl:      1.375rem;  /* 22px — card/section titles */
+  --text-2xl:     1.75rem;   /* 28px — page titles */
+  --text-3xl:     2.25rem;   /* 36px */
+  --text-display: clamp(2.5rem, 6vw, 3.75rem);
+
+  /* Eyebrow/label treatment — the "library label" voice */
+  --label-size:    0.7rem;
+  --label-tracking: 0.14em;
+
+  /* ── Motion ───────────────────────────────────────────────────────────── */
+  --ease:        cubic-bezier(0.4, 0, 0.2, 1);
+  --transition:  0.18s var(--ease);
+
+  /* ── Elevation — restrained; depth via layering, not heavy shadows ─────── */
+  --shadow-card:  0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-lift:  0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-modal: 0 24px 60px rgba(0, 0, 0, 0.65);
+}

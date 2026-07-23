@@ -72,10 +72,10 @@ export default function SettingsPage() {
 
   const tabStyle = (s: Section): React.CSSProperties => ({
     padding: "0.5rem 1.25rem",
-    background: section === s ? "rgba(228,255,26,0.1)" : "none",
+    background: section === s ? "var(--accent-dim)" : "none",
     border: `1px solid ${section === s ? "var(--accent)" : "var(--border)"}`,
-    color: section === s ? "var(--accent)" : "var(--muted)",
-    borderRadius: 8,
+    color: section === s ? "var(--accent)" : "var(--text-muted)",
+    borderRadius: "var(--radius-sm)",
     cursor: "pointer",
     fontSize: "0.875rem",
     fontWeight: section === s ? 600 : 400,
@@ -85,10 +85,10 @@ export default function SettingsPage() {
   const fieldStyle: React.CSSProperties = {
     width: "100%",
     padding: "0.55rem 0.75rem",
-    background: "var(--bg)",
+    background: "var(--bg-base)",
     border: "1px solid var(--border)",
-    color: "var(--text)",
-    borderRadius: 8,
+    color: "var(--text-primary)",
+    borderRadius: "var(--radius-sm)",
     fontSize: "0.9rem",
     outline: "none",
     boxSizing: "border-box",
@@ -97,7 +97,7 @@ export default function SettingsPage() {
   const labelStyle: React.CSSProperties = {
     display: "block",
     fontSize: "0.75rem",
-    color: "var(--muted)",
+    color: "var(--text-muted)",
     marginBottom: 6,
     textTransform: "uppercase",
     letterSpacing: "0.08em",
@@ -107,11 +107,12 @@ export default function SettingsPage() {
     <div style={{ maxWidth: 540, margin: "0 auto", padding: "2.5rem clamp(16px, 3vw, 24px)" }}>
       <h1
         style={{
-          fontFamily: "Syne, sans-serif",
-          fontSize: "1.5rem",
-          fontWeight: 700,
-          marginBottom: "1.5rem",
-          color: "var(--text)",
+          fontFamily: "var(--font-display)",
+          fontSize: "var(--text-2xl)",
+          fontWeight: 600,
+          letterSpacing: "-0.015em",
+          marginBottom: "var(--space-6)",
+          color: "var(--text-primary)",
         }}
       >
         Settings
@@ -126,9 +127,9 @@ export default function SettingsPage() {
         <form
           onSubmit={handleSaveProfile}
           style={{
-            background: "var(--surface)",
+            background: "var(--bg-card)",
             border: "1px solid var(--border)",
-            borderRadius: 12,
+            borderRadius: "var(--radius-lg)",
             padding: "1.5rem",
             display: "flex",
             flexDirection: "column",
@@ -146,7 +147,7 @@ export default function SettingsPage() {
               onChange={(e) => setBio(e.target.value)}
               rows={3}
               placeholder="Tell people about yourself..."
-              style={{ ...fieldStyle, resize: "vertical", fontFamily: "Inter, sans-serif" }}
+              style={{ ...fieldStyle, resize: "vertical", fontFamily: "var(--font-body)" }}
             />
           </div>
           <div>
@@ -155,7 +156,7 @@ export default function SettingsPage() {
           </div>
 
           {profileMsg && (
-            <p style={{ color: profileMsg.type === "ok" ? "#4ade80" : "var(--danger)", fontSize: "0.85rem", margin: 0 }}>
+            <p style={{ color: profileMsg.type === "ok" ? "var(--success)" : "var(--danger)", fontSize: "0.85rem", margin: 0 }}>
               {profileMsg.text}
             </p>
           )}
@@ -167,13 +168,13 @@ export default function SettingsPage() {
               padding: "0.65rem",
               background: "var(--accent)",
               border: "none",
-              color: "#0e0e10",
-              borderRadius: 8,
+              color: "var(--on-accent)",
+              borderRadius: "var(--radius-sm)",
               cursor: profileSaving ? "not-allowed" : "pointer",
-              fontWeight: 700,
+              fontWeight: 600,
               fontSize: "0.9rem",
               opacity: profileSaving ? 0.7 : 1,
-              fontFamily: "Syne, sans-serif",
+              fontFamily: "var(--font-body)",
             }}
           >
             {profileSaving ? "Saving..." : "Save Profile"}
@@ -185,16 +186,16 @@ export default function SettingsPage() {
         <form
           onSubmit={handleChangePassword}
           style={{
-            background: "var(--surface)",
+            background: "var(--bg-card)",
             border: "1px solid var(--border)",
-            borderRadius: 12,
+            borderRadius: "var(--radius-lg)",
             padding: "1.5rem",
             display: "flex",
             flexDirection: "column",
             gap: "1.1rem",
           }}
         >
-          <p style={{ fontSize: "0.875rem", color: "var(--muted)", margin: 0 }}>
+          <p style={{ fontSize: "0.875rem", color: "var(--text-muted)", margin: 0 }}>
             Leave fields blank if you don't want to change your password.
           </p>
           <div>
@@ -218,7 +219,7 @@ export default function SettingsPage() {
           </div>
 
           {securityMsg && (
-            <p style={{ color: securityMsg.type === "ok" ? "#4ade80" : "var(--danger)", fontSize: "0.85rem", margin: 0 }}>
+            <p style={{ color: securityMsg.type === "ok" ? "var(--success)" : "var(--danger)", fontSize: "0.85rem", margin: 0 }}>
               {securityMsg.text}
             </p>
           )}
@@ -230,13 +231,13 @@ export default function SettingsPage() {
               padding: "0.65rem",
               background: "var(--accent)",
               border: "none",
-              color: "#0e0e10",
-              borderRadius: 8,
+              color: "var(--on-accent)",
+              borderRadius: "var(--radius-sm)",
               cursor: securitySaving || !newPassword ? "not-allowed" : "pointer",
-              fontWeight: 700,
+              fontWeight: 600,
               fontSize: "0.9rem",
               opacity: securitySaving || !newPassword ? 0.7 : 1,
-              fontFamily: "Syne, sans-serif",
+              fontFamily: "var(--font-body)",
             }}
           >
             {securitySaving ? "Updating..." : "Update Password"}

@@ -93,10 +93,10 @@ export default function FriendsPage() {
 
   const tabStyle = (t: Tab): React.CSSProperties => ({
     padding: "0.5rem 1.25rem",
-    background: tab === t ? "rgba(228,255,26,0.1)" : "none",
+    background: tab === t ? "var(--accent-dim)" : "none",
     border: `1px solid ${tab === t ? "var(--accent)" : "var(--border)"}`,
-    color: tab === t ? "var(--accent)" : "var(--muted)",
-    borderRadius: 8,
+    color: tab === t ? "var(--accent)" : "var(--text-muted)",
+    borderRadius: "var(--radius-sm)",
     cursor: "pointer",
     fontWeight: tab === t ? 600 : 400,
     fontSize: "0.875rem",
@@ -107,11 +107,12 @@ export default function FriendsPage() {
     <div style={{ maxWidth: 1280, margin: "0 auto", padding: "2rem clamp(16px, 3vw, 24px)" }}>
       <h1
         style={{
-          fontFamily: "Syne, sans-serif",
-          fontSize: "1.5rem",
-          fontWeight: 700,
-          marginBottom: "1.5rem",
-          color: "var(--text)",
+          fontFamily: "var(--font-display)",
+          fontSize: "var(--text-2xl)",
+          fontWeight: 600,
+          letterSpacing: "-0.015em",
+          marginBottom: "var(--space-6)",
+          color: "var(--text-primary)",
         }}
       >
         Friends
@@ -125,9 +126,9 @@ export default function FriendsPage() {
           gap: "0.5rem",
           marginBottom: "1.5rem",
           padding: "1rem",
-          background: "var(--surface)",
+          background: "var(--bg-card)",
           border: "1px solid var(--border)",
-          borderRadius: 10,
+          borderRadius: "var(--radius-lg)",
         }}
       >
         <input
@@ -137,10 +138,10 @@ export default function FriendsPage() {
           style={{
             flex: 1,
             padding: "0.5rem 0.75rem",
-            background: "var(--bg)",
+            background: "var(--bg-base)",
             border: "1px solid var(--border)",
-            color: "var(--text)",
-            borderRadius: 8,
+            color: "var(--text-primary)",
+            borderRadius: "var(--radius-sm)",
             fontSize: "0.9rem",
             outline: "none",
           }}
@@ -152,13 +153,13 @@ export default function FriendsPage() {
             padding: "0.5rem 1.25rem",
             background: "var(--accent)",
             border: "none",
-            color: "#0e0e10",
-            borderRadius: 8,
+            color: "var(--on-accent)",
+            borderRadius: "var(--radius-sm)",
             cursor: adding ? "not-allowed" : "pointer",
-            fontWeight: 700,
+            fontWeight: 600,
             fontSize: "0.875rem",
             opacity: adding ? 0.7 : 1,
-            fontFamily: "Syne, sans-serif",
+            fontFamily: "var(--font-body)",
           }}
         >
           Add Friend
@@ -166,7 +167,7 @@ export default function FriendsPage() {
       </form>
 
       {addError && <p style={{ color: "var(--danger)", marginBottom: "1rem", fontSize: "0.85rem" }}>{addError}</p>}
-      {addSuccess && <p style={{ color: "#4ade80", marginBottom: "1rem", fontSize: "0.85rem" }}>{addSuccess}</p>}
+      {addSuccess && <p style={{ color: "var(--success)", marginBottom: "1rem", fontSize: "0.85rem" }}>{addSuccess}</p>}
 
       {/* Tabs */}
       <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem" }}>
@@ -179,10 +180,10 @@ export default function FriendsPage() {
       </div>
 
       {loading ? (
-        <p style={{ color: "var(--muted)" }}>Loading...</p>
+        <p style={{ color: "var(--text-muted)" }}>Loading...</p>
       ) : tab === "friends" ? (
         friendProfiles.length === 0 ? (
-          <p style={{ color: "var(--muted)" }}>No friends yet. Add some above!</p>
+          <p style={{ color: "var(--text-muted)" }}>No friends yet. Add some above!</p>
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 320px), 1fr))", gap: "0.75rem" }}>
             {friendProfiles.map((u) => (
@@ -193,9 +194,9 @@ export default function FriendsPage() {
                   alignItems: "center",
                   gap: "0.75rem",
                   padding: "0.75rem 1rem",
-                  background: "var(--surface)",
+                  background: "var(--bg-card)",
                   border: "1px solid var(--border)",
-                  borderRadius: 10,
+                  borderRadius: "var(--radius-lg)",
                   transition: "border-color 0.15s",
                 }}
                 onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
@@ -207,14 +208,14 @@ export default function FriendsPage() {
                     height: 38,
                     borderRadius: "50%",
                     background: "var(--accent)",
-                    color: "#0e0e10",
+                    color: "var(--on-accent)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    fontWeight: 700,
+                    fontWeight: 600,
                     fontSize: "0.9rem",
                     flexShrink: 0,
-                    fontFamily: "Syne, sans-serif",
+                    fontFamily: "var(--font-display)",
                   }}
                 >
                   {u.username[0]?.toUpperCase()}
@@ -224,7 +225,7 @@ export default function FriendsPage() {
                     to={`/profile/${u.id}`}
                     style={{
                       fontWeight: 600,
-                      color: "var(--text)",
+                      color: "var(--text-primary)",
                       textDecoration: "none",
                       fontSize: "0.9rem",
                     }}
@@ -232,7 +233,7 @@ export default function FriendsPage() {
                     {u.username}
                   </Link>
                   {u.bio && (
-                    <p style={{ fontSize: "0.8rem", color: "var(--muted)", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {u.bio}
                     </p>
                   )}
@@ -243,7 +244,7 @@ export default function FriendsPage() {
         )
       ) : (
         pendingRequests.length === 0 ? (
-          <p style={{ color: "var(--muted)" }}>No pending requests.</p>
+          <p style={{ color: "var(--text-muted)" }}>No pending requests.</p>
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 320px), 1fr))", gap: "0.75rem" }}>
             {pendingRequests.map((req) => {
@@ -256,9 +257,9 @@ export default function FriendsPage() {
                     alignItems: "center",
                     gap: "0.75rem",
                     padding: "0.75rem 1rem",
-                    background: "var(--surface)",
+                    background: "var(--bg-card)",
                     border: "1px solid var(--border)",
-                    borderRadius: 10,
+                    borderRadius: "var(--radius-lg)",
                   }}
                 >
                   <div
@@ -267,11 +268,11 @@ export default function FriendsPage() {
                       height: 38,
                       borderRadius: "50%",
                       background: "var(--border)",
-                      color: "var(--muted)",
+                      color: "var(--text-muted)",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      fontWeight: 700,
+                      fontWeight: 600,
                       fontSize: "0.9rem",
                       flexShrink: 0,
                     }}
@@ -282,7 +283,7 @@ export default function FriendsPage() {
                     <span style={{ fontWeight: 600, fontSize: "0.9rem" }}>
                       {requester?.username ?? req.requester_id}
                     </span>
-                    <p style={{ fontSize: "0.78rem", color: "var(--muted)", marginTop: 2 }}>
+                    <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", marginTop: 2 }}>
                       wants to be your friend
                     </p>
                   </div>
@@ -292,11 +293,11 @@ export default function FriendsPage() {
                       padding: "0.4rem 1rem",
                       background: "var(--accent)",
                       border: "none",
-                      color: "#0e0e10",
-                      borderRadius: 8,
+                      color: "var(--on-accent)",
+                      borderRadius: "var(--radius-sm)",
                       cursor: "pointer",
                       fontSize: "0.85rem",
-                      fontWeight: 700,
+                      fontWeight: 600,
                     }}
                   >
                     Accept

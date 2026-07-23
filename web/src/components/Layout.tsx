@@ -35,7 +35,7 @@ export default function Layout() {
             style={{
               position: "absolute",
               inset: 0,
-              background: "var(--bg)",
+              background: "var(--bg-base)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",

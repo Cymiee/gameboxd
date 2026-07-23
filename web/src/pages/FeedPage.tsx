@@ -64,15 +64,15 @@ export default function FeedPage() {
       <div style={{ maxWidth: 640, margin: "0 auto", padding: "4rem 24px", textAlign: "center" }}>
         <h2
           style={{
-            fontFamily: "Syne, sans-serif",
+            fontFamily: "var(--font-display)",
             fontSize: "1.25rem",
-            fontWeight: 700,
+            fontWeight: 600,
             marginBottom: "0.5rem",
           }}
         >
           Activity Feed
         </h2>
-        <p style={{ color: "var(--muted)" }}>Follow friends to see their activity here.</p>
+        <p style={{ color: "var(--text-muted)" }}>Follow friends to see their activity here.</p>
       </div>
     );
   }
@@ -81,11 +81,12 @@ export default function FeedPage() {
     <div style={{ maxWidth: 1280, margin: "0 auto", padding: "2rem clamp(16px, 3vw, 24px)" }}>
       <h1
         style={{
-          fontFamily: "Syne, sans-serif",
-          fontSize: "1.5rem",
-          fontWeight: 700,
-          marginBottom: "1.5rem",
-          color: "var(--text)",
+          fontFamily: "var(--font-display)",
+          fontSize: "var(--text-2xl)",
+          fontWeight: 600,
+          letterSpacing: "-0.015em",
+          marginBottom: "var(--space-6)",
+          color: "var(--text-primary)",
         }}
       >
         Activity Feed

@@ -36,10 +36,10 @@ export default function SearchPage() {
           style={{
             flex: 1,
             padding: "0.65rem 1rem",
-            background: "var(--surface)",
+            background: "var(--bg-card)",
             border: "1px solid var(--border)",
-            color: "var(--text)",
-            borderRadius: 8,
+            color: "var(--text-primary)",
+            borderRadius: "var(--radius-sm)",
             fontSize: "1rem",
           }}
         />
@@ -50,8 +50,8 @@ export default function SearchPage() {
             padding: "0.65rem 1.5rem",
             background: "var(--accent)",
             border: "none",
-            color: "#0e0e10",
-            borderRadius: 8,
+            color: "var(--on-accent)",
+            borderRadius: "var(--radius-sm)",
             cursor: searching ? "not-allowed" : "pointer",
             fontWeight: 600,
             fontSize: "1rem",
@@ -62,14 +62,14 @@ export default function SearchPage() {
         </button>
       </form>
 
-      {searchError && <p style={{ color: "#f55", marginBottom: "1rem" }}>{searchError}</p>}
+      {searchError && <p style={{ color: "var(--danger)", marginBottom: "1rem" }}>{searchError}</p>}
 
       {results.length > 0 && (
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
-            gap: "1rem",
+            gridTemplateColumns: "repeat(auto-fill, minmax(min(45%, 150px), 1fr))",
+            gap: "var(--space-4)",
           }}
         >
           {results.map((game) => (
@@ -83,7 +83,7 @@ export default function SearchPage() {
       )}
 
       {!searching && results.length === 0 && query && (
-        <p style={{ color: "var(--muted)" }}>No results found.</p>
+        <p style={{ color: "var(--text-muted)" }}>No results found.</p>
       )}
     </div>
   );

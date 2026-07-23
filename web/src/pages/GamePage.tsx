@@ -3,6 +3,9 @@ import { useParams, useNavigate } from "react-router-dom";
 import { PageSpinner } from "../components/Spinner";
 import type { IGDBGame, GameLogRow, GameStatus, FriendRating } from "@gameboxd/lib";
 import { getCoverUrl, getUserGameLogs, toggleLike, deleteGameLog, getFriendRatingsForGame } from "@gameboxd/lib";
+import GameCover from "../components/GameCover";
+import StatusChip from "../components/StatusChip";
+import Shelf, { ShelfHeader } from "../components/Shelf";
 import { getGame, getGames } from "../lib/igdb";
 import { supabase } from "../lib/supabase";
 import { useAuthStore } from "../store/auth";
@@ -153,7 +156,7 @@ export default function GamePage() {
           style={{
             position: "absolute",
             inset: 0,
-            background: "linear-gradient(to bottom, rgba(0,0,0,0.1) 40%, var(--bg) 100%)",
+            background: "linear-gradient(to bottom, rgba(0,0,0,0.1) 40%, var(--bg-base) 100%)",
           }}
         />
 
@@ -179,29 +182,21 @@ export default function GamePage() {
               alignItems: "center",
             }}
           >
-            {coverUrl && (
-              <img
-                src={coverUrl}
-                alt={game.name}
-                style={{
-                  width: isMobile ? 150 : 200,
-                  flexShrink: 0,
-                  borderRadius: 10,
-                  boxShadow: "0 10px 40px rgba(0,0,0,0.7)",
-                }}
-              />
-            )}
+            <div style={{ width: isMobile ? 150 : 200, flexShrink: 0 }}>
+              <GameCover name={game.name} imageId={game.cover?.image_id} />
+            </div>
 
             <div style={{ width: isMobile ? "100%" : "auto" }}>
               <h1
                 style={{
-                  fontFamily: "Syne, sans-serif",
-                  fontSize: "clamp(1.75rem, 3vw, 2.5rem)",
-                  fontWeight: 800,
-                  color: "#fff",
-                  lineHeight: 1.15,
+                  fontFamily: "var(--font-display)",
+                  fontSize: "clamp(1.875rem, 3vw, 2.75rem)",
+                  fontWeight: 600,
+                  letterSpacing: "-0.02em",
+                  color: "var(--text-primary)",
+                  lineHeight: 1.12,
                   margin: 0,
-                  marginBottom: "0.6rem",
+                  marginBottom: "var(--space-3)",
                 }}
               >
                 {game.name}
@@ -213,11 +208,13 @@ export default function GamePage() {
                     <span
                       key={g.id}
                       style={{
-                        padding: "0.2rem 0.65rem",
-                        background: "var(--border)",
-                        borderRadius: 999,
-                        fontSize: "0.75rem",
-                        color: "var(--muted)",
+                        padding: "3px 11px",
+                        background: "var(--bg-card)",
+                        border: "1px solid var(--border)",
+                        borderRadius: "var(--radius-full)",
+                        fontSize: "var(--text-xs)",
+                        fontWeight: 500,
+                        color: "var(--text-secondary)",
                       }}
                     >
                       {g.name}
@@ -226,35 +223,42 @@ export default function GamePage() {
                 </div>
               )}
 
-              <div style={{ display: "flex", gap: "1rem", alignItems: "center", flexWrap: "wrap", marginBottom: "0.75rem" }}>
-                {year && <span style={{ color: "var(--muted)", fontSize: "0.9rem" }}>{year}</span>}
+              <div style={{ display: "flex", gap: "var(--space-3)", alignItems: "center", flexWrap: "wrap", marginBottom: "var(--space-4)", color: "var(--text-muted)", fontSize: "var(--text-sm)" }}>
+                {year && <span style={{ fontVariantNumeric: "tabular-nums" }}>{year}</span>}
+                {year && game.platforms && game.platforms.length > 0 && <span aria-hidden>·</span>}
                 {game.platforms && game.platforms.length > 0 && (
-                  <span style={{ color: "var(--muted)", fontSize: "0.85rem" }}>
-                    {game.platforms.map((p) => p.name).join(", ")}
-                  </span>
+                  <span>{game.platforms.map((p) => p.name).join(", ")}</span>
                 )}
               </div>
 
+              {/* Existing log status reads as metadata here, not a second CTA */}
+              {existingLog && (
+                <div style={{ marginBottom: "var(--space-4)" }}>
+                  <StatusChip status={existingLog.status} />
+                </div>
+              )}
+
               {communityRating && (
-                <div style={{ marginBottom: "1rem" }}>
+                <div style={{ marginBottom: "var(--space-5)", display: "flex", alignItems: "baseline", gap: "var(--space-2)" }}>
                   <span
                     style={{
-                      fontFamily: "Syne, sans-serif",
-                      fontSize: "2.5rem",
-                      fontWeight: 800,
+                      fontFamily: "var(--font-display)",
+                      fontSize: "var(--text-3xl)",
+                      fontWeight: 600,
                       color: "var(--accent)",
                       lineHeight: 1,
+                      fontVariantNumeric: "tabular-nums",
                     }}
                   >
                     {communityRating}
                   </span>
-                  <span style={{ color: "var(--muted)", fontSize: "0.85rem", marginLeft: "0.5rem" }}>
-                    {game.rating_count != null && `(${game.rating_count.toLocaleString()} ratings)`}
+                  <span style={{ color: "var(--text-muted)", fontSize: "var(--text-xs)" }}>
+                    {game.rating_count != null && `${game.rating_count.toLocaleString()} ratings`}
                   </span>
                 </div>
               )}
 
-              <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap" }}>
+              <div style={{ display: "flex", gap: "var(--space-3)", flexWrap: "wrap" }}>
                 <button
                   onClick={() => {
                     if (userId) {
@@ -264,16 +268,19 @@ export default function GamePage() {
                     }
                   }}
                   style={{
-                    padding: "0.6rem 1.5rem",
+                    padding: "0.65rem 1.5rem",
                     background: "var(--accent)",
                     border: "none",
-                    color: "#0e0e10",
-                    borderRadius: 8,
+                    color: "var(--on-accent)",
+                    borderRadius: "var(--radius-sm)",
                     cursor: "pointer",
-                    fontWeight: 700,
-                    fontSize: "0.9rem",
-                    fontFamily: "Syne, sans-serif",
+                    fontWeight: 600,
+                    fontSize: "var(--text-sm)",
+                    fontFamily: "var(--font-body)",
+                    transition: "background var(--transition)",
                   }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--accent-hover)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "var(--accent)")}
                 >
                   {existingLog && existingLog.status !== "want_to_play" ? "Edit log" : "Log this game"}
                 </button>
@@ -284,10 +291,10 @@ export default function GamePage() {
                     disabled={wtpSaving}
                     style={{
                       padding: "0.6rem 1.25rem",
-                      background: wantToPlay ? "rgba(228,255,26,0.1)" : "transparent",
+                      background: wantToPlay ? "var(--accent-dim)" : "transparent",
                       border: `1px solid ${wantToPlay ? "var(--accent)" : "var(--border)"}`,
-                      color: wantToPlay ? "var(--accent)" : "var(--muted)",
-                      borderRadius: 8,
+                      color: wantToPlay ? "var(--accent)" : "var(--text-muted)",
+                      borderRadius: "var(--radius-sm)",
                       cursor: wtpSaving ? "not-allowed" : "pointer",
                       fontSize: "0.875rem",
                       fontWeight: wantToPlay ? 600 : 400,
@@ -308,39 +315,23 @@ export default function GamePage() {
       {/* ── Body ── */}
       <div style={{ maxWidth: 1280, margin: "0 auto", padding: isMobile ? "1.75rem 16px 3rem" : "2.5rem 24px 4rem" }}>
 
-        {/* Friends' ratings strip */}
-        {userId && (
-          <section style={{ marginBottom: "2.5rem" }}>
-            <h2
-              style={{
-                fontFamily: "Syne, sans-serif",
-                fontSize: "0.72rem",
-                fontWeight: 700,
-                letterSpacing: "0.12em",
-                textTransform: "uppercase",
-                color: "var(--muted)",
-                marginBottom: "0.75rem",
-              }}
-            >
-              Your Friends Rated This
-            </h2>
-            {friendRatings.length === 0 ? (
-              <p style={{ color: "var(--muted)", fontSize: "0.875rem" }}>
-                None of your friends have played this yet.
-              </p>
-            ) : (
-              <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
+        {/* Friends' ratings strip — hidden entirely when no friends have rated */}
+        {userId && friendRatings.length > 0 && (
+          <section style={{ marginBottom: "var(--space-7)" }}>
+            <ShelfHeader title="Friends Rated This" count={friendRatings.length} />
+            {(
+              <div style={{ display: "flex", gap: "var(--space-3)", flexWrap: "wrap" }}>
                 {friendRatings.map((fr) => (
                   <div
                     key={fr.user.id}
                     style={{
                       display: "flex",
                       alignItems: "center",
-                      gap: "0.5rem",
-                      background: "var(--surface)",
+                      gap: "var(--space-2)",
+                      background: "var(--bg-card)",
                       border: "1px solid var(--border)",
-                      borderRadius: 8,
-                      padding: "0.5rem 0.75rem",
+                      borderRadius: "var(--radius-sm)",
+                      padding: "var(--space-2) var(--space-3)",
                     }}
                   >
                     <div
@@ -348,28 +339,31 @@ export default function GamePage() {
                         width: 28,
                         height: 28,
                         borderRadius: "50%",
-                        background: "var(--accent)",
-                        color: "#0e0e10",
+                        background: "var(--accent-dim)",
+                        border: "1px solid var(--accent-ring)",
+                        color: "var(--accent)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        fontWeight: 700,
-                        fontSize: "0.75rem",
-                        fontFamily: "Syne, sans-serif",
+                        fontWeight: 600,
+                        fontSize: "var(--text-xs)",
+                        fontFamily: "var(--font-display)",
                         flexShrink: 0,
                       }}
                     >
                       {fr.user.username[0]?.toUpperCase()}
                     </div>
-                    <span style={{ fontSize: "0.875rem", color: "var(--text)" }}>{fr.user.username}</span>
+                    <span style={{ fontSize: "var(--text-sm)", color: "var(--text-primary)" }}>{fr.user.username}</span>
                     <span
                       style={{
-                        background: "var(--accent)",
-                        color: "#0e0e10",
-                        borderRadius: 4,
-                        fontSize: "0.75rem",
-                        fontWeight: 700,
-                        padding: "1px 6px",
+                        background: "var(--accent-dim)",
+                        color: "var(--accent)",
+                        border: "1px solid var(--accent-ring)",
+                        borderRadius: "var(--radius-full)",
+                        fontSize: "var(--text-xs)",
+                        fontWeight: 600,
+                        padding: "1px 8px",
+                        fontVariantNumeric: "tabular-nums",
                       }}
                     >
                       {fr.rating}/10
@@ -392,46 +386,46 @@ export default function GamePage() {
         >
           <div>
             {game.summary && (
-              <p style={{ fontSize: "0.95rem", color: "var(--text)", lineHeight: 1.8, marginBottom: "1.5rem" }}>
+              <p style={{ fontSize: "var(--text-base)", color: "var(--text-secondary)", lineHeight: 1.75, marginBottom: "var(--space-6)", maxWidth: "68ch" }}>
                 {game.summary}
               </p>
             )}
 
-            <div style={{ display: "flex", gap: "2rem", flexWrap: "wrap", marginBottom: "1.5rem" }}>
+            <div style={{ display: "flex", gap: "var(--space-6)", flexWrap: "wrap", marginBottom: "var(--space-6)" }}>
               {developer && (
                 <div>
-                  <div style={{ fontSize: "0.7rem", color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 3 }}>Developer</div>
-                  <div style={{ fontSize: "0.9rem", color: "var(--text)" }}>{developer}</div>
+                  <div className="label" style={{ marginBottom: 4 }}>Developer</div>
+                  <div style={{ fontSize: "0.9rem", color: "var(--text-primary)" }}>{developer}</div>
                 </div>
               )}
               {publisher && publisher !== developer && (
                 <div>
-                  <div style={{ fontSize: "0.7rem", color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 3 }}>Publisher</div>
-                  <div style={{ fontSize: "0.9rem", color: "var(--text)" }}>{publisher}</div>
+                  <div className="label" style={{ marginBottom: 4 }}>Publisher</div>
+                  <div style={{ fontSize: "0.9rem", color: "var(--text-primary)" }}>{publisher}</div>
                 </div>
               )}
               {year && (
                 <div>
-                  <div style={{ fontSize: "0.7rem", color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 3 }}>Released</div>
-                  <div style={{ fontSize: "0.9rem", color: "var(--text)" }}>{year}</div>
+                  <div className="label" style={{ marginBottom: 4 }}>Released</div>
+                  <div style={{ fontSize: "0.9rem", color: "var(--text-primary)" }}>{year}</div>
                 </div>
               )}
             </div>
 
             {game.platforms && game.platforms.length > 0 && (
               <div>
-                <div style={{ fontSize: "0.7rem", color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Platforms</div>
-                <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
+                <div className="label" style={{ marginBottom: "var(--space-2)" }}>Platforms</div>
+                <div style={{ display: "flex", gap: "var(--space-2)", flexWrap: "wrap" }}>
                   {game.platforms.map((p) => (
                     <span
                       key={p.id}
                       style={{
-                        padding: "0.2rem 0.65rem",
-                        background: "var(--surface)",
+                        padding: "3px 11px",
+                        background: "var(--bg-card)",
                         border: "1px solid var(--border)",
-                        borderRadius: 6,
-                        fontSize: "0.8rem",
-                        color: "var(--muted)",
+                        borderRadius: "var(--radius-sm)",
+                        fontSize: "var(--text-xs)",
+                        color: "var(--text-secondary)",
                       }}
                     >
                       {p.name}
@@ -446,49 +440,59 @@ export default function GamePage() {
           {existingLog && existingLog.status !== "want_to_play" && (
             <div
               style={{
-                background: "var(--surface)",
+                background: "var(--bg-card)",
                 border: "1px solid var(--border)",
-                borderRadius: 10,
-                padding: "1.25rem",
+                borderRadius: "var(--radius-lg)",
+                padding: "var(--space-5)",
               }}
             >
-              <div
-                style={{
-                  fontSize: "0.7rem",
-                  color: "var(--muted)",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.08em",
-                  marginBottom: "0.75rem",
-                }}
-              >
+              <div className="label" style={{ marginBottom: "var(--space-3)" }}>
                 Your Log
               </div>
-              <div style={{ fontSize: "0.9rem", color: "var(--text)", marginBottom: "0.4rem", textTransform: "capitalize" }}>
-                {existingLog.status.replace("_", " ")}
+              <div style={{ marginBottom: "var(--space-3)" }}>
+                <StatusChip status={existingLog.status} />
               </div>
               {existingLog.rating != null && (
-                <div style={{ marginBottom: "0.4rem" }}>
-                  <span style={{ background: "var(--accent)", color: "#0e0e10", borderRadius: 4, fontSize: "0.8rem", fontWeight: 700, padding: "2px 8px" }}>
-                    {existingLog.rating}/10
-                  </span>
+                <div
+                  style={{
+                    fontFamily: "var(--font-display)",
+                    fontSize: "var(--text-2xl)",
+                    fontWeight: 600,
+                    color: "var(--accent)",
+                    lineHeight: 1,
+                    fontVariantNumeric: "tabular-nums",
+                    marginBottom: "var(--space-3)",
+                  }}
+                >
+                  {existingLog.rating}
+                  <span style={{ fontSize: "var(--text-sm)", color: "var(--text-muted)", fontWeight: 400 }}>/10</span>
                 </div>
               )}
               {existingLog.review && (
-                <p style={{ fontSize: "0.85rem", color: "var(--muted)", lineHeight: 1.5, marginTop: "0.5rem" }}>
+                <p style={{ fontSize: "var(--text-sm)", color: "var(--text-secondary)", lineHeight: 1.6, marginTop: "var(--space-2)" }}>
                   {existingLog.review.length > 120 ? existingLog.review.slice(0, 120) + "…" : existingLog.review}
                 </p>
               )}
               <button
                 onClick={() => setShowLogModal(true)}
                 style={{
-                  marginTop: "0.75rem",
-                  padding: "0.4rem 0.9rem",
+                  marginTop: "var(--space-4)",
+                  padding: "0.45rem 1rem",
                   background: "none",
                   border: "1px solid var(--border)",
-                  color: "var(--muted)",
-                  borderRadius: 6,
+                  color: "var(--text-secondary)",
+                  borderRadius: "var(--radius-sm)",
                   cursor: "pointer",
-                  fontSize: "0.8rem",
+                  fontSize: "var(--text-xs)",
+                  transition: "border-color var(--transition), color var(--transition)",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = "var(--accent-ring)";
+                  e.currentTarget.style.color = "var(--accent)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = "var(--border)";
+                  e.currentTarget.style.color = "var(--text-secondary)";
                 }}
               >
                 Edit
@@ -499,36 +503,13 @@ export default function GamePage() {
 
         {/* Similar games */}
         {similarGames.length > 0 && (
-          <section style={{ marginTop: "3rem" }}>
-            <h2
-              style={{
-                fontFamily: "Syne, sans-serif",
-                fontSize: "0.72rem",
-                fontWeight: 700,
-                letterSpacing: "0.12em",
-                textTransform: "uppercase",
-                color: "var(--muted)",
-                marginBottom: "1rem",
-              }}
-            >
-              Similar Games
-            </h2>
-            <div
-              style={{
-                display: "flex",
-                gap: "0.75rem",
-                overflowX: "auto",
-                paddingBottom: "0.5rem",
-                scrollbarWidth: "none",
-              }}
-            >
+          <div style={{ marginTop: "var(--space-8)" }}>
+            <Shelf title="Similar Games" count={similarGames.length} itemWidth={isMobile ? 128 : 150}>
               {similarGames.map((g) => (
-                <div key={g.id} style={{ flex: "0 0 130px" }}>
-                  <GameCard game={g} onSelect={(sg) => navigate(`/game/${sg.id}`)} />
-                </div>
+                <GameCard key={g.id} game={g} onSelect={(sg) => navigate(`/game/${sg.id}`)} />
               ))}
-            </div>
-          </section>
+            </Shelf>
+          </div>
         )}
       </div>
 

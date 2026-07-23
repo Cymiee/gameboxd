@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { IGDBGame } from "@gameboxd/lib";
-import { getCoverUrl } from "@gameboxd/lib";
+import GameCover from "./GameCover";
+import { color, font, space, transition } from "../theme";
 
 interface Props {
   game: IGDBGame;
@@ -15,98 +16,69 @@ export default function GameCard({ game, onSelect, onQuickLog }: Props) {
     : null;
 
   return (
-    <div style={{ cursor: onSelect ? "pointer" : "default", width: "100%" }}>
-      {/* paddingBottom: 150% forces 2:3 portrait ratio regardless of image dimensions */}
-      <div
-        style={{
-          position: "relative",
-          width: "100%",
-          paddingBottom: "150%",
-          borderRadius: 8,
-          overflow: "hidden",
-          background: "var(--surface)",
-          transform: hovered ? "scale(1.03)" : "scale(1)",
-          transition: "transform 0.18s ease",
-        }}
-        onClick={() => onSelect?.(game)}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
+    <div
+      style={{ width: "100%" }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <GameCover
+        name={game.name}
+        imageId={game.cover?.image_id}
+        interactive
+        {...(onSelect ? { onClick: () => onSelect(game) } : {})}
       >
-        {game.cover ? (
-          <img
-            src={getCoverUrl(game.cover.image_id, "cover_big")}
-            alt={game.name}
-            style={{
-              position: "absolute",
-              inset: 0,
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              display: "block",
-            }}
-          />
-        ) : (
+        {onQuickLog && hovered && (
           <div
             style={{
               position: "absolute",
               inset: 0,
-              background: "var(--border)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "var(--muted)",
-              fontSize: "0.8rem",
-            }}
-          >
-            No cover
-          </div>
-        )}
-
-        {hovered && (
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              background: "rgba(0,0,0,0.55)",
+              background: "linear-gradient(to top, rgba(0,0,0,0.75), rgba(0,0,0,0.15))",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
             }}
           >
-            {onQuickLog && (
-              <button
-                onClick={(e) => { e.stopPropagation(); onQuickLog(game); }}
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: "50%",
-                  background: "var(--accent)",
-                  border: "none",
-                  color: "#0e0e10",
-                  fontSize: "1.5rem",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  lineHeight: 1,
-                  flexShrink: 0,
-                }}
-              >
-                +
-              </button>
-            )}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onQuickLog(game);
+              }}
+              aria-label={`Log ${game.name}`}
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: "50%",
+                background: color.accent,
+                border: "none",
+                color: color.onAccent,
+                fontSize: "1.5rem",
+                fontWeight: 600,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                lineHeight: 1,
+                flexShrink: 0,
+                transition: `background ${transition}`,
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = color.accentHover)}
+              onMouseLeave={(e) => (e.currentTarget.style.background = color.accent)}
+            >
+              +
+            </button>
           </div>
         )}
-      </div>
+      </GameCover>
 
-      <div style={{ paddingTop: "0.5rem" }}>
+      <div style={{ paddingTop: space[3] }}>
         <div
           style={{
-            fontFamily: "Syne, sans-serif",
+            fontFamily: font.display,
             fontWeight: 600,
-            fontSize: "0.85rem",
-            color: "var(--text)",
+            fontSize: "var(--text-sm)",
+            lineHeight: 1.35,
+            color: hovered ? color.accent : color.text,
+            transition: `color ${transition}`,
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
@@ -115,7 +87,14 @@ export default function GameCard({ game, onSelect, onQuickLog }: Props) {
           {game.name}
         </div>
         {year && (
-          <div style={{ fontSize: "0.75rem", color: "var(--muted)", marginTop: 1 }}>
+          <div
+            style={{
+              fontSize: "var(--text-xs)",
+              color: color.textMuted,
+              marginTop: 2,
+              fontVariantNumeric: "tabular-nums",
+            }}
+          >
             {year}
           </div>
         )}

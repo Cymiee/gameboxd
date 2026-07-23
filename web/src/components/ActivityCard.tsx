@@ -1,6 +1,6 @@
 import type { ActivityRow, UserRow, IGDBGame } from "@gameboxd/lib";
-import { getCoverUrl } from "@gameboxd/lib";
 import { Link } from "react-router-dom";
+import GameCover from "./GameCover";
 
 interface Props {
   activity: ActivityRow;
@@ -44,7 +44,7 @@ function activityText(
       return (
         <>
           <strong>{username}</strong> logged <strong>{gameName}</strong>{" "}
-          <span style={{ color: "var(--muted)", textTransform: "capitalize" }}>
+          <span style={{ color: "var(--text-muted)", textTransform: "capitalize" }}>
             ({String(meta.status).replace("_", " ")})
           </span>
         </>
@@ -69,43 +69,29 @@ export default function ActivityCard({ activity, user, game }: Props) {
     <div
       style={{
         display: "flex",
-        gap: "0.75rem",
+        gap: "var(--space-4)",
         alignItems: "flex-start",
-        padding: "0.75rem",
-        background: "var(--surface)",
+        padding: "var(--space-4)",
+        background: "var(--bg-card)",
         border: "1px solid var(--border)",
-        borderRadius: 8,
+        borderRadius: "var(--radius-lg)",
       }}
     >
-      {game.cover ? (
-        <img
-          src={getCoverUrl(game.cover.image_id, "thumb")}
-          alt={game.name}
-          style={{ width: 40, height: 57, objectFit: "cover", borderRadius: 4, flexShrink: 0 }}
-        />
-      ) : (
-        <div
-          style={{
-            width: 40,
-            height: 57,
-            background: "var(--border)",
-            borderRadius: 4,
-            flexShrink: 0,
-          }}
-        />
-      )}
+      <div style={{ width: 42, flexShrink: 0 }}>
+        <GameCover name={game.name} imageId={game.cover?.image_id} size="thumb" rounding="sm" />
+      </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: "0.875rem", color: "var(--text)", lineHeight: 1.45 }}>
+        <div style={{ fontSize: "var(--text-sm)", color: "var(--text-primary)", lineHeight: 1.5 }}>
           {activityText(activity, user.username, game.name)}
         </div>
-        <div style={{ marginTop: "0.25rem", display: "flex", gap: "0.5rem", alignItems: "center" }}>
+        <div style={{ marginTop: "var(--space-2)", display: "flex", gap: "var(--space-2)", alignItems: "center" }}>
           <Link
             to={`/profile/${user.id}`}
-            style={{ fontSize: "0.75rem", color: "var(--accent)" }}
+            style={{ fontSize: "var(--text-xs)", color: "var(--accent)" }}
           >
             {user.username}
           </Link>
-          <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>
+          <span style={{ fontSize: "var(--text-xs)", color: "var(--text-muted)" }}>
             · {timeAgo(activity.created_at)}
           </span>
         </div>

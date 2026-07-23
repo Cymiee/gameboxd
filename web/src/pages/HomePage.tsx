@@ -1,63 +1,53 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import type { IGDBGame, ActivityRow, UserRow } from "@gameboxd/lib";
-import { getCoverUrl, getFriendsActivityFeed, getPopularAmongFriends, getUsersByIds } from "@gameboxd/lib";
+import { getFriendsActivityFeed, getPopularAmongFriends, getUsersByIds } from "@gameboxd/lib";
 import { supabase } from "../lib/supabase";
 import { useAuthStore } from "../store/auth";
 import { getTrendingGames, getGames, getNewReleases } from "../lib/igdb";
 import GameCard from "../components/GameCard";
+import GameCover from "../components/GameCover";
 import LogGameModal from "../components/LogGameModal";
 import Spinner from "../components/Spinner";
+import Shelf, { ShelfHeader } from "../components/Shelf";
 import { useGamesStore } from "../store/games";
 import { useIsMobile } from "../hooks/useIsMobile";
-import backgroundImg from "../assets/background.png";
+import { color, font, space } from "../theme";
 
-// ── Horizontal scroll row ────────────────────────────────────────────────────
+// ── Shelf of game covers ─────────────────────────────────────────────────────
 
-function HScrollRow({ games, loading, onQuickLog }: {
+function GameShelf({ title, games, loading, onQuickLog }: {
+  title: string;
   games: IGDBGame[];
   loading: boolean;
   onQuickLog?: (game: IGDBGame) => void;
 }) {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+
   if (loading) {
     return (
-      <div style={{ height: 200, display: "flex", alignItems: "center", paddingLeft: "0.5rem" }}>
-        <Spinner />
-      </div>
+      <section style={{ marginBottom: space[7] }}>
+        <ShelfHeader title={title} />
+        <div style={{ height: 200, display: "flex", alignItems: "center" }}>
+          <Spinner />
+        </div>
+      </section>
     );
   }
   if (games.length === 0) return null;
+
   return (
-    <div
-      style={
-        isMobile
-          ? {
-              // Swipeable row on phones — equal-split columns get too small
-              display: "flex",
-              gap: "0.6rem",
-              overflowX: "auto",
-              paddingBottom: "0.5rem",
-              scrollbarWidth: "none",
-            }
-          : {
-              display: "grid",
-              gridTemplateColumns: `repeat(${games.length}, minmax(0, 1fr))`,
-              gap: "0.75rem",
-            }
-      }
-    >
+    <Shelf title={title} count={games.length} itemWidth={isMobile ? 128 : 168}>
       {games.map((g) => (
-        <div key={g.id} style={isMobile ? { flex: "0 0 118px" } : undefined}>
-          <GameCard
-            game={g}
-            onSelect={(game) => navigate(`/game/${game.id}`)}
-            {...(onQuickLog ? { onQuickLog } : {})}
-          />
-        </div>
+        <GameCard
+          key={g.id}
+          game={g}
+          onSelect={(game) => navigate(`/game/${game.id}`)}
+          {...(onQuickLog ? { onQuickLog } : {})}
+        />
       ))}
-    </div>
+    </Shelf>
   );
 }
 
@@ -67,12 +57,12 @@ function SectionHeader({ title }: { title: string }) {
   return (
     <h2
       style={{
-        fontFamily: "Syne, sans-serif",
+        fontFamily: "var(--font-display)",
         fontSize: "0.72rem",
-        fontWeight: 700,
+        fontWeight: 600,
         letterSpacing: "0.12em",
         textTransform: "uppercase",
-        color: "var(--muted)",
+        color: "var(--text-muted)",
         marginBottom: "1rem",
       }}
     >
@@ -110,12 +100,12 @@ function FriendsStrip({ items }: { items: FeedItem[] }) {
   return (
     <div
       ref={scrollRef}
+      className="no-scrollbar"
       style={{
         display: "flex",
-        gap: "0.75rem",
+        gap: space[3],
         overflowX: "auto",
-        paddingBottom: "0.5rem",
-        scrollbarWidth: "none",
+        paddingBottom: space[2],
       }}
     >
       {items.map((item) => (
@@ -124,20 +114,20 @@ function FriendsStrip({ items }: { items: FeedItem[] }) {
           to={`/game/${item.game.id}`}
           style={{
             flex: "0 0 auto",
-            background: "var(--surface)",
-            border: "1px solid var(--border)",
-            borderRadius: 10,
-            padding: "0.75rem",
+            background: color.bgCard,
+            border: `1px solid ${color.border}`,
+            borderRadius: "var(--radius-md)",
+            padding: space[3],
             display: "flex",
             alignItems: "center",
-            gap: "0.6rem",
+            gap: space[3],
             textDecoration: "none",
-            minWidth: 220,
-            maxWidth: 260,
-            transition: "border-color 0.15s",
+            minWidth: 230,
+            maxWidth: 270,
+            transition: "border-color var(--transition)",
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
-          onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
+          onMouseEnter={(e) => (e.currentTarget.style.borderColor = color.accentRing)}
+          onMouseLeave={(e) => (e.currentTarget.style.borderColor = color.border)}
         >
           {/* Avatar */}
           <div
@@ -145,15 +135,16 @@ function FriendsStrip({ items }: { items: FeedItem[] }) {
               width: 32,
               height: 32,
               borderRadius: "50%",
-              background: "var(--accent)",
-              color: "#0e0e10",
+              background: color.accentDim,
+              border: `1px solid ${color.accentRing}`,
+              color: color.accent,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontWeight: 700,
-              fontSize: "0.75rem",
+              fontWeight: 600,
+              fontSize: "var(--text-xs)",
               flexShrink: 0,
-              fontFamily: "Syne, sans-serif",
+              fontFamily: font.display,
             }}
           >
             {item.user.username[0]?.toUpperCase()}
@@ -163,8 +154,8 @@ function FriendsStrip({ items }: { items: FeedItem[] }) {
           <div style={{ flex: 1, minWidth: 0 }}>
             <div
               style={{
-                fontSize: "0.8rem",
-                color: "var(--text)",
+                fontSize: "var(--text-sm)",
+                color: color.text,
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
@@ -172,27 +163,28 @@ function FriendsStrip({ items }: { items: FeedItem[] }) {
             >
               <span style={{ fontWeight: 600 }}>{item.user.username}</span>
               {" "}
-              <span style={{ color: "var(--muted)" }}>
+              <span style={{ color: color.textMuted }}>
                 {item.activity.type === "rated" ? "rated" :
                  item.activity.type === "reviewed" ? "reviewed" :
                  item.activity.type === "topped" ? "topped" : "logged"}
               </span>
               {" "}
-              <span style={{ fontWeight: 500 }}>{item.game.name}</span>
+              <span style={{ fontWeight: 500, fontFamily: font.display }}>{item.game.name}</span>
             </div>
-            <div style={{ fontSize: "0.7rem", color: "var(--muted)", marginTop: 2 }}>
+            <div style={{ fontSize: "var(--text-xs)", color: color.textMuted, marginTop: 2 }}>
               {timeAgo(item.activity.created_at)}
             </div>
           </div>
 
           {/* Game cover */}
-          {item.game.cover && (
-            <img
-              src={getCoverUrl(item.game.cover.image_id, "thumb")}
-              alt={item.game.name}
-              style={{ width: 28, height: 40, objectFit: "cover", borderRadius: 3, flexShrink: 0 }}
+          <div style={{ width: 30, flexShrink: 0 }}>
+            <GameCover
+              name={item.game.name}
+              imageId={item.game.cover?.image_id}
+              size="thumb"
+              rounding="sm"
             />
-          )}
+          </div>
         </Link>
       ))}
     </div>
@@ -292,12 +284,15 @@ export default function HomePage() {
 
   return (
     <div style={{ paddingBottom: "4rem" }}>
-      {/* ── Hero ── */}
+      {/* ── Hero ──
+          Flat gradient + faint amber bloom rather than art: the old illustration
+          was lime-green and fought the amber accent (and weighed 2.9 MB). */}
       <div
         style={{
-          backgroundImage: `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.7)), url(${backgroundImg})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
+          backgroundImage:
+            "radial-gradient(ellipse 80% 60% at 50% 0%, rgba(224, 168, 46, 0.10), transparent 70%), " +
+            "radial-gradient(circle, rgba(224, 168, 46, 0.045) 1px, transparent 1px)",
+          backgroundSize: "auto, 30px 30px",
           borderBottom: "1px solid var(--border)",
           height: isMobile ? 320 : 420,
           display: "flex",
@@ -308,68 +303,55 @@ export default function HomePage() {
           padding: "0 1.5rem",
         }}
       >
+        <span className="label" style={{ marginBottom: space[4] }}>
+          Your game library
+        </span>
         <h1
           style={{
-            fontFamily: "Syne, sans-serif",
-            fontSize: isMobile ? "2.5rem" : "clamp(3rem, 6vw, 4.5rem)",
-            fontWeight: 800,
-            color: "#fff",
+            fontFamily: font.display,
+            fontSize: isMobile ? "2.75rem" : "var(--text-display)",
+            fontWeight: 600,
+            letterSpacing: "-0.02em",
+            color: color.text,
             margin: 0,
-            lineHeight: 1.1,
+            lineHeight: 1.05,
           }}
         >
           Shelved
         </h1>
         <p
           style={{
-            color: "#a1a1aa",
-            marginTop: "1rem",
-            fontSize: "1.1rem",
+            color: color.textSecondary,
+            marginTop: space[4],
+            fontSize: "var(--text-lg)",
             fontWeight: 400,
-            maxWidth: 420,
+            maxWidth: 440,
+            lineHeight: 1.55,
           }}
         >
           Track, rate, and discover games with your friends.
         </p>
-        <div style={{ marginTop: "1.75rem" }}>
-          {!userId ? (
-            <Link
-              to="/auth"
-              style={{
-                display: "inline-block",
-                padding: "0.7rem 1.75rem",
-                background: "var(--accent)",
-                color: "#0e0e10",
-                borderRadius: 999,
-                fontWeight: 700,
-                fontSize: "0.95rem",
-                fontFamily: "Syne, sans-serif",
-                textDecoration: "none",
-                transition: "opacity 0.15s",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.9")}
-              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
-            >
-              Start tracking
-            </Link>
-          ) : (
-            <Link
-              to={`/profile/${userId}`}
-              style={{
-                display: "inline-block",
-                padding: "0.7rem 1.75rem",
-                background: "var(--accent)",
-                color: "#0e0e10",
-                borderRadius: 999,
-                fontWeight: 700,
-                fontSize: "0.95rem",
-                fontFamily: "Syne, sans-serif",
-                textDecoration: "none",
-              }}
-            >
-              Go to your profile
-            </Link>
-          )}
+        <div style={{ marginTop: space[6] }}>
+          <Link
+            to={userId ? `/profile/${userId}` : "/auth"}
+            style={{
+              display: "inline-block",
+              padding: "0.75rem 1.85rem",
+              background: color.accent,
+              color: color.onAccent,
+              borderRadius: "var(--radius-full)",
+              fontWeight: 600,
+              fontSize: "var(--text-sm)",
+              fontFamily: font.body,
+              letterSpacing: "0.01em",
+              textDecoration: "none",
+              transition: "background var(--transition)",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = color.accentHover)}
+            onMouseLeave={(e) => (e.currentTarget.style.background = color.accent)}
+          >
+            {userId ? "Go to your shelf" : "Start your shelf"}
+          </Link>
         </div>
       </div>
 
@@ -377,8 +359,8 @@ export default function HomePage() {
 
         {/* ── Friends Activity Strip ── */}
         {userId && (friendsFeedLoading || friendsFeed.length > 0) && (
-          <section style={{ marginBottom: "2.5rem" }}>
-            <SectionHeader title="From Your Friends" />
+          <section style={{ marginBottom: space[7] }}>
+            <ShelfHeader title="From Your Friends" />
             {friendsFeedLoading ? (
               <div style={{ height: 80, display: "flex", alignItems: "center" }}>
                 <Spinner />
@@ -389,26 +371,27 @@ export default function HomePage() {
           </section>
         )}
 
-        {/* ── Trending Now ── */}
-        <section style={{ marginBottom: "2.5rem" }}>
-          <SectionHeader title="Trending Now" />
-          <HScrollRow games={trending} loading={trendingLoading} {...(userId ? { onQuickLog: handleQuickLog } : {})} />
-        </section>
+        <GameShelf
+          title="Trending Now"
+          games={trending}
+          loading={trendingLoading}
+          {...(userId ? { onQuickLog: handleQuickLog } : {})}
+        />
 
-        {/* ── New Releases ── */}
-        {(newReleasesLoading || newReleases.length > 0) && (
-          <section style={{ marginBottom: "2.5rem" }}>
-            <SectionHeader title="New Releases" />
-            <HScrollRow games={newReleases} loading={newReleasesLoading} {...(userId ? { onQuickLog: handleQuickLog } : {})} />
-          </section>
-        )}
+        <GameShelf
+          title="New Releases"
+          games={newReleases}
+          loading={newReleasesLoading}
+          {...(userId ? { onQuickLog: handleQuickLog } : {})}
+        />
 
-        {/* ── Popular Among Friends ── */}
-        {userId && (popularFriendsLoading || popularFriends.length > 0) && (
-          <section style={{ marginBottom: "2.5rem" }}>
-            <SectionHeader title="Popular With Your Friends" />
-            <HScrollRow games={popularFriends} loading={popularFriendsLoading} onQuickLog={handleQuickLog} />
-          </section>
+        {userId && (
+          <GameShelf
+            title="Popular With Your Friends"
+            games={popularFriends}
+            loading={popularFriendsLoading}
+            onQuickLog={handleQuickLog}
+          />
         )}
       </div>
 

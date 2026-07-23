@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import type { UserRow, TopGameRow, GameLogRow, IGDBGame, ActivityRow } from "@gameboxd/lib";
 import {
   getProfile, getTopGames, getUserGameLogs, updateProfile, setTopGame,
@@ -10,7 +10,10 @@ import { useAuthStore } from "../store/auth";
 import { getGames, searchGames } from "../lib/igdb";
 import ActivityCard from "../components/ActivityCard";
 import Spinner from "../components/Spinner";
+import GameCover from "../components/GameCover";
+import Shelf from "../components/Shelf";
 import { useIsMobile } from "../hooks/useIsMobile";
+import { STATUS_META, STATUS_ORDER } from "../theme";
 
 type ProfileTab = "logs" | "reviews" | "lists";
 
@@ -26,17 +29,7 @@ function timeAgo(dateStr: string): string {
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div
-      style={{
-        fontFamily: "Syne, sans-serif",
-        fontSize: "0.7rem",
-        fontWeight: 700,
-        letterSpacing: "0.12em",
-        textTransform: "uppercase",
-        color: "var(--muted)",
-        marginBottom: "1rem",
-      }}
-    >
+    <div className="label" style={{ marginBottom: "var(--space-4)" }}>
       {children}
     </div>
   );
@@ -47,6 +40,7 @@ export default function ProfilePage() {
   const { userId: myUserId, profile: myProfile, setProfile } = useAuthStore();
   const isOwn = paramUserId === myUserId;
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
 
   const [profile, setPageProfile] = useState<UserRow | null>(null);
   const [topGames, setTopGames] = useState<TopGameRow[]>([]);
@@ -246,21 +240,22 @@ export default function ProfilePage() {
       <div style={isMobile ? {} : { position: "sticky", top: 76 }}>
 
         {/* Avatar + user info */}
-        <div style={{ marginBottom: "1.5rem" }}>
+        <div style={{ marginBottom: "var(--space-5)" }}>
           <div
             style={{
-              width: 80,
-              height: 80,
+              width: 76,
+              height: 76,
               borderRadius: "50%",
-              background: "var(--accent)",
-              color: "#0e0e10",
+              background: "var(--accent-dim)",
+              border: "1px solid var(--accent-ring)",
+              color: "var(--accent)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontWeight: 700,
-              fontSize: "2rem",
-              fontFamily: "Syne, sans-serif",
-              marginBottom: "0.75rem",
+              fontWeight: 600,
+              fontSize: "1.875rem",
+              fontFamily: "var(--font-display)",
+              marginBottom: "var(--space-4)",
             }}
           >
             {profile.username[0]?.toUpperCase()}
@@ -268,11 +263,13 @@ export default function ProfilePage() {
 
           <h1
             style={{
-              fontFamily: "Syne, sans-serif",
-              fontWeight: 700,
-              fontSize: "1.5rem",
-              color: "var(--text)",
-              marginBottom: "0.35rem",
+              fontFamily: "var(--font-display)",
+              fontWeight: 600,
+              fontSize: "var(--text-2xl)",
+              letterSpacing: "-0.015em",
+              color: "var(--text-primary)",
+              marginBottom: "var(--space-2)",
+              lineHeight: 1.2,
             }}
           >
             {profile.username}
@@ -281,21 +278,21 @@ export default function ProfilePage() {
           {profile.bio && (
             <p
               style={{
-                color: "var(--muted)",
-                fontSize: "0.875rem",
-                lineHeight: 1.5,
+                color: "var(--text-secondary)",
+                fontSize: "var(--text-sm)",
+                lineHeight: 1.6,
                 display: "-webkit-box",
-                WebkitLineClamp: 2,
+                WebkitLineClamp: 3,
                 WebkitBoxOrient: "vertical",
                 overflow: "hidden",
-                marginBottom: "0.5rem",
+                marginBottom: "var(--space-3)",
               }}
             >
               {profile.bio}
             </p>
           )}
 
-          <p style={{ color: "var(--muted)", fontSize: "0.8rem" }}>
+          <p style={{ color: "var(--text-muted)", fontSize: "var(--text-xs)", fontVariantNumeric: "tabular-nums" }}>
             {stats.logged} games
             {stats.avgRating && ` · ${stats.avgRating} avg`}
             {stats.reviews > 0 && ` · ${stats.reviews} reviews`}
@@ -315,8 +312,8 @@ export default function ProfilePage() {
                 padding: "0.45rem 1rem",
                 background: "none",
                 border: "1px solid var(--border)",
-                color: "var(--muted)",
-                borderRadius: 8,
+                color: "var(--text-muted)",
+                borderRadius: "var(--radius-sm)",
                 cursor: "pointer",
                 fontSize: "0.85rem",
                 marginBottom: "1.25rem",
@@ -327,9 +324,9 @@ export default function ProfilePage() {
           ) : (
             <div
               style={{
-                background: "var(--surface)",
+                background: "var(--bg-card)",
                 border: "1px solid var(--border)",
-                borderRadius: 10,
+                borderRadius: "var(--radius-lg)",
                 padding: "1rem",
                 marginBottom: "1.25rem",
                 display: "flex",
@@ -338,7 +335,7 @@ export default function ProfilePage() {
               }}
             >
               <div>
-                <label style={{ fontSize: "0.75rem", color: "var(--muted)", display: "block", marginBottom: 4 }}>Bio</label>
+                <label style={{ fontSize: "0.75rem", color: "var(--text-muted)", display: "block", marginBottom: 4 }}>Bio</label>
                 <textarea
                   value={editBio}
                   onChange={(e) => setEditBio(e.target.value)}
@@ -346,18 +343,18 @@ export default function ProfilePage() {
                   style={{
                     width: "100%",
                     padding: "0.4rem 0.6rem",
-                    background: "var(--bg)",
+                    background: "var(--bg-base)",
                     border: "1px solid var(--border)",
-                    color: "var(--text)",
-                    borderRadius: 6,
+                    color: "var(--text-primary)",
+                    borderRadius: "var(--radius-sm)",
                     fontSize: "0.875rem",
-                    fontFamily: "Inter, sans-serif",
+                    fontFamily: "var(--font-body)",
                     resize: "vertical",
                   }}
                 />
               </div>
               <div>
-                <label style={{ fontSize: "0.75rem", color: "var(--muted)", display: "block", marginBottom: 4 }}>Avatar URL</label>
+                <label style={{ fontSize: "0.75rem", color: "var(--text-muted)", display: "block", marginBottom: 4 }}>Avatar URL</label>
                 <input
                   value={editAvatar}
                   onChange={(e) => setEditAvatar(e.target.value)}
@@ -365,10 +362,10 @@ export default function ProfilePage() {
                   style={{
                     width: "100%",
                     padding: "0.4rem 0.6rem",
-                    background: "var(--bg)",
+                    background: "var(--bg-base)",
                     border: "1px solid var(--border)",
-                    color: "var(--text)",
-                    borderRadius: 6,
+                    color: "var(--text-primary)",
+                    borderRadius: "var(--radius-sm)",
                     fontSize: "0.875rem",
                   }}
                 />
@@ -381,11 +378,11 @@ export default function ProfilePage() {
                     padding: "0.4rem 0.9rem",
                     background: "var(--accent)",
                     border: "none",
-                    color: "#0e0e10",
-                    borderRadius: 6,
+                    color: "var(--on-accent)",
+                    borderRadius: "var(--radius-sm)",
                     cursor: "pointer",
                     fontSize: "0.85rem",
-                    fontWeight: 700,
+                    fontWeight: 600,
                   }}
                 >
                   {saving ? "Saving..." : "Save"}
@@ -396,8 +393,8 @@ export default function ProfilePage() {
                     padding: "0.4rem 0.9rem",
                     background: "none",
                     border: "1px solid var(--border)",
-                    color: "var(--muted)",
-                    borderRadius: 6,
+                    color: "var(--text-muted)",
+                    borderRadius: "var(--radius-sm)",
                     cursor: "pointer",
                     fontSize: "0.85rem",
                   }}
@@ -414,10 +411,10 @@ export default function ProfilePage() {
                 style={{
                   display: "inline-block",
                   padding: "0.45rem 1rem",
-                  background: "rgba(228,255,26,0.1)",
+                  background: "var(--accent-dim)",
                   border: "1px solid var(--accent)",
                   color: "var(--accent)",
-                  borderRadius: 8,
+                  borderRadius: "var(--radius-sm)",
                   fontSize: "0.85rem",
                   fontWeight: 600,
                 }}
@@ -431,8 +428,8 @@ export default function ProfilePage() {
                   padding: "0.45rem 1rem",
                   background: "none",
                   border: "1px solid var(--border)",
-                  color: "var(--muted)",
-                  borderRadius: 8,
+                  color: "var(--text-muted)",
+                  borderRadius: "var(--radius-sm)",
                   fontSize: "0.85rem",
                 }}
               >
@@ -446,11 +443,11 @@ export default function ProfilePage() {
                   padding: "0.45rem 1rem",
                   background: "var(--accent)",
                   border: "none",
-                  color: "#0e0e10",
-                  borderRadius: 8,
+                  color: "var(--on-accent)",
+                  borderRadius: "var(--radius-sm)",
                   cursor: friendActionLoading ? "not-allowed" : "pointer",
                   fontSize: "0.85rem",
-                  fontWeight: 700,
+                  fontWeight: 600,
                   opacity: friendActionLoading ? 0.7 : 1,
                 }}
               >
@@ -461,9 +458,9 @@ export default function ProfilePage() {
         ) : null}
 
         {/* Top 3 games */}
-        <SectionLabel>Favourite Games</SectionLabel>
+        <SectionLabel>Favourites</SectionLabel>
 
-        <div style={{ display: "flex", gap: "0.6rem", marginBottom: "0.75rem" }}>
+        <div style={{ display: "flex", gap: "var(--space-3)", marginBottom: "var(--space-4)" }}>
           {([1, 2, 3] as const).map((pos) => {
             const entry = topGames.find((g) => g.position === pos);
             const game = entry ? topGameData.get(entry.game_igdb_id) : null;
@@ -472,38 +469,31 @@ export default function ProfilePage() {
             return (
               <div
                 key={pos}
-                style={{ flex: 1, position: "relative" }}
+                style={{ flex: 1, position: "relative", minWidth: 0 }}
                 onMouseEnter={() => setTopGameHovered(pos)}
                 onMouseLeave={() => setTopGameHovered(null)}
               >
                 {game ? (
-                  <div style={{ position: "relative" }}>
-                    <Link to={`/game/${game.id}`}>
-                      <img
-                        src={getCoverUrl(game.cover?.image_id ?? "", "cover_big")}
-                        alt={game.name}
-                        style={{
-                          width: "100%",
-                          aspectRatio: "2/3",
-                          objectFit: "cover",
-                          borderRadius: 6,
-                          display: "block",
-                        }}
-                      />
-                    </Link>
-
-                    {/* Position number */}
+                  <GameCover
+                    name={game.name}
+                    imageId={game.cover?.image_id}
+                    rounding="md"
+                    interactive
+                    onClick={() => navigate(`/game/${game.id}`)}
+                  >
+                    {/* Position number — editorial index mark */}
                     <span
                       style={{
                         position: "absolute",
                         bottom: 4,
-                        left: 6,
-                        fontFamily: "Syne, sans-serif",
-                        fontSize: "2rem",
-                        fontWeight: 800,
-                        color: "rgba(255,255,255,0.25)",
+                        left: 7,
+                        fontFamily: "var(--font-display)",
+                        fontSize: "1.75rem",
+                        fontWeight: 600,
+                        color: "rgba(245, 243, 240, 0.28)",
                         lineHeight: 1,
                         pointerEvents: "none",
+                        fontVariantNumeric: "tabular-nums",
                       }}
                     >
                       {posLabel}
@@ -513,17 +503,21 @@ export default function ProfilePage() {
                     {isOwn && topGameHovered === pos && (
                       <>
                         <button
-                          onClick={() => handleRemoveSlot(pos)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveSlot(pos);
+                          }}
+                          aria-label={`Remove ${game.name} from favourites`}
                           style={{
                             position: "absolute",
-                            top: 4,
-                            right: 4,
-                            background: "rgba(0,0,0,0.75)",
+                            top: 5,
+                            right: 5,
+                            background: "rgba(0,0,0,0.78)",
                             border: "none",
-                            color: "#fff",
+                            color: "var(--text-primary)",
                             borderRadius: "50%",
-                            width: 22,
-                            height: 22,
+                            width: 24,
+                            height: 24,
                             cursor: "pointer",
                             fontSize: "0.7rem",
                             display: "flex",
@@ -539,16 +533,17 @@ export default function ProfilePage() {
                             bottom: 0,
                             left: 0,
                             right: 0,
-                            background: "linear-gradient(to top, rgba(0,0,0,0.9), transparent)",
-                            borderRadius: "0 0 6px 6px",
-                            padding: "1.5rem 0.4rem 0.4rem",
+                            background: "linear-gradient(to top, rgba(0,0,0,0.92), transparent)",
+                            padding: "1.5rem 0.5rem 0.5rem",
+                            pointerEvents: "none",
                           }}
                         >
                           <div
                             style={{
-                              fontSize: "0.65rem",
+                              fontSize: "var(--text-xs)",
                               fontWeight: 600,
-                              color: "#fff",
+                              fontFamily: "var(--font-display)",
+                              color: "var(--text-primary)",
                               overflow: "hidden",
                               textOverflow: "ellipsis",
                               whiteSpace: "nowrap",
@@ -559,35 +554,43 @@ export default function ProfilePage() {
                         </div>
                       </>
                     )}
-                  </div>
+                  </GameCover>
                 ) : (
                   <div
                     onClick={() => isOwn && setAssigningSlot(pos)}
                     style={{
-                      aspectRatio: "2/3",
-                      background: "var(--surface)",
-                      border: "2px dashed var(--border)",
-                      borderRadius: 6,
+                      aspectRatio: "3 / 4",
+                      background: "var(--bg-inset)",
+                      border: "1px dashed var(--border-strong)",
+                      borderRadius: "var(--radius-md)",
                       display: "flex",
                       flexDirection: "column",
                       alignItems: "center",
                       justifyContent: "center",
-                      color: "var(--muted)",
+                      color: "var(--text-muted)",
                       cursor: isOwn ? "pointer" : "default",
-                      gap: "0.25rem",
-                      fontSize: "0.65rem",
-                      transition: "border-color 0.15s",
+                      gap: "var(--space-1)",
+                      fontSize: "var(--text-xs)",
+                      transition: "border-color var(--transition), color var(--transition)",
                     }}
-                    onMouseEnter={(e) => isOwn && (e.currentTarget.style.borderColor = "var(--accent)")}
-                    onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
+                    onMouseEnter={(e) => {
+                      if (!isOwn) return;
+                      e.currentTarget.style.borderColor = "var(--accent-ring)";
+                      e.currentTarget.style.color = "var(--accent)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = "var(--border-strong)";
+                      e.currentTarget.style.color = "var(--text-muted)";
+                    }}
                   >
-                    {isOwn && (
+                    {isOwn ? (
                       <>
-                        <span style={{ fontSize: "1.2rem" }}>+</span>
+                        <span style={{ fontSize: "1.25rem", lineHeight: 1 }}>+</span>
                         <span>Add</span>
                       </>
+                    ) : (
+                      <span style={{ fontSize: "1rem" }}>—</span>
                     )}
-                    {!isOwn && <span style={{ fontSize: "1rem" }}>—</span>}
                   </div>
                 )}
               </div>
@@ -599,9 +602,9 @@ export default function ProfilePage() {
         {assigningSlot && (
           <div
             style={{
-              background: "var(--surface)",
+              background: "var(--bg-card)",
               border: "1px solid var(--accent)",
-              borderRadius: 8,
+              borderRadius: "var(--radius-sm)",
               padding: "0.75rem",
             }}
           >
@@ -609,7 +612,7 @@ export default function ProfilePage() {
               <span style={{ fontWeight: 600, fontSize: "0.85rem" }}>Slot #{assigningSlot}</span>
               <button
                 onClick={() => { setAssigningSlot(null); setSlotResults([]); setSlotSearch(""); }}
-                style={{ background: "none", border: "none", color: "var(--muted)", cursor: "pointer", fontSize: "0.85rem" }}
+                style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: "0.85rem" }}
               >
                 ✕
               </button>
@@ -622,10 +625,10 @@ export default function ProfilePage() {
                 style={{
                   flex: 1,
                   padding: "0.35rem 0.6rem",
-                  background: "var(--bg)",
+                  background: "var(--bg-base)",
                   border: "1px solid var(--border)",
-                  color: "var(--text)",
-                  borderRadius: 6,
+                  color: "var(--text-primary)",
+                  borderRadius: "var(--radius-sm)",
                   fontSize: "0.85rem",
                 }}
               />
@@ -636,11 +639,11 @@ export default function ProfilePage() {
                   padding: "0.35rem 0.6rem",
                   background: "var(--accent)",
                   border: "none",
-                  color: "#0e0e10",
-                  borderRadius: 6,
+                  color: "var(--on-accent)",
+                  borderRadius: "var(--radius-sm)",
                   cursor: "pointer",
                   fontSize: "0.8rem",
-                  fontWeight: 700,
+                  fontWeight: 600,
                 }}
               >
                 {slotSearching ? "..." : "Go"}
@@ -653,10 +656,10 @@ export default function ProfilePage() {
                   onClick={() => handleAssignSlot(g)}
                   style={{
                     padding: "0.35rem 0.6rem",
-                    background: "var(--bg)",
+                    background: "var(--bg-base)",
                     border: "1px solid var(--border)",
-                    color: "var(--text)",
-                    borderRadius: 6,
+                    color: "var(--text-primary)",
+                    borderRadius: "var(--radius-sm)",
                     cursor: "pointer",
                     fontSize: "0.8rem",
                     textAlign: "left",
@@ -701,8 +704,8 @@ export default function ProfilePage() {
                   padding: "0.45rem 1rem",
                   background: "none",
                   border: "1px solid var(--border)",
-                  color: "var(--muted)",
-                  borderRadius: 8,
+                  color: "var(--text-muted)",
+                  borderRadius: "var(--radius-sm)",
                   cursor: "pointer",
                   fontSize: "0.85rem",
                 }}
@@ -725,7 +728,7 @@ export default function ProfilePage() {
                   background: "none",
                   border: "none",
                   borderBottom: `2px solid ${activeTab === tab ? "var(--accent)" : "transparent"}`,
-                  color: activeTab === tab ? "var(--text)" : "var(--muted)",
+                  color: activeTab === tab ? "var(--text-primary)" : "var(--text-muted)",
                   cursor: "pointer",
                   fontSize: "0.9rem",
                   fontWeight: activeTab === tab ? 600 : 400,
@@ -740,80 +743,72 @@ export default function ProfilePage() {
             ))}
           </div>
 
-          {/* Logs tab */}
+          {/* Logs tab — grouped into status shelves */}
           {activeTab === "logs" && (
             logs.length === 0 ? (
-              <p style={{ color: "var(--muted)", fontSize: "0.9rem" }}>No games logged yet.</p>
+              <p style={{ color: "var(--text-muted)", fontSize: "var(--text-sm)" }}>No games logged yet.</p>
             ) : (
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))",
-                  gap: "0.6rem",
-                }}
-              >
-                {logs.map((log) => {
-                  const game = logGameData.get(log.game_igdb_id);
-                  if (!game) return null;
+              <>
+                {STATUS_ORDER.map((status) => {
+                  const shelfLogs = logs.filter((l) => l.status === status);
+                  if (shelfLogs.length === 0) return null;
+                  const meta = STATUS_META[status];
+
                   return (
-                    <Link
-                      key={log.id}
-                      to={`/game/${log.game_igdb_id}`}
-                      style={{ textDecoration: "none", position: "relative", display: "block" }}
+                    <Shelf
+                      key={status}
+                      title={meta.label}
+                      count={shelfLogs.length}
+                      accent={meta.color}
+                      layout="grid"
+                      itemWidth={116}
                     >
-                      {game.cover ? (
-                        <img
-                          src={getCoverUrl(game.cover.image_id, "cover_big")}
-                          alt={game.name}
-                          title={game.name}
-                          style={{ width: "100%", aspectRatio: "2/3", objectFit: "cover", borderRadius: 6, display: "block" }}
-                        />
-                      ) : (
-                        <div
-                          style={{
-                            width: "100%",
-                            aspectRatio: "2/3",
-                            background: "var(--border)",
-                            borderRadius: 6,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            color: "var(--muted)",
-                            fontSize: "0.65rem",
-                          }}
-                        >
-                          {game.name}
-                        </div>
-                      )}
-                      {log.rating != null && (
-                        <span
-                          style={{
-                            position: "absolute",
-                            top: 4,
-                            right: 4,
-                            background: "var(--accent)",
-                            color: "#0e0e10",
-                            borderRadius: 4,
-                            fontSize: "0.65rem",
-                            fontWeight: 700,
-                            padding: "1px 5px",
-                            lineHeight: 1.4,
-                          }}
-                        >
-                          {log.rating}
-                        </span>
-                      )}
-                    </Link>
+                      {shelfLogs.map((log) => {
+                        const game = logGameData.get(log.game_igdb_id);
+                        if (!game) return null;
+                        return (
+                          <GameCover
+                            key={log.id}
+                            name={game.name}
+                            imageId={game.cover?.image_id}
+                            rounding="md"
+                            interactive
+                            onClick={() => navigate(`/game/${log.game_igdb_id}`)}
+                          >
+                            {log.rating != null && (
+                              <span
+                                style={{
+                                  position: "absolute",
+                                  top: 6,
+                                  right: 6,
+                                  background: "rgba(0,0,0,0.78)",
+                                  color: "var(--accent)",
+                                  border: "1px solid var(--accent-ring)",
+                                  borderRadius: "var(--radius-full)",
+                                  fontSize: "0.6875rem",
+                                  fontWeight: 600,
+                                  padding: "1px 7px",
+                                  lineHeight: 1.5,
+                                  fontVariantNumeric: "tabular-nums",
+                                }}
+                              >
+                                {log.rating}
+                              </span>
+                            )}
+                          </GameCover>
+                        );
+                      })}
+                    </Shelf>
                   );
                 })}
-              </div>
+              </>
             )
           )}
 
           {/* Reviews tab */}
           {activeTab === "reviews" && (
             reviewLogs.length === 0 ? (
-              <p style={{ color: "var(--muted)", fontSize: "0.9rem" }}>No reviews yet.</p>
+              <p style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>No reviews yet.</p>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
                 {reviewLogs.map((log) => {
@@ -828,42 +823,43 @@ export default function ProfilePage() {
                       to={`/game/${log.game_igdb_id}`}
                       style={{
                         display: "flex",
-                        gap: "0.75rem",
+                        gap: "var(--space-4)",
                         textDecoration: "none",
-                        background: "var(--surface)",
+                        background: "var(--bg-card)",
                         border: "1px solid var(--border)",
-                        borderRadius: 8,
-                        padding: "0.75rem",
-                        transition: "border-color 0.15s",
+                        borderRadius: "var(--radius-lg)",
+                        padding: "var(--space-4)",
+                        transition: "border-color var(--transition)",
                       }}
-                      onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
+                      onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--accent-ring)")}
                       onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
                     >
-                      {game.cover && (
-                        <img
-                          src={getCoverUrl(game.cover.image_id, "thumb")}
-                          alt={game.name}
-                          style={{ width: 50, objectFit: "cover", borderRadius: 4, flexShrink: 0, alignSelf: "flex-start" }}
+                      <div style={{ width: 52, flexShrink: 0 }}>
+                        <GameCover
+                          name={game.name}
+                          imageId={game.cover?.image_id}
+                          size="cover_small"
+                          rounding="sm"
                         />
-                      )}
+                      </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div
                           style={{
-                            fontFamily: "Syne, sans-serif",
+                            fontFamily: "var(--font-display)",
                             fontWeight: 600,
-                            fontSize: "0.9rem",
-                            color: "var(--text)",
-                            marginBottom: "0.2rem",
+                            fontSize: "var(--text-base)",
+                            color: "var(--text-primary)",
+                            marginBottom: "var(--space-1)",
                           }}
                         >
                           {game.name}
                         </div>
                         {log.rating != null && (
-                          <div style={{ fontSize: "0.75rem", color: "var(--accent)", marginBottom: "0.4rem", fontWeight: 600 }}>
+                          <div style={{ fontSize: "var(--text-xs)", color: "var(--accent)", marginBottom: "var(--space-2)", fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>
                             {log.rating}/10
                           </div>
                         )}
-                        <p style={{ fontSize: "0.85rem", color: "var(--muted)", lineHeight: 1.5, margin: 0 }}>
+                        <p style={{ fontSize: "var(--text-sm)", color: "var(--text-secondary)", lineHeight: 1.6, margin: 0 }}>
                           {excerpt}
                         </p>
                       </div>
@@ -879,11 +875,11 @@ export default function ProfilePage() {
             <div
               style={{
                 padding: "2rem",
-                background: "var(--surface)",
+                background: "var(--bg-card)",
                 border: "1px solid var(--border)",
-                borderRadius: 8,
+                borderRadius: "var(--radius-sm)",
                 textAlign: "center",
-                color: "var(--muted)",
+                color: "var(--text-muted)",
                 fontSize: "0.9rem",
               }}
             >

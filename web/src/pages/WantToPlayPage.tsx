@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { PageSpinner } from "../components/Spinner";
 import type { GameLogRow, IGDBGame } from "@gameboxd/lib";
-import { getUserGameLogs, deleteGameLog, getCoverUrl } from "@gameboxd/lib";
+import { getUserGameLogs, deleteGameLog } from "@gameboxd/lib";
+import GameCover from "../components/GameCover";
+import { ShelfHeader } from "../components/Shelf";
 import { supabase } from "../lib/supabase";
 import { useAuthStore } from "../store/auth";
 import { getGames } from "../lib/igdb";
@@ -58,20 +60,10 @@ export default function WantToPlayPage() {
 
   return (
     <div style={{ maxWidth: 800, margin: "0 auto", padding: "2.5rem clamp(16px, 3vw, 24px)" }}>
-      <h1
-        style={{
-          fontFamily: "Syne, sans-serif",
-          fontSize: "1.5rem",
-          fontWeight: 700,
-          marginBottom: "1.5rem",
-          color: "var(--text)",
-        }}
-      >
-        Want to Play
-      </h1>
+      <ShelfHeader title="Wishlist" count={logs.length} accent="var(--status-wishlist)" />
 
       {logs.length === 0 ? (
-        <p style={{ color: "var(--muted)", fontSize: "0.95rem" }}>
+        <p style={{ color: "var(--text-muted)", fontSize: "var(--text-sm)" }}>
           No games in your backlog yet.{" "}
           <Link to="/games" style={{ color: "var(--accent)" }}>
             Browse games
@@ -79,10 +71,9 @@ export default function WantToPlayPage() {
           and add some!
         </p>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
           {logs.map((log) => {
             const game = games.get(log.game_igdb_id);
-            const coverUrl = game?.cover ? getCoverUrl(game.cover.image_id, "cover_small") : null;
             const year = game?.first_release_date
               ? new Date(game.first_release_date * 1000).getFullYear()
               : null;
@@ -95,42 +86,34 @@ export default function WantToPlayPage() {
                   alignItems: "center",
                   // Actions wrap below the title on narrow screens
                   flexWrap: "wrap",
-                  gap: "0.6rem 1rem",
-                  background: "var(--surface)",
+                  gap: "var(--space-3) var(--space-4)",
+                  background: "var(--bg-card)",
                   border: "1px solid var(--border)",
-                  borderRadius: 10,
-                  padding: "0.75rem 1rem",
-                  transition: "border-color 0.15s",
+                  borderRadius: "var(--radius-lg)",
+                  padding: "var(--space-3) var(--space-4)",
+                  transition: "border-color var(--transition)",
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
+                onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--accent-ring)")}
                 onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
               >
-                {coverUrl ? (
-                  <img
-                    src={coverUrl}
-                    alt={game?.name}
-                    style={{ width: 44, height: 60, objectFit: "cover", borderRadius: 5, flexShrink: 0 }}
+                <div style={{ width: 46, flexShrink: 0 }}>
+                  <GameCover
+                    name={game?.name ?? `Game #${log.game_igdb_id}`}
+                    imageId={game?.cover?.image_id}
+                    size="cover_small"
+                    rounding="sm"
                   />
-                ) : (
-                  <div
-                    style={{
-                      width: 44,
-                      height: 60,
-                      background: "var(--border)",
-                      borderRadius: 5,
-                      flexShrink: 0,
-                    }}
-                  />
-                )}
+                </div>
 
                 <div style={{ flex: 1, minWidth: 140 }}>
                   <Link
                     to={`/game/${log.game_igdb_id}`}
                     style={{
-                      color: "var(--text)",
+                      color: "var(--text-primary)",
                       textDecoration: "none",
                       fontWeight: 600,
-                      fontSize: "0.95rem",
+                      fontFamily: "var(--font-display)",
+                      fontSize: "var(--text-base)",
                       display: "block",
                       overflow: "hidden",
                       textOverflow: "ellipsis",
@@ -140,7 +123,7 @@ export default function WantToPlayPage() {
                     {game?.name ?? `Game #${log.game_igdb_id}`}
                   </Link>
                   {year && (
-                    <span style={{ color: "var(--muted)", fontSize: "0.8rem" }}>{year}</span>
+                    <span style={{ color: "var(--text-muted)", fontSize: "var(--text-xs)", fontVariantNumeric: "tabular-nums" }}>{year}</span>
                   )}
                 </div>
 
@@ -150,11 +133,11 @@ export default function WantToPlayPage() {
                     style={{
                       padding: "0.35rem 0.85rem",
                       background: "var(--accent)",
-                      color: "#0e0e10",
-                      borderRadius: 6,
+                      color: "var(--on-accent)",
+                      borderRadius: "var(--radius-sm)",
                       textDecoration: "none",
                       fontSize: "0.8rem",
-                      fontWeight: 700,
+                      fontWeight: 600,
                     }}
                   >
                     Log it
@@ -164,10 +147,10 @@ export default function WantToPlayPage() {
                     disabled={removing === log.game_igdb_id}
                     style={{
                       padding: "0.35rem 0.85rem",
-                      background: "var(--bg)",
+                      background: "var(--bg-base)",
                       border: "1px solid var(--border)",
-                      color: "var(--muted)",
-                      borderRadius: 6,
+                      color: "var(--text-muted)",
+                      borderRadius: "var(--radius-sm)",
                       cursor: removing === log.game_igdb_id ? "not-allowed" : "pointer",
                       fontSize: "0.8rem",
                       opacity: removing === log.game_igdb_id ? 0.6 : 1,
