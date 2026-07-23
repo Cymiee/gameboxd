@@ -17,7 +17,6 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@expo/vector-icons": "^15.1.1",
     "@supabase/supabase-js": "^2.43.4",
     "axios": "^1.7.2",
     "zustand": "^4.5.2"

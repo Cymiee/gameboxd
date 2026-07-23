@@ -2,7 +2,7 @@ import axios, { type AxiosInstance } from "axios";
 import type { IGDBGame } from "../types/index.js";
 
 // IGDB uses Twitch OAuth — the access token must be fetched server-side
-// (client secret must never be exposed in the browser/mobile app).
+// (client secret must never be exposed in the browser).
 // In production, proxy IGDB calls through a Supabase Edge Function.
 
 interface IGDBClientConfig {

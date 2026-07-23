@@ -5,14 +5,12 @@ dist/
 .env.local
 *.tsbuildinfo
 
-# Expo
-.expo/
-android/
-ios/
-
 # Vite
 web/dist/
 
 # Supabase
 supabase/.branches
 supabase/.temp
+
+# Never track Firebase config
+google-services.json
