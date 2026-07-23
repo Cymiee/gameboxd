@@ -12,17 +12,52 @@ const GAME_FIELDS =
   "cover.id,cover.image_id,cover.url,genres.id,genres.name,platforms.id,platforms.name," +
   "involved_companies.company.id,involved_companies.company.name,involved_companies.developer;";
 
+// ── Request cache ────────────────────────────────────────────────────────────
+// Without this, every SPA navigation refires the same queries — going Home →
+// Explore → Home re-fetched all three shelves. Entries live for the session
+// only; a reload starts clean.
+
+const CACHE_TTL_MS = 5 * 60 * 1000;
+
+interface CacheEntry {
+  at: number;
+  games: IGDBGame[];
+}
+
+const cache = new Map<string, CacheEntry>();
+/** Identical concurrent calls share one request instead of racing. */
+const inFlight = new Map<string, Promise<IGDBGame[]>>();
+
 async function callProxy(endpoint: string, body: string): Promise<IGDBGame[]> {
-  const res = await fetch(PROXY_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-    },
-    body: JSON.stringify({ endpoint, body }),
-  });
-  if (!res.ok) throw new Error(`IGDB proxy error: ${res.statusText}`);
-  return res.json() as Promise<IGDBGame[]>;
+  const key = `${endpoint}\n${body}`;
+
+  const hit = cache.get(key);
+  if (hit && Date.now() - hit.at < CACHE_TTL_MS) return hit.games;
+
+  const pending = inFlight.get(key);
+  if (pending) return pending;
+
+  const request = (async () => {
+    const res = await fetch(PROXY_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({ endpoint, body }),
+    });
+    if (!res.ok) throw new Error(`IGDB proxy error: ${res.statusText}`);
+    const games = (await res.json()) as IGDBGame[];
+    cache.set(key, { at: Date.now(), games });
+    return games;
+  })();
+
+  inFlight.set(key, request);
+  try {
+    return await request;
+  } finally {
+    inFlight.delete(key);
+  }
 }
 
 export async function searchGames(query: string): Promise<IGDBGame[]> {
