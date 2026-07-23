@@ -51,6 +51,100 @@ function GameShelf({ title, games, loading, onQuickLog }: {
   );
 }
 
+// ── Get-started card ─────────────────────────────────────────────────────────
+
+/**
+ * Shown to signed-in users with no friend activity yet. The first useful action
+ * for a new account is logging a game, not finding friends — so Explore leads.
+ */
+function GetStartedCard({ hasLogs }: { hasLogs: boolean }) {
+  return (
+    <section
+      style={{
+        marginBottom: space[7],
+        padding: space[6],
+        background: color.bgCard,
+        border: `1px solid ${color.border}`,
+        borderRadius: "var(--radius-lg)",
+      }}
+    >
+      <div className="label" style={{ marginBottom: space[3] }}>
+        Getting started
+      </div>
+      <h2
+        style={{
+          fontFamily: font.display,
+          fontSize: "var(--text-xl)",
+          fontWeight: 600,
+          letterSpacing: "-0.01em",
+          color: color.text,
+          margin: 0,
+          marginBottom: space[2],
+        }}
+      >
+        {hasLogs ? "Your friends' activity will show up here" : "Start your shelf"}
+      </h2>
+      <p
+        style={{
+          color: color.textSecondary,
+          fontSize: "var(--text-sm)",
+          lineHeight: 1.6,
+          margin: 0,
+          marginBottom: space[5],
+          maxWidth: "52ch",
+        }}
+      >
+        {hasLogs
+          ? "Once you add friends, what they log, rate and review lands on this page."
+          : "Log a game you've played to build your library — then add friends to see what they're playing."}
+      </p>
+
+      <div style={{ display: "flex", gap: space[3], flexWrap: "wrap" }}>
+        <Link
+          to="/explore"
+          style={{
+            padding: "0.6rem 1.35rem",
+            background: color.accent,
+            color: color.onAccent,
+            borderRadius: "var(--radius-sm)",
+            fontSize: "var(--text-sm)",
+            fontWeight: 600,
+            textDecoration: "none",
+            transition: "background var(--transition)",
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = color.accentHover)}
+          onMouseLeave={(e) => (e.currentTarget.style.background = color.accent)}
+        >
+          Explore games
+        </Link>
+        <Link
+          to="/friends"
+          style={{
+            padding: "0.6rem 1.35rem",
+            background: "transparent",
+            border: `1px solid ${color.border}`,
+            color: color.textSecondary,
+            borderRadius: "var(--radius-sm)",
+            fontSize: "var(--text-sm)",
+            textDecoration: "none",
+            transition: "border-color var(--transition), color var(--transition)",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = color.accentRing;
+            e.currentTarget.style.color = color.accent;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = color.border;
+            e.currentTarget.style.color = color.textSecondary;
+          }}
+        >
+          Find friends
+        </Link>
+      </div>
+    </section>
+  );
+}
+
 // ── Section header ───────────────────────────────────────────────────────────
 
 function SectionHeader({ title }: { title: string }) {
@@ -119,7 +213,7 @@ function FriendsActivity({ items }: { items: FeedItem[] }) {
 
 export default function HomePage() {
   const { userId, profile } = useAuthStore();
-  const { logGame } = useGamesStore();
+  const { logGame, logs, fetchLogs } = useGamesStore();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
@@ -136,6 +230,12 @@ export default function HomePage() {
   const [popularFriendsLoading, setPopularFriendsLoading] = useState(false);
 
   const [quickLogGame, setQuickLogGame] = useState<IGDBGame | null>(null);
+
+  // Own logs — only used to tailor the get-started copy
+  useEffect(() => {
+    if (!userId) return;
+    void fetchLogs();
+  }, [userId, fetchLogs]);
 
   // Trending
   useEffect(() => {
@@ -206,6 +306,7 @@ export default function HomePage() {
   }, [userId]);
 
   const handleQuickLog = (game: IGDBGame) => setQuickLogGame(game);
+  const hasActivity = friendsFeed.length > 0;
 
   return (
     <div style={{ paddingBottom: "4rem" }}>
@@ -284,25 +385,22 @@ export default function HomePage() {
 
       <div style={{ maxWidth: 1280, margin: "0 auto", padding: isMobile ? "1.5rem 16px 0" : "2.5rem 24px 0" }}>
 
-        {/* ── Friend activity — the primary surface when signed in ── */}
-        {userId && (
+        {/* ── Friend activity leads — but only once there is any. With an empty
+               feed it would push the useful content below the fold, so
+               discovery leads instead and the prompt moves underneath. ── */}
+        {userId && hasActivity && (
           <section style={{ marginBottom: space[7] }}>
-            <ShelfHeader
-              title="From Your Friends"
-              {...(friendsFeed.length > 0 ? { count: friendsFeed.length } : {})}
-            />
-            {friendsFeedLoading ? (
-              <div style={{ height: 120, display: "flex", alignItems: "center" }}>
-                <Spinner />
-              </div>
-            ) : friendsFeed.length > 0 ? (
-              <FriendsActivity items={friendsFeed} />
-            ) : (
-              <p style={{ color: color.textMuted, fontSize: "var(--text-sm)" }}>
-                <Link to="/friends" style={{ color: color.accent }}>Add friends</Link>{" "}
-                to see what they're playing here.
-              </p>
-            )}
+            <ShelfHeader title="From Your Friends" count={friendsFeed.length} />
+            <FriendsActivity items={friendsFeed} />
+          </section>
+        )}
+
+        {userId && friendsFeedLoading && (
+          <section style={{ marginBottom: space[7] }}>
+            <ShelfHeader title="From Your Friends" />
+            <div style={{ height: 120, display: "flex", alignItems: "center" }}>
+              <Spinner />
+            </div>
           </section>
         )}
 
@@ -327,6 +425,11 @@ export default function HomePage() {
             loading={popularFriendsLoading}
             onQuickLog={handleQuickLog}
           />
+        )}
+
+        {/* Nothing to catch up on yet — point at the first useful action */}
+        {userId && !friendsFeedLoading && !hasActivity && (
+          <GetStartedCard hasLogs={logs.length > 0} />
         )}
       </div>
 
