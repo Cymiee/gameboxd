@@ -209,6 +209,11 @@ function FriendsActivity({ items }: { items: FeedItem[] }) {
   );
 }
 
+// A recent-activity preview, not the full feed. Fetch a small buffer so that
+// items whose game/user fail to resolve don't leave the preview under-filled.
+const HOME_ACTIVITY_LIMIT = 6;
+const HOME_ACTIVITY_FETCH = 12;
+
 // ── HomePage ─────────────────────────────────────────────────────────────────
 
 export default function HomePage() {
@@ -259,8 +264,10 @@ export default function HomePage() {
 
     setFriendsFeedLoading(true);
     async function loadFriendsFeed() {
-      // Larger limit than the old compact strip — this is now the main surface.
-      const feed = await getFriendsActivityFeed(supabase, userId!, 24);
+      // Home shows a compact preview of recent activity, not the whole feed —
+      // otherwise the section grows with every friend action and buries the
+      // discovery shelves below it. Fetch a small buffer; render fewer.
+      const feed = await getFriendsActivityFeed(supabase, userId!, HOME_ACTIVITY_FETCH);
       if (feed.length === 0) { setFriendsFeedLoading(false); return; }
 
       const uniqueGameIds = [...new Set(feed.map((a) => a.game_igdb_id))];
@@ -280,7 +287,7 @@ export default function HomePage() {
         const game = gameMap.get(activity.game_igdb_id);
         if (user && game) items.push({ activity, user, game });
       }
-      setFriendsFeed(items);
+      setFriendsFeed(items.slice(0, HOME_ACTIVITY_LIMIT));
     }
 
     loadFriendsFeed()
