@@ -57,8 +57,14 @@ a:hover {
 
 /* Hide scrollbars on horizontal shelf rows without losing scrollability */
 .no-scrollbar {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+/* Only apply this Firefox-specific property where supported */
+@supports (scrollbar-width: none) {
+  .no-scrollbar {
+    scrollbar-width: none; /* Firefox */
+  }
 }
 
 .no-scrollbar::-webkit-scrollbar {
