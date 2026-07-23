@@ -39,8 +39,19 @@ export default function GamePage() {
     if (!id) return;
     let cancelled = false;
 
+    // Navigating between games (e.g. via "Similar Games") reuses this component
+    // instance, so per-game state must be cleared or the previous game's log,
+    // modal and ratings carry over. Resetting loading here also stops the old
+    // game flashing for a frame before the new fetch resolves.
+    setLoading(true);
+    setExistingLog(null);
+    setWantToPlay(false);
+    setSaveError(null);
+    setShowLogModal(false);
+    setFriendRatings([]);
+    setSimilarGames([]);
+
     async function load() {
-      setLoading(true);
       setError(null);
       try {
         const [g, logs] = await Promise.all([
