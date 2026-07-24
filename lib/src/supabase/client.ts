@@ -169,6 +169,34 @@ export interface Database {
         };
         Relationships: [];
       };
+      user_profile_tags: {
+        Row: {
+          user_id: string;
+          avatar_id: string | null;
+          genres: string[];
+          archetypes: string[];
+          onboarding_completed: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          avatar_id?: string | null;
+          genres?: string[];
+          archetypes?: string[];
+          onboarding_completed?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          avatar_id?: string | null;
+          genres?: string[];
+          archetypes?: string[];
+          onboarding_completed?: boolean;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;

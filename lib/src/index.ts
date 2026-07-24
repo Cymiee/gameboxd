@@ -69,6 +69,23 @@ export {
 } from "./supabase/lists.js";
 export type { ListWithMeta, ListWithGames } from "./supabase/lists.js";
 
+// Profile tags (onboarding: avatar, genres, archetypes)
+export { getProfileTags, upsertProfileTags } from "./supabase/profileTags.js";
+export type { ProfileTagsUpdate } from "./supabase/profileTags.js";
+
+// Onboarding constants
+export {
+  GENRE_TAGS,
+  GENRE_LABELS,
+  MIN_GENRES,
+  MAX_GENRES,
+  ARCHETYPE_TAGS,
+  ARCHETYPES,
+  MAX_ARCHETYPES,
+  AVATAR_PRESETS,
+} from "./constants/onboarding.js";
+export type { GenreTag, ArchetypeTag, ArchetypeMeta, AvatarPreset } from "./constants/onboarding.js";
+
 // IGDB
 export { createIGDBClient, getCoverUrl } from "./igdb/client.js";
 export type { CoverSize } from "./igdb/client.js";
