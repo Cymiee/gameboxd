@@ -6,10 +6,13 @@ import GameCover from "../components/GameCover";
 
 const COVER_IMAGES = [
   { id: "co4jni", name: "Elden Ring" },
-  { id: "co1rgi", name: "Hollow Knight" },
-  { id: "co1tnm", name: "Red Dead Redemption 2" },
-  { id: "co1wyy", name: "The Witcher 3" },
-  { id: "co20jg", name: "Disco Elysium" },
+  { id: "coaes9", name: "Hollow Knight" },
+  { id: "coaarl", name: "The Witcher 3" },
+  { id: "co1q1f", name: "Red Dead Redemption 2" },
+  { id: "co9j3v", name: "Disco Elysium" },
+  { id: "co4rs3", name: "Hades" },
+  { id: "cob9dh", name: "Celeste" },
+  { id: "coa93h", name: "Stardew Valley" },
 ];
 
 export default function AuthPage() {
@@ -63,17 +66,19 @@ export default function AuthPage() {
   }
 
   const fieldStyle: React.CSSProperties = {
-    background: "var(--bg-base)",
+    background: "var(--bg-inset)",
     border: "1px solid var(--border)",
     borderRadius: "var(--radius-sm)",
-    padding: "0.7rem 0.9rem",
+    padding: "0.8rem 0.95rem",
     color: "var(--text-primary)",
     fontSize: "0.95rem",
     width: "100%",
     outline: "none",
     boxSizing: "border-box",
-    transition: "border-color 0.15s",
   };
+
+  // Staggered load animation for the form fields. Index drives the delay.
+  const riseStyle = (i: number): React.CSSProperties => ({ animationDelay: `${i * 60}ms` });
 
   return (
     <div
@@ -97,52 +102,72 @@ export default function AuthPage() {
           overflow: "hidden",
         }}
       >
-        {/* Dot-grid texture */}
+        {/* Soft radial glow behind the title */}
+        <div
+          aria-hidden
+          style={{
+            position: "absolute",
+            top: "34%",
+            left: "24%",
+            width: 520,
+            height: 520,
+            transform: "translate(-50%, -50%)",
+            background: "radial-gradient(circle, var(--accent-dim) 0%, transparent 62%)",
+            pointerEvents: "none",
+          }}
+        />
+        {/* Edge vignette for depth */}
         <div
           aria-hidden
           style={{
             position: "absolute",
             inset: 0,
-            backgroundImage: "radial-gradient(circle, rgba(224, 168, 46, 0.05) 1px, transparent 1px)",
-            backgroundSize: "28px 28px",
+            background: "radial-gradient(120% 120% at 50% 40%, transparent 58%, rgba(0,0,0,0.55) 100%)",
             pointerEvents: "none",
           }}
         />
 
-        {/* Centre content */}
-        <div style={{ position: "relative", padding: "0 3rem" }}>
-          <div className="label" style={{ marginBottom: "var(--space-4)" }}>
+        {/* Centre content — nudged below true centre */}
+        <div style={{ position: "relative", padding: "0 3.5rem", transform: "translateY(48px)" }}>
+          <div className="label auth-rise" style={{ marginBottom: "var(--space-5)" }}>
             Your game library
           </div>
 
           <div
+            className="auth-rise"
             style={{
               fontFamily: "var(--font-display)",
-              fontSize: "3.25rem",
+              fontSize: "3.5rem",
               fontWeight: 600,
               letterSpacing: "-0.02em",
               color: "var(--text-primary)",
-              marginBottom: "var(--space-4)",
+              marginBottom: "var(--space-6)",
               lineHeight: 1,
+              ...riseStyle(1),
             }}
           >
             Shelved
           </div>
 
           <p
+            className="auth-rise"
             style={{
               fontFamily: "var(--font-body)",
-              fontSize: "var(--text-base)",
+              fontSize: "var(--text-lg)",
               color: "var(--text-secondary)",
-              marginBottom: "var(--space-6)",
-              lineHeight: 1.6,
-              maxWidth: "36ch",
+              marginBottom: "var(--space-7)",
+              lineHeight: 1.65,
+              maxWidth: "34ch",
+              ...riseStyle(2),
             }}
           >
             Track, rate, and discover games with your friends.
           </p>
 
-          <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
+          <ul
+            className="auth-rise"
+            style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "var(--space-4)", ...riseStyle(3) }}
+          >
             {[
               "Log every game you play",
               "Show off your top 3",
@@ -156,41 +181,58 @@ export default function AuthPage() {
                   color: "var(--text-secondary)",
                   display: "flex",
                   gap: "var(--space-3)",
-                  alignItems: "baseline",
+                  alignItems: "center",
+                  lineHeight: 1.5,
                 }}
               >
-                <span
-                  aria-hidden
-                  style={{
-                    width: 3,
-                    height: 3,
-                    borderRadius: "50%",
-                    background: "var(--accent)",
-                    flexShrink: 0,
-                  }}
-                />
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden style={{ flexShrink: 0 }}>
+                  <path d="M2.5 7.5 L5.5 10.5 L11.5 3.5" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
                 {text}
               </li>
             ))}
           </ul>
         </div>
 
-        {/* Cover strip pinned to bottom */}
+        {/* Shelf — covers displayed on a divider line, fading off-screen */}
         <div
+          aria-hidden
           style={{
             position: "absolute",
-            bottom: "2rem",
-            left: "3rem",
-            right: "3rem",
-            display: "flex",
-            gap: "0.6rem",
+            bottom: "2.75rem",
+            left: 0,
+            right: 0,
+            // Fade both edges so the library reads as continuing off-screen
+            WebkitMaskImage: "linear-gradient(to right, transparent, #000 12%, #000 88%, transparent)",
+            maskImage: "linear-gradient(to right, transparent, #000 12%, #000 88%, transparent)",
           }}
         >
-          {COVER_IMAGES.map((cover) => (
-            <div key={cover.id} style={{ width: 70, flexShrink: 0, opacity: 0.8 }}>
-              <GameCover name={cover.name} imageId={cover.id} size="cover_small" rounding="sm" />
-            </div>
-          ))}
+          <div
+            style={{
+              display: "flex",
+              gap: "1rem",
+              alignItems: "flex-end",
+              padding: "0 3.5rem",
+              // The shelf line the covers sit on
+              borderBottom: "1px solid var(--border-strong)",
+              paddingBottom: "0.6rem",
+            }}
+          >
+            {COVER_IMAGES.map((cover) => (
+              <div
+                key={cover.id}
+                className="auth-cover"
+                style={{
+                  width: 62,
+                  flexShrink: 0,
+                  borderRadius: "var(--radius-sm)",
+                  boxShadow: "0 6px 14px rgba(0,0,0,0.5)",
+                }}
+              >
+                <GameCover name={cover.name} imageId={cover.id} size="cover_small" rounding="sm" />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
       )}
@@ -199,7 +241,7 @@ export default function AuthPage() {
       <div
         style={{
           flex: 1,
-          background: "var(--bg-card)",
+          background: "var(--bg-base)",
           display: "flex",
           alignItems: isMobile ? "flex-start" : "center",
           justifyContent: "center",
@@ -207,7 +249,7 @@ export default function AuthPage() {
           overflowY: "auto",
         }}
       >
-        <div style={{ width: "100%", maxWidth: 360 }}>
+        <div style={{ width: "100%", maxWidth: 380 }}>
           {/* Compact wordmark replaces the hidden brand panel on mobile */}
           {isMobile && (
             <div
@@ -242,8 +284,19 @@ export default function AuthPage() {
             </div>
           )}
 
+          {/* Auth card — subtly lighter than the page */}
+          <div
+            className="auth-rise"
+            style={{
+              background: "var(--bg-card)",
+              border: "1px solid rgba(255,255,255,0.06)",
+              borderRadius: 14,
+              boxShadow: "0 12px 40px rgba(0,0,0,0.35)",
+              padding: isMobile ? "1.5rem 1.25rem" : "2rem",
+            }}
+          >
           {/* Tab switcher */}
-          <div style={{ display: "flex", gap: "1.5rem", marginBottom: "1.75rem" }}>
+          <div style={{ display: "flex", gap: "1.5rem", marginBottom: "2rem" }}>
             {(["login", "signup"] as const).map((tab) => (
               <button
                 key={tab}
@@ -269,53 +322,49 @@ export default function AuthPage() {
 
           <form
             onSubmit={handleSubmit}
-            style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}
+            style={{ display: "flex", flexDirection: "column", gap: "1.1rem" }}
           >
             {mode === "signup" && (
               <input
+                className="auth-input auth-rise"
                 type="text"
                 placeholder="Username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
-                style={fieldStyle}
-                onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
-                onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
+                style={{ ...fieldStyle, ...riseStyle(0) }}
               />
             )}
 
             <input
+              className="auth-input auth-rise"
               type="email"
               placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              style={fieldStyle}
-              onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
-              onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
+              style={{ ...fieldStyle, ...riseStyle(1) }}
             />
 
             <input
+              className="auth-input auth-rise"
               type="password"
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              style={fieldStyle}
-              onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
-              onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
+              style={{ ...fieldStyle, ...riseStyle(2) }}
             />
 
             {mode === "signup" && (
               <input
+                className="auth-input auth-rise"
                 type="password"
                 placeholder="Confirm Password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
-                style={fieldStyle}
-                onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
-                onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
+                style={{ ...fieldStyle, ...riseStyle(3) }}
               />
             )}
 
@@ -330,6 +379,7 @@ export default function AuthPage() {
             )}
 
             <button
+              className="auth-submit auth-rise"
               type="submit"
               disabled={loading}
               style={{
@@ -337,14 +387,15 @@ export default function AuthPage() {
                 color: "var(--on-accent)",
                 border: "none",
                 borderRadius: "var(--radius-sm)",
-                padding: "0.75rem",
+                padding: "0.8rem",
                 cursor: loading ? "not-allowed" : "pointer",
                 fontSize: "0.95rem",
                 fontWeight: 600,
                 opacity: loading ? 0.7 : 1,
                 fontFamily: "var(--font-body)",
-                marginTop: "0.25rem",
+                marginTop: "0.75rem",
                 width: "100%",
+                ...riseStyle(4),
               }}
             >
               {loading ? "Loading…" : mode === "login" ? "Sign in" : "Sign up"}
@@ -364,6 +415,7 @@ export default function AuthPage() {
               </p>
             )}
           </form>
+          </div>
         </div>
       </div>
     </div>

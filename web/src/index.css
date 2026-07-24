@@ -86,6 +86,47 @@ a:hover {
   50%      { opacity: 0.65; }
 }
 
+/* ── Auth screen ─────────────────────────────────────────────────────────── */
+
+@keyframes authFadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Inputs/rows fade + slide in on load; stagger is set inline per field. */
+.auth-rise {
+  animation: authFadeUp 280ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* Gold focus: accent border + soft ring. */
+.auth-input {
+  transition: border-color 220ms cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 220ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.auth-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+/* Primary button lifts 1px on hover. */
+.auth-submit {
+  transition: transform 220ms cubic-bezier(0.4, 0, 0.2, 1),
+              background 220ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.auth-submit:not(:disabled):hover {
+  transform: translateY(-1px);
+  background: var(--accent-hover);
+}
+
+/* Shelf covers lift a few px on hover. */
+.auth-cover {
+  transition: transform 240ms cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 240ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.auth-cover:hover {
+  transform: translateY(-5px);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
