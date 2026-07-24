@@ -1,13 +1,14 @@
 import { useEffect } from "react";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "./lib/supabase";
 import { useAuthStore } from "./store/auth";
 import { useNotificationsStore } from "./store/notifications";
-import { ensureProfile } from "@gameboxd/lib";
+import { ensureProfile, getProfileTags } from "@gameboxd/lib";
 import Spinner from "./components/Spinner";
 
 import Layout from "./components/Layout";
 import AuthPage from "./pages/AuthPage";
+import OnboardingPage from "./pages/OnboardingPage";
 import HomePage from "./pages/HomePage";
 import SearchPage from "./pages/SearchPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -25,8 +26,33 @@ function LegacyGamesRedirect() {
   return <Navigate to={`/explore${search}`} replace />;
 }
 
+/**
+ * Shows the profile-setup wizard once after a user's first login, when they
+ * haven't completed (or explicitly skipped) it. Fully non-blocking: it only
+ * redirects a single time per session, so the user can navigate away freely and
+ * finish later from Settings.
+ */
+function OnboardingGate() {
+  const { userId, profileTags, profileTagsLoaded } = useAuthStore();
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    if (!userId || !profileTagsLoaded) return;
+    if (profileTags?.onboarding_completed) return;
+    // Don't hijack these flows.
+    if (pathname.startsWith("/onboarding") || pathname === "/auth") return;
+    // Only auto-prompt once per browser session.
+    if (sessionStorage.getItem("onboardingPrompted")) return;
+    sessionStorage.setItem("onboardingPrompted", "1");
+    navigate("/onboarding", { replace: false });
+  }, [userId, profileTags, profileTagsLoaded, pathname, navigate]);
+
+  return null;
+}
+
 export default function App() {
-  const { userId, initialized, setUserId, setProfile, setInitialized } = useAuthStore();
+  const { userId, initialized, setUserId, setProfile, setProfileTags, setInitialized } = useAuthStore();
   const refreshNotifications = useNotificationsStore((s) => s.refresh);
   const clearNotifications = useNotificationsStore((s) => s.clear);
 
@@ -42,6 +68,7 @@ export default function App() {
           .then(setProfile)
           .catch(() => setProfile(null))
           .finally(setInitialized);
+        getProfileTags(supabase, user.id).then(setProfileTags).catch(() => setProfileTags(null));
         void refreshNotifications(user.id);
       } else {
         setInitialized();
@@ -62,16 +89,18 @@ export default function App() {
           } catch {
             setProfile(null);
           }
+          getProfileTags(supabase, user.id).then(setProfileTags).catch(() => setProfileTags(null));
           void refreshNotifications(user.id);
         } else {
           setProfile(null);
+          setProfileTags(null);
           clearNotifications();
         }
       }
     );
 
     return () => listener.subscription.unsubscribe();
-  }, [setUserId, setProfile, setInitialized, refreshNotifications, clearNotifications]);
+  }, [setUserId, setProfile, setProfileTags, setInitialized, refreshNotifications, clearNotifications]);
 
   if (!initialized) {
     return (
@@ -83,8 +112,20 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <OnboardingGate />
       <Routes>
         <Route path="/auth" element={<AuthPage />} />
+
+        {/* Full-screen onboarding wizard (protected, no navbar). Each step is its
+            own route; bare /onboarding lands on the first step. */}
+        <Route
+          path="/onboarding"
+          element={userId ? <Navigate to="/onboarding/avatar" replace /> : <Navigate to="/auth" replace />}
+        />
+        <Route
+          path="/onboarding/:step"
+          element={userId ? <OnboardingPage /> : <Navigate to="/auth" replace />}
+        />
 
         {/* Public — rendered with Navbar for everyone */}
         <Route element={<Layout />}>

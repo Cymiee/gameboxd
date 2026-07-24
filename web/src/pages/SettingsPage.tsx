@@ -1,12 +1,15 @@
 import { useState } from "react";
-import { updateProfile } from "@gameboxd/lib";
+import { updateProfile, upsertProfileTags, MIN_GENRES } from "@gameboxd/lib";
 import { supabase } from "../lib/supabase";
 import { useAuthStore } from "../store/auth";
+import AvatarSelect from "../components/onboarding/AvatarSelect";
+import GenreSelect from "../components/onboarding/GenreSelect";
+import ArchetypeSelect from "../components/onboarding/ArchetypeSelect";
 
-type Section = "profile" | "security";
+type Section = "profile" | "gaming" | "security";
 
 export default function SettingsPage() {
-  const { userId, profile, setProfile } = useAuthStore();
+  const { userId, profile, setProfile, profileTags, setProfileTags } = useAuthStore();
   const [section, setSection] = useState<Section>("profile");
 
   const [username, setUsername] = useState(profile?.username ?? "");
@@ -14,6 +17,12 @@ export default function SettingsPage() {
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url ?? "");
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileMsg, setProfileMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+
+  const [avatarId, setAvatarId] = useState<string | null>(profileTags?.avatar_id ?? null);
+  const [genres, setGenres] = useState<string[]>(profileTags?.genres ?? []);
+  const [archetypes, setArchetypes] = useState<string[]>(profileTags?.archetypes ?? []);
+  const [gamingSaving, setGamingSaving] = useState(false);
+  const [gamingMsg, setGamingMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
 
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -42,6 +51,30 @@ export default function SettingsPage() {
       setProfileMsg({ type: "err", text: e instanceof Error ? e.message : "Failed to update profile." });
     } finally {
       setProfileSaving(false);
+    }
+  };
+
+  const handleSaveGaming = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userId) return;
+    if (genres.length > 0 && genres.length < MIN_GENRES) {
+      setGamingMsg({ type: "err", text: `Pick at least ${MIN_GENRES} genre.` });
+      return;
+    }
+    setGamingSaving(true);
+    setGamingMsg(null);
+    try {
+      const saved = await upsertProfileTags(supabase, userId, {
+        avatar_id: avatarId,
+        genres,
+        archetypes,
+      });
+      setProfileTags(saved);
+      setGamingMsg({ type: "ok", text: "Preferences saved!" });
+    } catch (e) {
+      setGamingMsg({ type: "err", text: e instanceof Error ? e.message : "Failed to save preferences." });
+    } finally {
+      setGamingSaving(false);
     }
   };
 
@@ -118,8 +151,9 @@ export default function SettingsPage() {
         Settings
       </h1>
 
-      <div style={{ display: "flex", gap: "0.5rem", marginBottom: "2rem" }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginBottom: "2rem" }}>
         <button style={tabStyle("profile")} onClick={() => setSection("profile")}>Profile</button>
+        <button style={tabStyle("gaming")} onClick={() => setSection("gaming")}>Gaming</button>
         <button style={tabStyle("security")} onClick={() => setSection("security")}>Security</button>
       </div>
 
@@ -178,6 +212,59 @@ export default function SettingsPage() {
             }}
           >
             {profileSaving ? "Saving..." : "Save Profile"}
+          </button>
+        </form>
+      )}
+
+      {section === "gaming" && (
+        <form
+          onSubmit={handleSaveGaming}
+          style={{
+            background: "var(--bg-card)",
+            border: "1px solid var(--border)",
+            borderRadius: "var(--radius-lg)",
+            padding: "1.5rem",
+            display: "flex",
+            flexDirection: "column",
+            gap: "1.75rem",
+          }}
+        >
+          <div>
+            <label style={labelStyle}>Avatar</label>
+            <AvatarSelect value={avatarId} onChange={setAvatarId} />
+          </div>
+          <div>
+            <label style={labelStyle}>Favourite genres</label>
+            <GenreSelect value={genres} onChange={setGenres} />
+          </div>
+          <div>
+            <label style={labelStyle}>Gamer archetype</label>
+            <ArchetypeSelect value={archetypes} onChange={setArchetypes} />
+          </div>
+
+          {gamingMsg && (
+            <p style={{ color: gamingMsg.type === "ok" ? "var(--success)" : "var(--danger)", fontSize: "0.85rem", margin: 0 }}>
+              {gamingMsg.text}
+            </p>
+          )}
+
+          <button
+            type="submit"
+            disabled={gamingSaving}
+            style={{
+              padding: "0.65rem",
+              background: "var(--accent)",
+              border: "none",
+              color: "var(--on-accent)",
+              borderRadius: "var(--radius-sm)",
+              cursor: gamingSaving ? "not-allowed" : "pointer",
+              fontWeight: 600,
+              fontSize: "0.9rem",
+              opacity: gamingSaving ? 0.7 : 1,
+              fontFamily: "var(--font-body)",
+            }}
+          >
+            {gamingSaving ? "Saving..." : "Save Preferences"}
           </button>
         </form>
       )}

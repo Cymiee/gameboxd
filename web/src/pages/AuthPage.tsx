@@ -21,6 +21,8 @@ export default function AuthPage() {
   const fromPath = searchParams.get("from");
 
   const [mode, setMode] = useState<"login" | "signup">(initialMode);
+  // Phase 1 signup is two steps: 1 = email, 2 = username + password.
+  const [signupStep, setSignupStep] = useState<1 | 2>(1);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -36,6 +38,23 @@ export default function AuthPage() {
     if (err instanceof Error) return err.message;
     if (err && typeof err === "object" && "message" in err) return String((err as { message: unknown }).message);
     return "Something went wrong. Please try again.";
+  }
+
+  function switchMode(next: "login" | "signup") {
+    setMode(next);
+    setError(null);
+    setConfirmationSent(false);
+    setSignupStep(1);
+  }
+
+  function handleEmailContinue(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setError("Enter a valid email address");
+      return;
+    }
+    setSignupStep(2);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -75,6 +94,20 @@ export default function AuthPage() {
     width: "100%",
     outline: "none",
     boxSizing: "border-box",
+  };
+
+  const submitStyle: React.CSSProperties = {
+    background: "var(--accent)",
+    color: "var(--on-accent)",
+    border: "none",
+    borderRadius: "var(--radius-sm)",
+    padding: "0.8rem",
+    cursor: "pointer",
+    fontSize: "0.95rem",
+    fontWeight: 600,
+    fontFamily: "var(--font-body)",
+    marginTop: "0.75rem",
+    width: "100%",
   };
 
   // Staggered load animation for the form fields. Index drives the delay.
@@ -301,7 +334,7 @@ export default function AuthPage() {
               <button
                 key={tab}
                 type="button"
-                onClick={() => { setMode(tab); setError(null); }}
+                onClick={() => switchMode(tab)}
                 style={{
                   background: "none",
                   border: "none",
@@ -320,11 +353,89 @@ export default function AuthPage() {
             ))}
           </div>
 
-          <form
-            onSubmit={handleSubmit}
-            style={{ display: "flex", flexDirection: "column", gap: "1.1rem" }}
-          >
-            {mode === "signup" && (
+          {/* ── Sign in ── */}
+          {mode === "login" && (
+            <form
+              onSubmit={handleSubmit}
+              style={{ display: "flex", flexDirection: "column", gap: "1.1rem" }}
+            >
+              <input
+                className="auth-input auth-rise"
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                style={{ ...fieldStyle, ...riseStyle(1) }}
+              />
+              <input
+                className="auth-input auth-rise"
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                style={{ ...fieldStyle, ...riseStyle(2) }}
+              />
+
+              {error && (
+                <p style={{ color: "var(--danger)", fontSize: "0.875rem", margin: 0 }}>{error}</p>
+              )}
+
+              <button
+                className="auth-submit auth-rise"
+                type="submit"
+                disabled={loading}
+                style={{ ...submitStyle, opacity: loading ? 0.7 : 1, cursor: loading ? "not-allowed" : "pointer" }}
+              >
+                {loading ? "Loading…" : "Sign in"}
+              </button>
+            </form>
+          )}
+
+          {/* ── Sign up · Step 1: email ── */}
+          {mode === "signup" && signupStep === 1 && (
+            <form
+              onSubmit={handleEmailContinue}
+              style={{ display: "flex", flexDirection: "column", gap: "1.1rem" }}
+            >
+              <p style={{ fontSize: 13, color: "var(--text-muted)", margin: "0 0 0.25rem" }}>
+                Step 1 of 2 · Your email
+              </p>
+              <input
+                className="auth-input auth-rise"
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoFocus
+                style={{ ...fieldStyle, ...riseStyle(1) }}
+              />
+
+              {error && (
+                <p style={{ color: "var(--danger)", fontSize: "0.875rem", margin: 0 }}>{error}</p>
+              )}
+
+              <button className="auth-submit auth-rise" type="submit" style={submitStyle}>
+                Continue
+              </button>
+
+              <p style={{ fontFamily: "var(--font-body)", fontSize: 12, color: "var(--text-muted)", textAlign: "center", margin: 0 }}>
+                By signing up you agree to our Terms of Service
+              </p>
+            </form>
+          )}
+
+          {/* ── Sign up · Step 2: username + password ── */}
+          {mode === "signup" && signupStep === 2 && (
+            <form
+              onSubmit={handleSubmit}
+              style={{ display: "flex", flexDirection: "column", gap: "1.1rem" }}
+            >
+              <p style={{ fontSize: 13, color: "var(--text-muted)", margin: "0 0 0.25rem" }}>
+                Step 2 of 2 · Pick a username &amp; password
+              </p>
               <input
                 className="auth-input auth-rise"
                 type="text"
@@ -332,31 +443,18 @@ export default function AuthPage() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
+                autoFocus
                 style={{ ...fieldStyle, ...riseStyle(0) }}
               />
-            )}
-
-            <input
-              className="auth-input auth-rise"
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              style={{ ...fieldStyle, ...riseStyle(1) }}
-            />
-
-            <input
-              className="auth-input auth-rise"
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              style={{ ...fieldStyle, ...riseStyle(2) }}
-            />
-
-            {mode === "signup" && (
+              <input
+                className="auth-input auth-rise"
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                style={{ ...fieldStyle, ...riseStyle(1) }}
+              />
               <input
                 className="auth-input auth-rise"
                 type="password"
@@ -364,57 +462,49 @@ export default function AuthPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
-                style={{ ...fieldStyle, ...riseStyle(3) }}
+                style={{ ...fieldStyle, ...riseStyle(2) }}
               />
-            )}
 
-            {error && (
-              <p style={{ color: "var(--danger)", fontSize: "0.875rem", margin: 0 }}>{error}</p>
-            )}
+              {error && (
+                <p style={{ color: "var(--danger)", fontSize: "0.875rem", margin: 0 }}>{error}</p>
+              )}
 
-            {confirmationSent && (
-              <p style={{ color: "var(--success)", fontSize: "0.875rem", margin: 0, lineHeight: 1.5 }}>
-                Check your email to confirm your account, then sign in.
-              </p>
-            )}
+              {confirmationSent && (
+                <p style={{ color: "var(--success)", fontSize: "0.875rem", margin: 0, lineHeight: 1.5 }}>
+                  Check your email to confirm your account, then sign in.
+                </p>
+              )}
 
-            <button
-              className="auth-submit auth-rise"
-              type="submit"
-              disabled={loading}
-              style={{
-                background: "var(--accent)",
-                color: "var(--on-accent)",
-                border: "none",
-                borderRadius: "var(--radius-sm)",
-                padding: "0.8rem",
-                cursor: loading ? "not-allowed" : "pointer",
-                fontSize: "0.95rem",
-                fontWeight: 600,
-                opacity: loading ? 0.7 : 1,
-                fontFamily: "var(--font-body)",
-                marginTop: "0.75rem",
-                width: "100%",
-                ...riseStyle(4),
-              }}
-            >
-              {loading ? "Loading…" : mode === "login" ? "Sign in" : "Sign up"}
-            </button>
+              {!confirmationSent && (
+                <button
+                  className="auth-submit auth-rise"
+                  type="submit"
+                  disabled={loading}
+                  style={{ ...submitStyle, opacity: loading ? 0.7 : 1, cursor: loading ? "not-allowed" : "pointer" }}
+                >
+                  {loading ? "Loading…" : "Create account"}
+                </button>
+              )}
 
-            {mode === "signup" && (
-              <p
-                style={{
-                  fontFamily: "var(--font-body)",
-                  fontSize: 12,
-                  color: "var(--text-muted)",
-                  textAlign: "center",
-                  margin: 0,
-                }}
-              >
-                By signing up you agree to our Terms of Service
-              </p>
-            )}
-          </form>
+              {!confirmationSent && (
+                <button
+                  type="button"
+                  onClick={() => { setError(null); setSignupStep(1); }}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "var(--text-muted)",
+                    cursor: "pointer",
+                    fontSize: "0.85rem",
+                    fontFamily: "var(--font-body)",
+                    padding: 0,
+                  }}
+                >
+                  ← Back
+                </button>
+              )}
+            </form>
+          )}
           </div>
         </div>
       </div>
