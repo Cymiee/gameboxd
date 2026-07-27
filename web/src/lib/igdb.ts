@@ -9,7 +9,7 @@ export type SortMode = "trending" | "top_rated" | "new_releases";
 
 const GAME_FIELDS =
   "fields id,name,summary,first_release_date,rating,rating_count,total_rating,total_rating_count,hypes,similar_games," +
-  "cover.id,cover.image_id,cover.url,genres.id,genres.name,platforms.id,platforms.name," +
+  "cover.id,cover.image_id,cover.url,genres.id,genres.name,platforms.id,platforms.name,artworks.image_id,screenshots.image_id," +
   "involved_companies.company.id,involved_companies.company.name,involved_companies.developer;";
 
 // ── Request cache ────────────────────────────────────────────────────────────

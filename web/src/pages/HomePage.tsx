@@ -5,10 +5,11 @@ import { getFriendsActivityFeed, getPopularAmongFriends, getUsersByIds, GENRE_IG
 import type { GenreTag } from "@gameboxd/lib";
 import { supabase } from "../lib/supabase";
 import { useAuthStore } from "../store/auth";
-import { getTrendingGames, getGames, getNewReleases, getGamesByTags } from "../lib/igdb";
+import { getTrendingGames, getGames, getGame, getNewReleases, getGamesByTags } from "../lib/igdb";
 import GameCard from "../components/GameCard";
 import ActivityCard from "../components/ActivityCard";
 import RecommendationRow from "../components/RecommendationRow";
+import FeaturedHero from "../components/FeaturedHero";
 import LogGameModal from "../components/LogGameModal";
 import Spinner from "../components/Spinner";
 import Shelf, { ShelfHeader } from "../components/Shelf";
@@ -287,6 +288,27 @@ export default function HomePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, genresKey]);
 
+  // Seed "Because you loved X" from the user's highest-rated logged game.
+  const topRatedLog = [...logs].filter((l) => (l.rating ?? 0) >= 8).sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))[0];
+  const seedId = topRatedLog?.game_igdb_id ?? null;
+  useEffect(() => {
+    if (!seedId) { setSeedGame(null); setSeedRecs([]); return; }
+    let cancelled = false;
+    (async () => {
+      try {
+        const seed = await getGame(seedId);
+        if (cancelled) return;
+        setSeedGame(seed);
+        const ids = seed.similar_games ?? [];
+        const games = ids.length > 0 ? await getGames(ids) : [];
+        if (!cancelled) setSeedRecs(games);
+      } catch {
+        if (!cancelled) { setSeedGame(null); setSeedRecs([]); }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [seedId]);
+
   // Friends feed & popular (logged-in only)
   useEffect(() => {
     if (!userId) return;
@@ -344,102 +366,24 @@ export default function HomePage() {
   const handleQuickLog = (game: IGDBGame) => setQuickLogGame(game);
   const hasActivity = friendsFeed.length > 0;
 
+  // Cinematic featured hero — the most hyped current title with wide art.
+  const featured = trending.find((g) => g.artworks?.length || g.screenshots?.length) ?? trending[0] ?? newReleases[0] ?? null;
+
   // Don't suggest games the user has already logged.
   const loggedIds = new Set(logs.map((l) => l.game_igdb_id));
   const recommendedFresh = recommended.filter((g) => !loggedIds.has(g.id));
+  const seedRecsFresh = seedRecs.filter((g) => !loggedIds.has(g.id));
   const hasGenres = suggestionGenres.length > 0;
 
   return (
     <div style={{ paddingBottom: "4rem" }}>
-      {/* ── Hero — signed-out only. Signed in, friend activity leads instead. ──
-          Flat gradient + faint amber bloom rather than art: the old illustration
-          was lime-green and fought the amber accent (and weighed 2.9 MB). */}
-      {!userId && (
-      <div
-        style={{
-          position: "relative",
-          overflow: "hidden",
-          isolation: "isolate",
-          backgroundImage:
-            "radial-gradient(circle, rgba(224, 168, 46, 0.045) 1px, transparent 1px)",
-          backgroundSize: "30px 30px",
-          borderBottom: "1px solid var(--border)",
-          height: isMobile ? 340 : 440,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          textAlign: "center",
-          padding: "0 1.5rem",
-        }}
-      >
-        {/* Animated ambient backdrop */}
-        <div className="aurora" style={{ zIndex: 0 }} />
-
-        <div
-          className="stagger"
-          style={{
-            position: "relative",
-            zIndex: 1,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-          }}
-        >
-          <span className="label" style={{ marginBottom: space[4] }}>
-            Your game library
-          </span>
-          <h1
-            className="grad-text"
-            style={{
-              fontFamily: font.display,
-              fontSize: isMobile ? "3rem" : "var(--text-display)",
-              fontWeight: 600,
-              letterSpacing: "-0.02em",
-              margin: 0,
-              lineHeight: 1.05,
-            }}
-          >
-            Shelved
-          </h1>
-          <p
-            style={{
-              color: color.textSecondary,
-              marginTop: space[4],
-              fontSize: "var(--text-lg)",
-              fontWeight: 400,
-              maxWidth: 440,
-              lineHeight: 1.55,
-            }}
-          >
-            Track, rate, and discover games with your friends.
-          </p>
-          <div style={{ marginTop: space[6] }}>
-            <Link
-              className="press"
-              to={userId ? `/profile/${userId}` : "/auth"}
-              style={{
-                display: "inline-block",
-                padding: "0.8rem 2rem",
-                background: "var(--grad-brand)",
-                color: color.onAccent,
-                borderRadius: "var(--radius-full)",
-                fontWeight: 600,
-                fontSize: "var(--text-base)",
-                fontFamily: font.body,
-                letterSpacing: "0.01em",
-                textDecoration: "none",
-                boxShadow: "var(--glow-soft)",
-                transition: "box-shadow var(--transition), filter var(--transition)",
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.filter = "brightness(1.08)"; e.currentTarget.style.boxShadow = "var(--glow-accent)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; e.currentTarget.style.boxShadow = "var(--glow-soft)"; }}
-            >
-              Start your shelf
-            </Link>
-          </div>
-        </div>
-      </div>
+      {/* ── Cinematic featured hero — large artwork fading into the page ── */}
+      {featured && (
+        <FeaturedHero
+          game={featured}
+          ctaLabel={userId ? "Learn More" : "Start your shelf"}
+          ctaTo={userId ? `/game/${featured.id}` : "/auth"}
+        />
       )}
 
       <div style={{ maxWidth: 1280, margin: "0 auto", padding: isMobile ? "1.5rem 16px 0" : "2.5rem 24px 0" }}>
@@ -463,14 +407,19 @@ export default function HomePage() {
           </section>
         )}
 
-        {/* Personalised — leads the discovery shelves when the user has genres. */}
-        {userId && hasGenres && (recommendedLoading || recommendedFresh.length > 0) && (
-          <GameShelf
-            title="Based on Your Genres"
-            games={recommendedFresh}
-            loading={recommendedLoading}
-            onQuickLog={handleQuickLog}
-          />
+        {/* Personalised discovery leads. "Because you loved X" (seeded by a
+            top-rated log) takes priority; otherwise fall back to genre-based. */}
+        {userId && seedGame && seedRecsFresh.length > 0 ? (
+          <RecommendationRow seed={seedGame} games={seedRecsFresh} onQuickLog={handleQuickLog} />
+        ) : (
+          userId && hasGenres && (recommendedLoading || recommendedFresh.length > 0) && (
+            <GameShelf
+              title="Based on Your Genres"
+              games={recommendedFresh}
+              loading={recommendedLoading}
+              onQuickLog={handleQuickLog}
+            />
+          )
         )}
 
         <GameShelf
