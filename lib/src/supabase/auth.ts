@@ -144,3 +144,18 @@ export async function updateProfile(
   if (error) throw error;
   return data;
 }
+
+/** Unlink a user's Steam account (clears steam_id + sync time). */
+export async function unlinkSteam(
+  client: SupabaseClient<Database>,
+  userId: string
+): Promise<UserRow> {
+  const { data, error } = await client
+    .from("users")
+    .update({ steam_id: null, steam_synced_at: null })
+    .eq("id", userId)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}

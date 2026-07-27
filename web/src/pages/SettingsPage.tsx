@@ -1,17 +1,69 @@
-import { useState } from "react";
-import { updateProfile, upsertProfileTags, MIN_GENRES } from "@gameboxd/lib";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
+import { updateProfile, upsertProfileTags, unlinkSteam, MIN_GENRES } from "@gameboxd/lib";
 import { supabase } from "../lib/supabase";
 import { useAuthStore } from "../store/auth";
+import { startSteamLink } from "../lib/steam";
 import { presetAvatarUrl, isPresetAvatar } from "../components/Avatar";
 import AvatarSelect from "../components/onboarding/AvatarSelect";
 import GenreSelect from "../components/onboarding/GenreSelect";
 import ArchetypeSelect from "../components/onboarding/ArchetypeSelect";
 
-type Section = "profile" | "gaming" | "security";
+type Section = "profile" | "gaming" | "connections" | "security";
+
+const STEAM_ERRORS: Record<string, string> = {
+  expired: "That took too long — please try linking again.",
+  unverified: "Steam couldn't verify the sign-in. Please try again.",
+  already_linked: "That Steam account is already linked to another user.",
+  save_failed: "Couldn't save the link. Please try again.",
+  server: "Something went wrong. Please try again.",
+};
 
 export default function SettingsPage() {
   const { userId, profile, setProfile, profileTags, setProfileTags } = useAuthStore();
-  const [section, setSection] = useState<Section>("profile");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [section, setSection] = useState<Section>(searchParams.get("steam") ? "connections" : "profile");
+
+  const [steamMsg, setSteamMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [steamBusy, setSteamBusy] = useState(false);
+
+  // Surface the result of a Steam link round-trip (?steam=linked|error).
+  useEffect(() => {
+    const steam = searchParams.get("steam");
+    if (!steam) return;
+    if (steam === "linked") setSteamMsg({ type: "ok", text: "Steam account linked!" });
+    else setSteamMsg({ type: "err", text: STEAM_ERRORS[searchParams.get("reason") ?? ""] ?? "Couldn't link Steam." });
+    // Clear the query params so a refresh doesn't re-show the message.
+    searchParams.delete("steam");
+    searchParams.delete("reason");
+    setSearchParams(searchParams, { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  const handleLinkSteam = async () => {
+    setSteamMsg(null);
+    setSteamBusy(true);
+    try {
+      await startSteamLink(); // redirects away
+    } catch (e) {
+      setSteamMsg({ type: "err", text: e instanceof Error ? e.message : "Couldn't start Steam linking." });
+      setSteamBusy(false);
+    }
+  };
+
+  const handleUnlinkSteam = async () => {
+    if (!userId) return;
+    setSteamBusy(true);
+    setSteamMsg(null);
+    try {
+      const updated = await unlinkSteam(supabase, userId);
+      setProfile(updated);
+      setSteamMsg({ type: "ok", text: "Steam account unlinked." });
+    } catch (e) {
+      setSteamMsg({ type: "err", text: e instanceof Error ? e.message : "Couldn't unlink Steam." });
+    } finally {
+      setSteamBusy(false);
+    }
+  };
 
   const [username, setUsername] = useState(profile?.username ?? "");
   const [bio, setBio] = useState(profile?.bio ?? "");
@@ -164,6 +216,7 @@ export default function SettingsPage() {
       <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginBottom: "2rem" }}>
         <button style={tabStyle("profile")} onClick={() => setSection("profile")}>Profile</button>
         <button style={tabStyle("gaming")} onClick={() => setSection("gaming")}>Gaming</button>
+        <button style={tabStyle("connections")} onClick={() => setSection("connections")}>Connections</button>
         <button style={tabStyle("security")} onClick={() => setSection("security")}>Security</button>
       </div>
 
@@ -279,6 +332,94 @@ export default function SettingsPage() {
             {gamingSaving ? "Saving..." : "Save Preferences"}
           </button>
         </form>
+      )}
+
+      {section === "connections" && (
+        <div
+          style={{
+            background: "var(--bg-card)",
+            border: "1px solid var(--border)",
+            borderRadius: "var(--radius-lg)",
+            padding: "1.5rem",
+            display: "flex",
+            flexDirection: "column",
+            gap: "1rem",
+          }}
+        >
+          <div>
+            <label style={labelStyle}>Steam</label>
+            <p style={{ fontSize: "0.875rem", color: "var(--text-muted)", margin: "0 0 1rem", lineHeight: 1.55 }}>
+              Link your Steam account to import your library and hours played. Your Steam profile's
+              “Game details” must be set to Public.
+            </p>
+
+            {profile?.steam_id ? (
+              <div style={{ display: "flex", gap: "0.6rem", alignItems: "center", flexWrap: "wrap" }}>
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "0.4rem",
+                    padding: "0.45rem 0.85rem",
+                    background: "var(--accent-dim)",
+                    border: "1px solid var(--accent-ring)",
+                    color: "var(--accent)",
+                    borderRadius: "var(--radius-sm)",
+                    fontSize: "0.85rem",
+                    fontWeight: 600,
+                    fontVariantNumeric: "tabular-nums",
+                  }}
+                >
+                  ✓ Linked · {profile.steam_id}
+                </span>
+                <button
+                  onClick={handleUnlinkSteam}
+                  disabled={steamBusy}
+                  style={{
+                    padding: "0.45rem 1rem",
+                    background: "transparent",
+                    border: "1px solid var(--border)",
+                    color: "var(--danger)",
+                    borderRadius: "var(--radius-sm)",
+                    cursor: steamBusy ? "not-allowed" : "pointer",
+                    fontSize: "0.85rem",
+                    fontWeight: 600,
+                    fontFamily: "var(--font-body)",
+                    opacity: steamBusy ? 0.6 : 1,
+                  }}
+                >
+                  Unlink
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={handleLinkSteam}
+                disabled={steamBusy}
+                className="btn-pop"
+                style={{
+                  padding: "0.6rem 1.25rem",
+                  background: "#1b2838",
+                  border: "1px solid #316282",
+                  color: "#c7d5e0",
+                  borderRadius: "var(--radius-sm)",
+                  cursor: steamBusy ? "not-allowed" : "pointer",
+                  fontSize: "0.9rem",
+                  fontWeight: 600,
+                  fontFamily: "var(--font-body)",
+                  opacity: steamBusy ? 0.7 : 1,
+                }}
+              >
+                {steamBusy ? "Redirecting…" : "Link Steam account"}
+              </button>
+            )}
+
+            {steamMsg && (
+              <p style={{ color: steamMsg.type === "ok" ? "var(--success)" : "var(--danger)", fontSize: "0.85rem", margin: "0.85rem 0 0" }}>
+                {steamMsg.text}
+              </p>
+            )}
+          </div>
+        </div>
       )}
 
       {section === "security" && (

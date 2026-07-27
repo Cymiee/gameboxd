@@ -12,6 +12,7 @@ export {
   signOut,
   getProfile,
   updateProfile,
+  unlinkSteam,
   ensureProfile,
   getUsersByIds,
   getUserByUsername,

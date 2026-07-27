@@ -15,6 +15,8 @@ export interface Database {
           username: string;
           bio: string | null;
           avatar_url: string | null;
+          steam_id: string | null;
+          steam_synced_at: string | null;
           created_at: string;
         };
         Insert: {
@@ -22,12 +24,16 @@ export interface Database {
           username: string;
           bio?: string | null;
           avatar_url?: string | null;
+          steam_id?: string | null;
+          steam_synced_at?: string | null;
           created_at?: string;
         };
         Update: {
           username?: string;
           bio?: string | null;
           avatar_url?: string | null;
+          steam_id?: string | null;
+          steam_synced_at?: string | null;
         };
         Relationships: [];
       };
