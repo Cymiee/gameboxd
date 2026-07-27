@@ -323,12 +323,14 @@ export default function HomePage() {
       {!userId && (
       <div
         style={{
+          position: "relative",
+          overflow: "hidden",
+          isolation: "isolate",
           backgroundImage:
-            "radial-gradient(ellipse 80% 60% at 50% 0%, rgba(224, 168, 46, 0.10), transparent 70%), " +
             "radial-gradient(circle, rgba(224, 168, 46, 0.045) 1px, transparent 1px)",
-          backgroundSize: "auto, 30px 30px",
+          backgroundSize: "30px 30px",
           borderBottom: "1px solid var(--border)",
-          height: isMobile ? 320 : 420,
+          height: isMobile ? 340 : 440,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -337,55 +339,71 @@ export default function HomePage() {
           padding: "0 1.5rem",
         }}
       >
-        <span className="label" style={{ marginBottom: space[4] }}>
-          Your game library
-        </span>
-        <h1
+        {/* Animated ambient backdrop */}
+        <div className="aurora" style={{ zIndex: 0 }} />
+
+        <div
+          className="stagger"
           style={{
-            fontFamily: font.display,
-            fontSize: isMobile ? "2.75rem" : "var(--text-display)",
-            fontWeight: 600,
-            letterSpacing: "-0.02em",
-            color: color.text,
-            margin: 0,
-            lineHeight: 1.05,
+            position: "relative",
+            zIndex: 1,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
           }}
         >
-          Shelved
-        </h1>
-        <p
-          style={{
-            color: color.textSecondary,
-            marginTop: space[4],
-            fontSize: "var(--text-lg)",
-            fontWeight: 400,
-            maxWidth: 440,
-            lineHeight: 1.55,
-          }}
-        >
-          Track, rate, and discover games with your friends.
-        </p>
-        <div style={{ marginTop: space[6] }}>
-          <Link
-            to={userId ? `/profile/${userId}` : "/auth"}
+          <span className="label" style={{ marginBottom: space[4] }}>
+            Your game library
+          </span>
+          <h1
+            className="grad-text"
             style={{
-              display: "inline-block",
-              padding: "0.75rem 1.85rem",
-              background: color.accent,
-              color: color.onAccent,
-              borderRadius: "var(--radius-full)",
+              fontFamily: font.display,
+              fontSize: isMobile ? "3rem" : "var(--text-display)",
               fontWeight: 600,
-              fontSize: "var(--text-sm)",
-              fontFamily: font.body,
-              letterSpacing: "0.01em",
-              textDecoration: "none",
-              transition: "background var(--transition)",
+              letterSpacing: "-0.02em",
+              margin: 0,
+              lineHeight: 1.05,
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = color.accentHover)}
-            onMouseLeave={(e) => (e.currentTarget.style.background = color.accent)}
           >
-            Start your shelf
-          </Link>
+            Shelved
+          </h1>
+          <p
+            style={{
+              color: color.textSecondary,
+              marginTop: space[4],
+              fontSize: "var(--text-lg)",
+              fontWeight: 400,
+              maxWidth: 440,
+              lineHeight: 1.55,
+            }}
+          >
+            Track, rate, and discover games with your friends.
+          </p>
+          <div style={{ marginTop: space[6] }}>
+            <Link
+              className="press"
+              to={userId ? `/profile/${userId}` : "/auth"}
+              style={{
+                display: "inline-block",
+                padding: "0.8rem 2rem",
+                background: "var(--grad-brand)",
+                color: color.onAccent,
+                borderRadius: "var(--radius-full)",
+                fontWeight: 600,
+                fontSize: "var(--text-base)",
+                fontFamily: font.body,
+                letterSpacing: "0.01em",
+                textDecoration: "none",
+                boxShadow: "var(--glow-soft)",
+                transition: "box-shadow var(--transition), filter var(--transition)",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.filter = "brightness(1.08)"; e.currentTarget.style.boxShadow = "var(--glow-accent)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; e.currentTarget.style.boxShadow = "var(--glow-soft)"; }}
+            >
+              Start your shelf
+            </Link>
+          </div>
         </div>
       </div>
       )}

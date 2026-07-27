@@ -91,7 +91,7 @@ export async function getPopularAmongFriends(
 }
 
 export type FriendRating = {
-  user: Pick<UserRow, "id" | "username">;
+  user: Pick<UserRow, "id" | "username" | "avatar_url">;
   rating: number;
 };
 
@@ -105,7 +105,7 @@ export async function getFriendRatingsForGame(
 
   const { data, error } = await client
     .from("game_logs")
-    .select("rating, user:users!game_logs_user_id_fkey(id, username)")
+    .select("rating, user:users!game_logs_user_id_fkey(id, username, avatar_url)")
     .in("user_id", friendIds)
     .eq("game_igdb_id", gameIgdbId)
     .not("rating", "is", null);
@@ -113,12 +113,12 @@ export async function getFriendRatingsForGame(
 
   const rows = (data ?? []) as unknown as {
     rating: number | null;
-    user: Pick<UserRow, "id" | "username"> | null;
+    user: Pick<UserRow, "id" | "username" | "avatar_url"> | null;
   }[];
 
   return rows
     .filter((r) => r.rating != null && r.user != null)
-    .map((r) => ({ user: r.user as Pick<UserRow, "id" | "username">, rating: r.rating as number }));
+    .map((r) => ({ user: r.user as Pick<UserRow, "id" | "username" | "avatar_url">, rating: r.rating as number }));
 }
 
 export interface FriendStatusResult {

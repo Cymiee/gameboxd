@@ -9,6 +9,7 @@ import { supabase } from "../lib/supabase";
 import { useAuthStore } from "../store/auth";
 import { getGames, searchGames } from "../lib/igdb";
 import ActivityCard from "../components/ActivityCard";
+import Avatar, { isPresetAvatar } from "../components/Avatar";
 import Spinner from "../components/Spinner";
 import GameCover from "../components/GameCover";
 import ShelfLibrary from "../components/ShelfLibrary";
@@ -146,12 +147,15 @@ export default function ProfilePage() {
   };
 
   const handleSaveProfile = async () => {
-    if (!myUserId) return;
+    if (!myUserId || !profile) return;
     setSaving(true);
+    // An empty URL box shouldn't wipe a preset chosen in Settings › Gaming.
+    const trimmedAvatar = editAvatar.trim();
+    const nextAvatarUrl = trimmedAvatar || (isPresetAvatar(profile.avatar_url) ? profile.avatar_url : null);
     try {
       const updated = await updateProfile(supabase, myUserId, {
         bio: editBio.trim() || null,
-        avatar_url: editAvatar.trim() || null,
+        avatar_url: nextAvatarUrl,
       });
       setPageProfile(updated);
       if (isOwn) setProfile(updated);
@@ -240,25 +244,9 @@ export default function ProfilePage() {
       <div style={isMobile ? {} : { position: "sticky", top: 76 }}>
 
         {/* Avatar + user info */}
-        <div style={{ marginBottom: "var(--space-5)" }}>
-          <div
-            style={{
-              width: 76,
-              height: 76,
-              borderRadius: "50%",
-              background: "var(--accent-dim)",
-              border: "1px solid var(--accent-ring)",
-              color: "var(--accent)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontWeight: 600,
-              fontSize: "1.875rem",
-              fontFamily: "var(--font-display)",
-              marginBottom: "var(--space-4)",
-            }}
-          >
-            {profile.username[0]?.toUpperCase()}
+        <div className="reveal" style={{ marginBottom: "var(--space-5)" }}>
+          <div className="reveal-pop" style={{ marginBottom: "var(--space-4)", display: "inline-block" }}>
+            <Avatar username={profile.username} avatarUrl={profile.avatar_url} size={76} />
           </div>
 
           <h1
@@ -305,7 +293,7 @@ export default function ProfilePage() {
             <button
               onClick={() => {
                 setEditBio(profile.bio ?? "");
-                setEditAvatar(profile.avatar_url ?? "");
+                setEditAvatar(isPresetAvatar(profile.avatar_url) ? "" : (profile.avatar_url ?? ""));
                 setEditing(true);
               }}
               style={{

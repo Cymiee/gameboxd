@@ -67,6 +67,7 @@ function activityText(
 export default function ActivityCard({ activity, user, game }: Props) {
   return (
     <div
+      className="hover-glow"
       style={{
         display: "flex",
         gap: "var(--space-4)",
@@ -77,9 +78,9 @@ export default function ActivityCard({ activity, user, game }: Props) {
         borderRadius: "var(--radius-lg)",
       }}
     >
-      <div style={{ width: 42, flexShrink: 0 }}>
-        <GameCover name={game.name} imageId={game.cover?.image_id} size="thumb" rounding="sm" />
-      </div>
+      <Link to={`/game/${game.id}`} style={{ width: 42, flexShrink: 0 }}>
+        <GameCover name={game.name} imageId={game.cover?.image_id} size="thumb" rounding="sm" interactive />
+      </Link>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: "var(--text-sm)", color: "var(--text-primary)", lineHeight: 1.5 }}>
           {activityText(activity, user.username, game.name)}

@@ -14,6 +14,7 @@ export default function ListCard({ list, games }: Props) {
 
   return (
     <Link
+      className="card-interactive"
       to={`/list/${list.id}`}
       style={{
         display: "block",
@@ -22,10 +23,7 @@ export default function ListCard({ list, games }: Props) {
         borderRadius: "var(--radius-lg)",
         padding: "var(--space-4)",
         textDecoration: "none",
-        transition: "border-color var(--transition)",
       }}
-      onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--accent-ring)")}
-      onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
     >
       {/* Cover row — four fixed slots so every card is the same height */}
       <div style={{ display: "flex", gap: "var(--space-2)", marginBottom: "var(--space-4)" }}>

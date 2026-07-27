@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { CoverSize } from "@gameboxd/lib";
 import { getCoverUrl } from "@gameboxd/lib";
-import { color, radius, transition, font } from "../theme";
+import { color, radius, font } from "../theme";
 
 interface Props {
   name: string;
@@ -55,10 +55,11 @@ export default function GameCover({
         overflow: "hidden",
         background: color.bgCard,
         border: `1px solid ${hovered ? color.accentRing : color.border}`,
-        boxShadow: hovered ? "var(--shadow-lift)" : "var(--shadow-card)",
-        transform: hovered ? "translateY(-3px)" : "none",
-        transition: `transform ${transition}, border-color ${transition}, box-shadow ${transition}`,
+        boxShadow: hovered ? "var(--shadow-hover), var(--glow-soft)" : "var(--shadow-card)",
+        transform: hovered ? "translateY(-4px)" : "none",
+        transition: `transform var(--transition-slow), border-color var(--transition-slow), box-shadow var(--transition-slow)`,
         cursor: onClick ? "pointer" : "default",
+        willChange: "transform",
       }}
     >
       {showFallback ? (
@@ -74,6 +75,8 @@ export default function GameCover({
             height: "100%",
             objectFit: "cover",
             display: "block",
+            transform: hovered ? "scale(1.06)" : "none",
+            transition: `transform 0.5s var(--ease-out)`,
           }}
         />
       )}

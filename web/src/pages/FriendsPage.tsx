@@ -12,6 +12,7 @@ import {
 import { supabase } from "../lib/supabase";
 import { useAuthStore } from "../store/auth";
 import { useNotificationsStore } from "../store/notifications";
+import Avatar from "../components/Avatar";
 
 type Tab = "friends" | "pending";
 
@@ -205,24 +206,7 @@ export default function FriendsPage() {
                 onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
                 onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
               >
-                <div
-                  style={{
-                    width: 38,
-                    height: 38,
-                    borderRadius: "50%",
-                    background: "var(--accent)",
-                    color: "var(--on-accent)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontWeight: 600,
-                    fontSize: "0.9rem",
-                    flexShrink: 0,
-                    fontFamily: "var(--font-display)",
-                  }}
-                >
-                  {u.username[0]?.toUpperCase()}
-                </div>
+                <Avatar username={u.username} avatarUrl={u.avatar_url} size={38} variant="solid" />
                 <div style={{ flex: 1 }}>
                   <Link
                     to={`/profile/${u.id}`}
@@ -265,23 +249,12 @@ export default function FriendsPage() {
                     borderRadius: "var(--radius-lg)",
                   }}
                 >
-                  <div
-                    style={{
-                      width: 38,
-                      height: 38,
-                      borderRadius: "50%",
-                      background: "var(--border)",
-                      color: "var(--text-muted)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontWeight: 600,
-                      fontSize: "0.9rem",
-                      flexShrink: 0,
-                    }}
-                  >
-                    {requester?.username[0]?.toUpperCase() ?? "?"}
-                  </div>
+                  <Avatar
+                    username={requester?.username ?? "?"}
+                    avatarUrl={requester?.avatar_url ?? null}
+                    size={38}
+                    variant="solid"
+                  />
                   <div style={{ flex: 1 }}>
                     <span style={{ fontWeight: 600, fontSize: "0.9rem" }}>
                       {requester?.username ?? req.requester_id}

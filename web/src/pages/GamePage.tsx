@@ -4,6 +4,7 @@ import { PageSpinner } from "../components/Spinner";
 import type { IGDBGame, GameLogRow, GameStatus, FriendRating } from "@gameboxd/lib";
 import { getCoverUrl, getUserGameLogs, toggleLike, deleteGameLog, getFriendRatingsForGame } from "@gameboxd/lib";
 import GameCover from "../components/GameCover";
+import Avatar from "../components/Avatar";
 import StatusChip from "../components/StatusChip";
 import Shelf, { ShelfHeader } from "../components/Shelf";
 import { getGame, getGames } from "../lib/igdb";
@@ -186,6 +187,7 @@ export default function GamePage() {
           }}
         >
           <div
+            className="stagger"
             style={{
               maxWidth: 1280,
               width: "100%",
@@ -196,7 +198,7 @@ export default function GamePage() {
               alignItems: "center",
             }}
           >
-            <div style={{ width: isMobile ? 150 : 200, flexShrink: 0 }}>
+            <div style={{ width: isMobile ? 150 : 200, flexShrink: 0, boxShadow: "var(--glow-soft)", borderRadius: "var(--radius-lg)" }}>
               <GameCover name={game.name} imageId={game.cover?.image_id} />
             </div>
 
@@ -365,25 +367,7 @@ export default function GamePage() {
                       padding: "var(--space-2) var(--space-3)",
                     }}
                   >
-                    <div
-                      style={{
-                        width: 28,
-                        height: 28,
-                        borderRadius: "50%",
-                        background: "var(--accent-dim)",
-                        border: "1px solid var(--accent-ring)",
-                        color: "var(--accent)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontWeight: 600,
-                        fontSize: "var(--text-xs)",
-                        fontFamily: "var(--font-display)",
-                        flexShrink: 0,
-                      }}
-                    >
-                      {fr.user.username[0]?.toUpperCase()}
-                    </div>
+                    <Avatar username={fr.user.username} avatarUrl={fr.user.avatar_url} size={28} />
                     <span style={{ fontSize: "var(--text-sm)", color: "var(--text-primary)" }}>{fr.user.username}</span>
                     <span
                       style={{

@@ -29,29 +29,32 @@ export default function GameCard({ game, onSelect, onQuickLog }: Props) {
       >
         {onQuickLog && hovered && (
           <div
+            className="reveal"
             style={{
               position: "absolute",
               inset: 0,
-              background: "linear-gradient(to top, rgba(0,0,0,0.75), rgba(0,0,0,0.15))",
+              background: "linear-gradient(to top, rgba(0,0,0,0.78), rgba(0,0,0,0.15))",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
+              animationDuration: "220ms",
             }}
           >
             <button
+              className="reveal-pop press"
               onClick={(e) => {
                 e.stopPropagation();
                 onQuickLog(game);
               }}
               aria-label={`Log ${game.name}`}
               style={{
-                width: 44,
-                height: 44,
+                width: 46,
+                height: 46,
                 borderRadius: "50%",
-                background: color.accent,
+                background: "var(--grad-brand)",
                 border: "none",
                 color: color.onAccent,
-                fontSize: "1.5rem",
+                fontSize: "1.6rem",
                 fontWeight: 600,
                 cursor: "pointer",
                 display: "flex",
@@ -59,10 +62,8 @@ export default function GameCard({ game, onSelect, onQuickLog }: Props) {
                 justifyContent: "center",
                 lineHeight: 1,
                 flexShrink: 0,
-                transition: `background ${transition}`,
+                boxShadow: "var(--glow-accent)",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = color.accentHover)}
-              onMouseLeave={(e) => (e.currentTarget.style.background = color.accent)}
             >
               +
             </button>

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { updateProfile, upsertProfileTags, MIN_GENRES } from "@gameboxd/lib";
 import { supabase } from "../lib/supabase";
 import { useAuthStore } from "../store/auth";
+import { presetAvatarUrl, isPresetAvatar } from "../components/Avatar";
 import AvatarSelect from "../components/onboarding/AvatarSelect";
 import GenreSelect from "../components/onboarding/GenreSelect";
 import ArchetypeSelect from "../components/onboarding/ArchetypeSelect";
@@ -14,7 +15,8 @@ export default function SettingsPage() {
 
   const [username, setUsername] = useState(profile?.username ?? "");
   const [bio, setBio] = useState(profile?.bio ?? "");
-  const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url ?? "");
+  // A preset avatar is managed in the Gaming tab; keep it out of the URL box.
+  const [avatarUrl, setAvatarUrl] = useState(isPresetAvatar(profile?.avatar_url) ? "" : (profile?.avatar_url ?? ""));
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileMsg, setProfileMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
 
@@ -39,11 +41,14 @@ export default function SettingsPage() {
     }
     setProfileSaving(true);
     setProfileMsg(null);
+    // An empty URL box shouldn't wipe a preset chosen in the Gaming tab.
+    const trimmedUrl = avatarUrl.trim();
+    const nextAvatarUrl = trimmedUrl || (isPresetAvatar(profile?.avatar_url) ? profile!.avatar_url : null);
     try {
       const updated = await updateProfile(supabase, userId, {
         username: trimmed,
         bio: bio.trim() || null,
-        avatar_url: avatarUrl.trim() || null,
+        avatar_url: nextAvatarUrl,
       });
       setProfile(updated);
       setProfileMsg({ type: "ok", text: "Profile updated!" });
@@ -70,6 +75,11 @@ export default function SettingsPage() {
         archetypes,
       });
       setProfileTags(saved);
+      // Mirror the chosen preset into avatar_url so it renders app-wide.
+      if (avatarId) {
+        const updated = await updateProfile(supabase, userId, { avatar_url: presetAvatarUrl(avatarId) });
+        setProfile(updated);
+      }
       setGamingMsg({ type: "ok", text: "Preferences saved!" });
     } catch (e) {
       setGamingMsg({ type: "err", text: e instanceof Error ? e.message : "Failed to save preferences." });
@@ -200,8 +210,9 @@ export default function SettingsPage() {
             disabled={profileSaving}
             style={{
               padding: "0.65rem",
-              background: "var(--accent)",
+              background: "var(--grad-brand)",
               border: "none",
+              boxShadow: "var(--glow-soft)",
               color: "var(--on-accent)",
               borderRadius: "var(--radius-sm)",
               cursor: profileSaving ? "not-allowed" : "pointer",
@@ -253,8 +264,9 @@ export default function SettingsPage() {
             disabled={gamingSaving}
             style={{
               padding: "0.65rem",
-              background: "var(--accent)",
+              background: "var(--grad-brand)",
               border: "none",
+              boxShadow: "var(--glow-soft)",
               color: "var(--on-accent)",
               borderRadius: "var(--radius-sm)",
               cursor: gamingSaving ? "not-allowed" : "pointer",
@@ -316,8 +328,9 @@ export default function SettingsPage() {
             disabled={securitySaving || !newPassword}
             style={{
               padding: "0.65rem",
-              background: "var(--accent)",
+              background: "var(--grad-brand)",
               border: "none",
+              boxShadow: "var(--glow-soft)",
               color: "var(--on-accent)",
               borderRadius: "var(--radius-sm)",
               cursor: securitySaving || !newPassword ? "not-allowed" : "pointer",

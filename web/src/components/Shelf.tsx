@@ -35,7 +35,7 @@ export default function Shelf({
       <ShelfHeader title={title} {...(count !== undefined ? { count } : {})} {...(accent ? { accent } : {})} action={action} />
       {layout === "row" ? (
         <div
-          className="no-scrollbar"
+          className="no-scrollbar stagger"
           style={{
             display: "flex",
             gap: space[4],
@@ -130,13 +130,14 @@ export function ShelfHeader({
         </span>
       )}
 
-      {/* Hairline rule carries the eye across — the only "shelf" line in the UI */}
+      {/* Hairline rule carries the eye across — the only "shelf" line in the UI.
+          Tinted with the shelf's hue at the start for a touch of color energy. */}
       <span
         aria-hidden
         style={{
           flex: 1,
           height: 1,
-          background: `linear-gradient(to right, ${color.border}, transparent)`,
+          background: `linear-gradient(to right, ${hue}, ${color.border} 22%, transparent)`,
           minWidth: space[4],
         }}
       />

@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, Navigate } from "react-router-dom";
-import { upsertProfileTags, MIN_GENRES, type ProfileTagsUpdate } from "@gameboxd/lib";
+import { upsertProfileTags, updateProfile, MIN_GENRES, type ProfileTagsUpdate } from "@gameboxd/lib";
 import { supabase } from "../lib/supabase";
 import { useAuthStore } from "../store/auth";
 import { useIsMobile } from "../hooks/useIsMobile";
+import { presetAvatarUrl } from "../components/Avatar";
 import AvatarSelect from "../components/onboarding/AvatarSelect";
 import GenreSelect from "../components/onboarding/GenreSelect";
 import ArchetypeSelect from "../components/onboarding/ArchetypeSelect";
@@ -25,7 +26,7 @@ export default function OnboardingPage() {
   const { step } = useParams();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const { userId, profileTags, setProfileTags } = useAuthStore();
+  const { userId, profileTags, setProfileTags, setProfile } = useAuthStore();
 
   // Local working copy of the selections, seeded from any saved tags (resumable).
   const [avatarId, setAvatarId] = useState<string | null>(profileTags?.avatar_id ?? null);
@@ -60,6 +61,15 @@ export default function OnboardingPage() {
     setProfileTags(saved);
   }
 
+  // The chosen preset is the structured avatar_id AND the display avatar_url,
+  // so it renders everywhere without threading tags through every query.
+  async function persistAvatar(id: string) {
+    if (!userId) return;
+    await persist({ avatar_id: id });
+    const updated = await updateProfile(supabase, userId, { avatar_url: presetAvatarUrl(id) });
+    setProfile(updated);
+  }
+
   function goNext() {
     navigate(`/onboarding/${STEPS[stepIndex + 1]}`);
   }
@@ -74,7 +84,7 @@ export default function OnboardingPage() {
     setSaving(true);
     setError(null);
     try {
-      if (step === "avatar" && avatarId) await persist({ avatar_id: avatarId });
+      if (step === "avatar" && avatarId) await persistAvatar(avatarId);
       else if (step === "genres") await persist({ genres });
       else if (step === "archetypes") await persist({ archetypes, onboarding_completed: true });
 
@@ -118,6 +128,10 @@ export default function OnboardingPage() {
         archetypes,
         onboarding_completed: true,
       });
+      if (avatarId && userId) {
+        const updated = await updateProfile(supabase, userId, { avatar_url: presetAvatarUrl(avatarId) });
+        setProfile(updated);
+      }
       finish();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't save. Please try again.");
@@ -142,20 +156,24 @@ export default function OnboardingPage() {
   const primaryBtn: React.CSSProperties = {
     flex: 1,
     padding: "0.8rem",
-    background: "var(--accent)",
+    background: "var(--grad-brand)",
     color: "var(--on-accent)",
-    border: "1px solid var(--accent)",
+    border: "none",
     borderRadius: "var(--radius-sm)",
     cursor: !canContinue || saving ? "not-allowed" : "pointer",
     opacity: !canContinue || saving ? 0.5 : 1,
     fontSize: "0.95rem",
     fontWeight: 600,
     fontFamily: "var(--font-body)",
+    boxShadow: !canContinue || saving ? "none" : "var(--glow-soft)",
   };
 
   return (
     <div
       style={{
+        position: "relative",
+        overflow: "hidden",
+        isolation: "isolate",
         minHeight: "100vh",
         background: "var(--bg-base)",
         display: "flex",
@@ -164,7 +182,12 @@ export default function OnboardingPage() {
         padding: isMobile ? "1.5rem 1.25rem 2.5rem" : "2.5rem",
       }}
     >
-      <div style={{ width: "100%", maxWidth: 620, display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+      <div className="aurora" style={{ zIndex: 0 }} />
+      <div
+        key={step}
+        className="reveal"
+        style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 620, display: "flex", flexDirection: "column", gap: "1.5rem" }}
+      >
         {/* Header: progress + skip all */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1rem" }}>
           <span style={{ fontSize: 13, color: "var(--text-muted)", fontWeight: 600 }}>
@@ -196,10 +219,11 @@ export default function OnboardingPage() {
               key={s}
               style={{
                 flex: 1,
-                height: 4,
+                height: 5,
                 borderRadius: 999,
-                background: i <= stepIndex ? "var(--accent)" : "var(--border)",
-                transition: "background 0.2s",
+                background: i <= stepIndex ? "var(--grad-brand)" : "var(--border)",
+                boxShadow: i <= stepIndex ? "var(--glow-soft)" : "none",
+                transition: "background 0.3s var(--ease-out), box-shadow 0.3s var(--ease-out)",
               }}
             />
           ))}
@@ -208,12 +232,12 @@ export default function OnboardingPage() {
         {/* Title */}
         <div>
           <h1
+            className="grad-text"
             style={{
               fontFamily: "var(--font-display)",
-              fontSize: "var(--text-2xl)",
+              fontSize: "var(--text-3xl)",
               fontWeight: 600,
               letterSpacing: "-0.015em",
-              color: "var(--text-primary)",
               margin: "0 0 0.4rem",
             }}
           >
@@ -235,10 +259,10 @@ export default function OnboardingPage() {
 
         {/* Footer: Skip + Continue given equal visual weight (no dark patterns). */}
         <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.5rem" }}>
-          <button type="button" onClick={handleSkipStep} disabled={saving} style={secondaryBtn}>
+          <button type="button" className="press" onClick={handleSkipStep} disabled={saving} style={secondaryBtn}>
             Skip
           </button>
-          <button type="button" onClick={handleContinue} disabled={!canContinue || saving} style={primaryBtn}>
+          <button type="button" className="press" onClick={handleContinue} disabled={!canContinue || saving} style={primaryBtn}>
             {saving ? "Saving…" : isLast ? "Finish" : "Continue"}
           </button>
         </div>

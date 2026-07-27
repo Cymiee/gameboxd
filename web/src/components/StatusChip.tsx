@@ -12,7 +12,7 @@ interface Props {
  */
 export default function StatusChip({ status, size = "md" }: Props) {
   const meta = STATUS_META[status];
-  return <Chip label={meta.label} color={meta.color} dim={meta.dim} size={size} />;
+  return <Chip label={meta.label} color={meta.color} dim={meta.dim} size={size} pulse={status === "playing"} />;
 }
 
 export function FavoriteChip({ size = "md" }: { size?: "sm" | "md" }) {
@@ -31,11 +31,13 @@ function Chip({
   color,
   dim,
   size,
+  pulse = false,
 }: {
   label: string;
   color: string;
   dim: string;
   size: "sm" | "md";
+  pulse?: boolean;
 }) {
   return (
     <span
@@ -58,12 +60,14 @@ function Chip({
     >
       <span
         aria-hidden
+        className={pulse ? "pulse-dot" : undefined}
         style={{
           width: 5,
           height: 5,
           borderRadius: "50%",
           background: color,
           flexShrink: 0,
+          ...(pulse ? { ["--pulse-color" as string]: color } : {}),
         }}
       />
       {label}

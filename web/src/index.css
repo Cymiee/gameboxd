@@ -108,14 +108,19 @@ a:hover {
   box-shadow: 0 0 0 3px var(--accent-dim);
 }
 
-/* Primary button lifts 1px on hover. */
+/* Primary button lifts 1px + brightens on hover (keeps any gradient intact). */
 .auth-submit {
   transition: transform 220ms cubic-bezier(0.4, 0, 0.2, 1),
-              background 220ms cubic-bezier(0.4, 0, 0.2, 1);
+              filter 220ms cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 220ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 .auth-submit:not(:disabled):hover {
   transform: translateY(-1px);
-  background: var(--accent-hover);
+  filter: brightness(1.08);
+  box-shadow: var(--glow-accent);
+}
+.auth-submit:not(:disabled):active {
+  transform: translateY(0) scale(0.98);
 }
 
 /* Shelf covers lift a few px on hover. */
@@ -127,10 +132,120 @@ a:hover {
   transform: translateY(-5px);
 }
 
+/* ── Global "cool" layer ─────────────────────────────────────────────────
+   Reusable motion + interaction primitives. Consume via className across
+   the app so every screen shares one rhythm. transform/opacity only. */
+
+html { scroll-behavior: smooth; }
+
+::selection {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* Thin, on-brand scrollbar — a small detail that reads as polish. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: var(--radius-full);
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-thumb:hover { background: var(--accent-ring); background-clip: content-box; }
+
+button, [role="button"], a, label[for], summary { touch-action: manipulation; }
+
+/* ── Keyframes ──────────────────────────────────────────────────────────── */
+@keyframes riseIn      { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes popIn       { from { opacity: 0; transform: scale(0.94); }      to { opacity: 1; transform: none; } }
+@keyframes auroraDrift { 0% { transform: translate3d(0,0,0) scale(1); } 50% { transform: translate3d(0,-3%,0) scale(1.08); } 100% { transform: translate3d(0,0,0) scale(1); } }
+@keyframes shine       { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+@keyframes floaty      { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes livePulse   { 0% { box-shadow: 0 0 0 0 var(--pulse-color, rgba(91,157,217,0.55)); } 70% { box-shadow: 0 0 0 6px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+
+/* Live "now playing" dot. */
+.pulse-dot { animation: livePulse 1.8s ease-out infinite; }
+
+/* ── Entrance reveals — set --d inline for stagger (e.g. style={{'--d':'80ms'}}) */
+.reveal       { animation: riseIn 520ms var(--ease-out) both; animation-delay: var(--d, 0ms); }
+.reveal-pop   { animation: popIn 420ms var(--ease-spring) both; animation-delay: var(--d, 0ms); }
+
+/* Auto-stagger direct children — no per-item delay wiring needed. */
+.stagger > *          { animation: riseIn 520ms var(--ease-out) both; }
+.stagger > *:nth-child(1) { animation-delay: 40ms; }
+.stagger > *:nth-child(2) { animation-delay: 90ms; }
+.stagger > *:nth-child(3) { animation-delay: 140ms; }
+.stagger > *:nth-child(4) { animation-delay: 190ms; }
+.stagger > *:nth-child(5) { animation-delay: 240ms; }
+.stagger > *:nth-child(6) { animation-delay: 290ms; }
+.stagger > *:nth-child(7) { animation-delay: 340ms; }
+.stagger > *:nth-child(8) { animation-delay: 390ms; }
+
+/* ── Interaction primitives ─────────────────────────────────────────────── */
+.hover-lift { transition: transform var(--transition-slow), box-shadow var(--transition-slow); will-change: transform; }
+.hover-lift:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); }
+
+.hover-glow { transition: box-shadow var(--transition-slow), border-color var(--transition-slow); }
+.hover-glow:hover { box-shadow: var(--glow-soft); border-color: var(--accent-ring); }
+
+/* Press feedback — subtle scale-down on tap/click. */
+.press { transition: transform var(--transition-fast); }
+.press:active { transform: scale(0.96); }
+
+/* Card that lifts, glows, and gives press feedback in one class. */
+.card-interactive {
+  cursor: pointer;
+  transition: transform var(--transition-slow), box-shadow var(--transition-slow), border-color var(--transition-slow);
+  will-change: transform;
+}
+.card-interactive:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); border-color: var(--border-strong); }
+.card-interactive:active { transform: translateY(-1px) scale(0.995); }
+
+/* Gradient-clipped display text for hero moments. */
+.grad-text {
+  background: var(--grad-vibe);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Animated ambient backdrop — drop inside a position:relative hero. */
+.aurora {
+  position: absolute;
+  inset: -20%;
+  background: var(--grad-aurora);
+  filter: blur(8px);
+  animation: auroraDrift 18s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Shimmering gradient sweep — for premium CTAs / badges. */
+.shine {
+  background-image: linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.18) 50%, transparent 70%);
+  background-size: 200% 100%;
+  animation: shine 2.6s linear infinite;
+}
+
+/* Animated link underline that wipes in from the left. */
+.link-anim { position: relative; }
+.link-anim::after {
+  content: ""; position: absolute; left: 0; bottom: -2px; height: 2px; width: 100%;
+  background: var(--accent); transform: scaleX(0); transform-origin: left;
+  transition: transform var(--transition-slow);
+}
+.link-anim:hover::after { transform: scaleX(1); }
+
 @media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+  .aurora, .shine, .floaty { animation: none !important; }
 }

@@ -337,12 +337,12 @@ export default function ExplorePage() {
         {/* ── Main content ── */}
         <div style={{ flex: 1, minWidth: 0 }}>
           {/* Heading — "Explore" is the page identity; the h1 stays contextual */}
-          <div style={{ marginBottom: "1.5rem" }}>
+          <div className="reveal" style={{ marginBottom: "1.5rem" }}>
             <div className="label" style={{ marginBottom: "var(--space-2)" }}>Explore</div>
             <h1
               style={{
                 fontFamily: "var(--font-display)",
-                fontSize: "var(--text-2xl)",
+                fontSize: "var(--text-3xl)",
                 fontWeight: 600,
                 letterSpacing: "-0.015em",
                 margin: 0,

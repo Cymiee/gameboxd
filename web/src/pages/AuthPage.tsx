@@ -97,17 +97,18 @@ export default function AuthPage() {
   };
 
   const submitStyle: React.CSSProperties = {
-    background: "var(--accent)",
+    background: "var(--grad-brand)",
     color: "var(--on-accent)",
     border: "none",
     borderRadius: "var(--radius-sm)",
-    padding: "0.8rem",
+    padding: "0.85rem",
     cursor: "pointer",
     fontSize: "0.95rem",
     fontWeight: 600,
     fontFamily: "var(--font-body)",
     marginTop: "0.75rem",
     width: "100%",
+    boxShadow: "var(--glow-soft)",
   };
 
   // Staggered load animation for the form fields. Index drives the delay.
@@ -167,13 +168,12 @@ export default function AuthPage() {
           </div>
 
           <div
-            className="auth-rise"
+            className="auth-rise grad-text"
             style={{
               fontFamily: "var(--font-display)",
-              fontSize: "3.5rem",
+              fontSize: "3.75rem",
               fontWeight: 600,
               letterSpacing: "-0.02em",
-              color: "var(--text-primary)",
               marginBottom: "var(--space-6)",
               lineHeight: 1,
               ...riseStyle(1),
@@ -286,12 +286,12 @@ export default function AuthPage() {
           {/* Compact wordmark replaces the hidden brand panel on mobile */}
           {isMobile && (
             <div
+              className="grad-text"
               style={{
                 fontFamily: "var(--font-display)",
-                fontSize: "var(--text-2xl)",
+                fontSize: "var(--text-3xl)",
                 fontWeight: 600,
                 letterSpacing: "-0.02em",
-                color: "var(--text-primary)",
                 marginBottom: "var(--space-6)",
                 lineHeight: 1,
               }}

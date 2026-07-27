@@ -4,6 +4,7 @@ import { useAuthStore } from "../store/auth";
 import { useNotificationsStore } from "../store/notifications";
 import { useIsMobile } from "../hooks/useIsMobile";
 import NotificationBadge from "./NotificationBadge";
+import Avatar from "./Avatar";
 
 export default function Navbar() {
   const { profile, logout } = useAuthStore();
@@ -89,6 +90,7 @@ export default function Navbar() {
       >
         {/* Wordmark — typographic, no icon */}
         <Link
+          className="press"
           to="/"
           style={{
             display: "flex",
@@ -113,10 +115,11 @@ export default function Navbar() {
           <span
             aria-hidden
             style={{
-              width: 5,
-              height: 5,
+              width: 6,
+              height: 6,
               borderRadius: "50%",
-              background: "var(--accent)",
+              background: "var(--grad-brand)",
+              boxShadow: "var(--glow-soft)",
               flexShrink: 0,
               alignSelf: "flex-end",
               marginBottom: isMobile ? 6 : 7,
@@ -204,10 +207,11 @@ export default function Navbar() {
               Log in
             </Link>
             <Link
+              className="press"
               to="/auth?mode=signup"
               style={{
                 padding: isMobile ? "0.4rem 0.8rem" : "0.4rem 0.9rem",
-                background: "var(--accent)",
+                background: "var(--grad-brand)",
                 border: "none",
                 color: "var(--on-accent)",
                 borderRadius: "var(--radius-sm)",
@@ -216,10 +220,11 @@ export default function Navbar() {
                 textDecoration: "none",
                 whiteSpace: "nowrap",
                 fontFamily: "var(--font-body)",
-                transition: "background var(--transition)",
+                boxShadow: "var(--glow-soft)",
+                transition: "box-shadow var(--transition), filter var(--transition)",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--accent-hover)")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "var(--accent)")}
+              onMouseEnter={(e) => { e.currentTarget.style.filter = "brightness(1.08)"; e.currentTarget.style.boxShadow = "var(--glow-accent)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; e.currentTarget.style.boxShadow = "var(--glow-soft)"; }}
             >
               Sign up
             </Link>
@@ -248,23 +253,7 @@ export default function Navbar() {
               }}
             >
               <div style={{ position: "relative", flexShrink: 0 }}>
-                <div
-                  style={{
-                    width: 30,
-                    height: 30,
-                    borderRadius: "50%",
-                    background: "var(--accent)",
-                    color: "var(--on-accent)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontWeight: 600,
-                    fontSize: "0.8rem",
-                    fontFamily: "var(--font-body)",
-                  }}
-                >
-                  {profile.username[0]?.toUpperCase()}
-                </div>
+                <Avatar username={profile.username} avatarUrl={profile.avatar_url} size={30} variant="solid" />
                 <NotificationBadge count={pendingRequests} floating />
               </div>
               {!isMobile && (
@@ -272,11 +261,21 @@ export default function Navbar() {
                   {profile.username}
                 </span>
               )}
-              <span style={{ color: "var(--text-muted)", fontSize: "0.6rem", marginLeft: 2 }}>▼</span>
+              <span
+                style={{
+                  color: "var(--text-muted)",
+                  fontSize: "0.6rem",
+                  marginLeft: 2,
+                  display: "inline-block",
+                  transform: dropdownOpen ? "rotate(180deg)" : "none",
+                  transition: "transform var(--transition)",
+                }}
+              >▼</span>
             </div>
 
             {dropdownOpen && (
               <div
+                className="reveal-pop"
                 onMouseEnter={openDropdown}
                 onMouseLeave={closeDropdown}
                 style={{
@@ -285,11 +284,13 @@ export default function Navbar() {
                   right: 0,
                   background: "var(--bg-card)",
                   border: "1px solid var(--border)",
-                  borderRadius: "var(--radius-sm)",
+                  borderRadius: "var(--radius-md)",
                   minWidth: 170,
-                  boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
+                  boxShadow: "var(--shadow-lift)",
                   overflow: "hidden",
                   zIndex: 200,
+                  transformOrigin: "top right",
+                  animationDuration: "200ms",
                 }}
               >
                 {[

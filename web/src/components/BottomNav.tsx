@@ -42,7 +42,9 @@ export default function BottomNav() {
           key={to}
           to={to}
           end={end}
+          className="press"
           style={({ isActive }) => ({
+            position: "relative",
             flex: 1,
             display: "flex",
             flexDirection: "column",
@@ -60,7 +62,29 @@ export default function BottomNav() {
         >
           {({ isActive }) => (
             <>
-              <Icon active={isActive} />
+              {/* Active-tab glow indicator */}
+              <span
+                aria-hidden
+                className={isActive ? "reveal-pop" : undefined}
+                style={{
+                  position: "absolute",
+                  top: 6,
+                  width: 22,
+                  height: 3,
+                  borderRadius: "var(--radius-full)",
+                  background: isActive ? "var(--grad-brand)" : "transparent",
+                  boxShadow: isActive ? "var(--glow-soft)" : "none",
+                }}
+              />
+              <span
+                style={{
+                  display: "inline-flex",
+                  transform: isActive ? "translateY(2px) scale(1.08)" : "none",
+                  transition: "transform var(--transition)",
+                }}
+              >
+                <Icon active={isActive} />
+              </span>
               <span style={{ whiteSpace: "nowrap" }}>{label}</span>
             </>
           )}
