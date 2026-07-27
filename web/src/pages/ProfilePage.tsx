@@ -15,6 +15,8 @@ import GameCover from "../components/GameCover";
 import ShelfLibrary from "../components/ShelfLibrary";
 import UserLists from "../components/UserLists";
 import TasteTags from "../components/TasteTags";
+import AvatarPickerModal from "../components/AvatarPickerModal";
+import { EditIcon } from "../components/icons";
 import { useIsMobile } from "../hooks/useIsMobile";
 
 type ProfileTab = "logs" | "reviews" | "lists";
@@ -69,6 +71,8 @@ export default function ProfilePage() {
   const [slotSearch, setSlotSearch] = useState("");
   const [slotResults, setSlotResults] = useState<IGDBGame[]>([]);
   const [slotSearching, setSlotSearching] = useState(false);
+
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
 
   // Friend state (for other profiles)
   const [isFriend, setIsFriend] = useState(false);
@@ -249,8 +253,35 @@ export default function ProfilePage() {
 
         {/* Avatar + user info */}
         <div className="reveal" style={{ marginBottom: "var(--space-5)" }}>
-          <div className="reveal-pop" style={{ marginBottom: "var(--space-4)", display: "inline-block" }}>
+          <div className="reveal-pop" style={{ position: "relative", marginBottom: "var(--space-4)", width: 76 }}>
             <Avatar username={profile.username} avatarUrl={profile.avatar_url} size={76} />
+            {isOwn && (
+              <button
+                type="button"
+                onClick={() => setShowAvatarPicker(true)}
+                aria-label="Edit avatar"
+                title="Edit avatar"
+                className="press"
+                style={{
+                  position: "absolute",
+                  right: -2,
+                  bottom: -2,
+                  width: 28,
+                  height: 28,
+                  borderRadius: "50%",
+                  background: "var(--accent)",
+                  color: "var(--on-accent)",
+                  border: "2px solid var(--bg-base)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                  boxShadow: "var(--shadow-card)",
+                }}
+              >
+                <EditIcon size={14} />
+              </button>
+            )}
           </div>
 
           <h1
@@ -817,6 +848,19 @@ export default function ProfilePage() {
           )}
         </div>
       </div>
+
+      {showAvatarPicker && myUserId && (
+        <AvatarPickerModal
+          userId={myUserId}
+          currentAvatarId={profileTags?.avatar_id ?? null}
+          onClose={() => setShowAvatarPicker(false)}
+          onSaved={(updated, avatarId) => {
+            setPageProfile(updated);
+            setProfile(updated);
+            setProfileTags((prev) => (prev ? { ...prev, avatar_id: avatarId } : prev));
+          }}
+        />
+      )}
     </div>
   );
 }

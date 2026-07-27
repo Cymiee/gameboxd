@@ -32,6 +32,16 @@ export function PlusIcon({ size = 18, color = "currentColor", strokeWidth = 2.4 
   );
 }
 
+/** Pencil — edit affordance. */
+export function EditIcon({ size = 16, color = "currentColor", strokeWidth = 2 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden style={{ flexShrink: 0, display: "block" }}>
+      <path d="M12 20h9" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
+      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" stroke={color} strokeWidth={strokeWidth} strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 /** Star — outline or filled, for favourites. */
 export function StarIcon({ size = 18, color = "currentColor", strokeWidth = 1.8, filled = false }: IconProps & { filled?: boolean }) {
   return (
