@@ -13,13 +13,15 @@ import { useAuthStore } from "../store/auth";
 import { useGamesStore } from "../store/games";
 import LogGameModal from "../components/LogGameModal";
 import AddToListModal from "../components/AddToListModal";
+import FavouriteModal from "../components/FavouriteModal";
 import GameCard from "../components/GameCard";
+import { StarIcon } from "../components/icons";
 import { useIsMobile } from "../hooks/useIsMobile";
 
 export default function GamePage() {
   const { id } = useParams<{ id: string }>();
   const { userId } = useAuthStore();
-  const { logGame } = useGamesStore();
+  const { logGame, topGames, fetchTopGames } = useGamesStore();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
@@ -34,9 +36,15 @@ export default function GamePage() {
 
   const [showLogModal, setShowLogModal] = useState(false);
   const [showAddToList, setShowAddToList] = useState(false);
+  const [showFavModal, setShowFavModal] = useState(false);
 
   const [friendRatings, setFriendRatings] = useState<FriendRating[]>([]);
   const [similarGames, setSimilarGames] = useState<IGDBGame[]>([]);
+
+  // Load favourites so the button can reflect whether this game is pinned.
+  useEffect(() => { if (userId) void fetchTopGames(); }, [userId, fetchTopGames]);
+
+  const isFavourite = game != null && topGames.some((t) => t.game_igdb_id === game.id);
 
   useEffect(() => {
     if (!id) return;
@@ -337,6 +345,28 @@ export default function GamePage() {
                     + Add to list
                   </button>
                 )}
+
+                {userId && (
+                  <button
+                    onClick={() => setShowFavModal(true)}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "0.4rem",
+                      padding: "0.6rem 1.25rem",
+                      background: isFavourite ? "var(--accent-dim)" : "transparent",
+                      border: `1px solid ${isFavourite ? "var(--accent)" : "var(--border)"}`,
+                      color: isFavourite ? "var(--accent)" : "var(--text-muted)",
+                      borderRadius: "var(--radius-sm)",
+                      cursor: "pointer",
+                      fontSize: "0.875rem",
+                      fontWeight: isFavourite ? 600 : 400,
+                    }}
+                  >
+                    <StarIcon size={15} filled={isFavourite} />
+                    {isFavourite ? "Favourited" : "Favourite"}
+                  </button>
+                )}
               </div>
 
               {saveError && <p style={{ color: "var(--danger)", fontSize: "0.8rem", marginTop: "0.5rem" }}>{saveError}</p>}
@@ -545,6 +575,10 @@ export default function GamePage() {
           gameName={game.name}
           onClose={() => setShowAddToList(false)}
         />
+      )}
+
+      {showFavModal && userId && game && (
+        <FavouriteModal game={game} onClose={() => setShowFavModal(false)} />
       )}
     </div>
   );

@@ -31,3 +31,17 @@ export function PlusIcon({ size = 18, color = "currentColor", strokeWidth = 2.4 
     </svg>
   );
 }
+
+/** Star — outline or filled, for favourites. */
+export function StarIcon({ size = 18, color = "currentColor", strokeWidth = 1.8, filled = false }: IconProps & { filled?: boolean }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={filled ? color : "none"} aria-hidden style={{ flexShrink: 0, display: "block" }}>
+      <path
+        d="M12 3.5l2.6 5.27 5.82.85-4.21 4.1.99 5.79L12 16.77l-5.2 2.73.99-5.79-4.21-4.1 5.82-.85z"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
