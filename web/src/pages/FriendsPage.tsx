@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import type { UserRow, FriendshipRow } from "@gameboxd/lib";
+import type { UserRow, FriendshipRow, UserProfileTagsRow } from "@gameboxd/lib";
 import {
   getFriends,
   getPendingRequests,
@@ -8,11 +8,71 @@ import {
   acceptFriendRequest,
   getUsersByIds,
   getUserByUsername,
+  getProfileTagsByIds,
+  ARCHETYPES,
+  GENRE_LABELS,
 } from "@gameboxd/lib";
 import { supabase } from "../lib/supabase";
 import { useAuthStore } from "../store/auth";
 import { useNotificationsStore } from "../store/notifications";
 import Avatar from "../components/Avatar";
+
+const ARCH_BY_ID = new Map<string, (typeof ARCHETYPES)[number]>(ARCHETYPES.map((a) => [a.id, a]));
+const genreLabel = (g: string) => GENRE_LABELS[g as keyof typeof GENRE_LABELS] ?? g;
+
+/** A friend's "vibe": top archetype + a couple genres, plus shared-taste count. */
+function FriendVibe({
+  tags,
+  myTags,
+  bio,
+}: {
+  tags: UserProfileTagsRow | undefined;
+  myTags: UserProfileTagsRow | null;
+  bio: string | null;
+}) {
+  const arch = tags?.archetypes[0] ? ARCH_BY_ID.get(tags.archetypes[0]) : undefined;
+  const genres = (tags?.genres ?? []).slice(0, 2);
+  const shared = myTags && tags
+    ? tags.genres.filter((g) => myTags.genres.includes(g)).length +
+      tags.archetypes.filter((a) => myTags.archetypes.includes(a)).length
+    : 0;
+
+  if (!arch && genres.length === 0) {
+    return bio ? (
+      <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        {bio}
+      </p>
+    ) : null;
+  }
+
+  const chip: React.CSSProperties = {
+    padding: "1px 8px",
+    borderRadius: "var(--radius-full)",
+    fontSize: "0.7rem",
+    fontWeight: 600,
+    whiteSpace: "nowrap",
+  };
+
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 4, alignItems: "center" }}>
+      {arch && (
+        <span style={{ ...chip, background: "var(--bg-inset)", border: "1px solid var(--border-strong)", color: "var(--text-primary)" }}>
+          {arch.emoji} {arch.label}
+        </span>
+      )}
+      {genres.map((g) => (
+        <span key={g} style={{ ...chip, background: "transparent", border: "1px solid var(--border)", color: "var(--text-secondary)", fontWeight: 500 }}>
+          {genreLabel(g)}
+        </span>
+      ))}
+      {shared > 0 && (
+        <span style={{ ...chip, background: "var(--accent-dim)", border: "1px solid var(--accent-ring)", color: "var(--accent)" }}>
+          ★ {shared} shared
+        </span>
+      )}
+    </div>
+  );
+}
 
 type Tab = "friends" | "pending";
 
@@ -22,9 +82,11 @@ export default function FriendsPage() {
   const [tab, setTab] = useState<Tab>("friends");
 
   const [friendProfiles, setFriendProfiles] = useState<UserRow[]>([]);
+  const [friendTags, setFriendTags] = useState<Map<string, UserProfileTagsRow>>(new Map());
   const [pendingRequests, setPendingRequests] = useState<FriendshipRow[]>([]);
   const [requesterProfiles, setRequesterProfiles] = useState<Map<string, UserRow>>(new Map());
   const [loading, setLoading] = useState(true);
+  const myTags = useAuthStore((s) => s.profileTags);
 
   const [addUsername, setAddUsername] = useState("");
   const [addError, setAddError] = useState<string | null>(null);
@@ -41,6 +103,14 @@ export default function FriendsPage() {
       ]);
 
       setFriendProfiles(await getUsersByIds(supabase, friendIds));
+
+      // Each friend's taste tags, for the vibe chips on their card.
+      if (friendIds.length > 0) {
+        const tags = await getProfileTagsByIds(supabase, friendIds);
+        setFriendTags(new Map(tags.map((t) => [t.user_id, t])));
+      } else {
+        setFriendTags(new Map());
+      }
 
       setPendingRequests(pending);
       setPending(pending.length); // keep the nav badge in sync
@@ -219,11 +289,7 @@ export default function FriendsPage() {
                   >
                     {u.username}
                   </Link>
-                  {u.bio && (
-                    <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {u.bio}
-                    </p>
-                  )}
+                  <FriendVibe tags={friendTags.get(u.id)} myTags={myTags} bio={u.bio} />
                 </div>
               </div>
             ))}

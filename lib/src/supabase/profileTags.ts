@@ -19,6 +19,20 @@ export async function getProfileTags(
   return data;
 }
 
+/** Batch fetch profile tags for several users (e.g. a friends list). */
+export async function getProfileTagsByIds(
+  client: SupabaseClient<Database>,
+  userIds: string[]
+): Promise<UserProfileTagsRow[]> {
+  if (userIds.length === 0) return [];
+  const { data, error } = await client
+    .from("user_profile_tags")
+    .select("*")
+    .in("user_id", userIds);
+  if (error) throw error;
+  return data;
+}
+
 /** Partial update — only the fields passed are written; the rest are left untouched. */
 export async function upsertProfileTags(
   client: SupabaseClient<Database>,

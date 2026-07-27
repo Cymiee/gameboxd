@@ -109,20 +109,6 @@ export async function deleteGameLog(
   if (error) throw error;
 }
 
-export async function toggleLike(
-  client: SupabaseClient<Database>,
-  userId: string,
-  gameIgdbId: number,
-  isLiked: boolean
-): Promise<void> {
-  const { error } = await client
-    .from("game_logs")
-    .update({ is_liked: isLiked })
-    .eq("user_id", userId)
-    .eq("game_igdb_id", gameIgdbId);
-  if (error) throw error;
-}
-
 export async function removeTopGame(
   client: SupabaseClient<Database>,
   userId: string,

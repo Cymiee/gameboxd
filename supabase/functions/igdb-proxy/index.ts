@@ -75,10 +75,7 @@ async function sha256(input: string): Promise<string> {
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-async function getAccessToken(): Promise<string> {
-  const cached = await cacheGet<string>("twitch_token");
-  if (cached) return cached;
-
+async function mintToken(): Promise<string> {
   const clientId = Deno.env.get("IGDB_CLIENT_ID");
   const clientSecret = Deno.env.get("IGDB_CLIENT_SECRET");
   if (!clientId || !clientSecret) {
@@ -94,6 +91,14 @@ async function getAccessToken(): Promise<string> {
   const json = (await res.json()) as { access_token: string; expires_in: number };
   cacheSet("twitch_token", json.access_token, Math.max(json.expires_in - TOKEN_SKEW_SECONDS, 60));
   return json.access_token;
+}
+
+async function getAccessToken(forceRefresh = false): Promise<string> {
+  if (!forceRefresh) {
+    const cached = await cacheGet<string>("twitch_token");
+    if (cached) return cached;
+  }
+  return mintToken();
 }
 
 Deno.serve(async (req) => {
@@ -113,18 +118,26 @@ Deno.serve(async (req) => {
     }
 
     const clientId = Deno.env.get("IGDB_CLIENT_ID")!;
-    const accessToken = await getAccessToken();
 
-    const igdbRes = await fetch(`https://api.igdb.com/v4${endpoint}`, {
-      method: "POST",
-      headers: {
-        "Client-ID": clientId,
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "text/plain",
-        Accept: "application/json",
-      },
-      body,
-    });
+    const callIgdb = (token: string) =>
+      fetch(`https://api.igdb.com/v4${endpoint}`, {
+        method: "POST",
+        headers: {
+          "Client-ID": clientId,
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "text/plain",
+          Accept: "application/json",
+        },
+        body,
+      });
+
+    let igdbRes = await callIgdb(await getAccessToken());
+    // A cached token can be stale — e.g. the Twitch secret was rotated, which
+    // revokes it. On an auth failure, mint a fresh token and retry once so the
+    // proxy self-heals instead of 500ing until the cache expires.
+    if (igdbRes.status === 401 || igdbRes.status === 403) {
+      igdbRes = await callIgdb(await getAccessToken(true));
+    }
 
     if (!igdbRes.ok) {
       throw new Error(`IGDB request failed: ${igdbRes.statusText}`);

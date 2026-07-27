@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { PageSpinner } from "../components/Spinner";
 import type { IGDBGame, GameLogRow, GameStatus, FriendRating } from "@gameboxd/lib";
-import { getCoverUrl, getUserGameLogs, toggleLike, deleteGameLog, getFriendRatingsForGame } from "@gameboxd/lib";
+import { getCoverUrl, getUserGameLogs, deleteGameLog, getFriendRatingsForGame } from "@gameboxd/lib";
 import GameCover from "../components/GameCover";
 import Avatar from "../components/Avatar";
 import StatusChip from "../components/StatusChip";
@@ -124,21 +124,8 @@ export default function GamePage() {
     if (!userId || !game) return;
     setSaveError(null);
 
-    if (existingLog?.is_liked) {
-      const logs = await getUserGameLogs(supabase, userId);
-      const likeCount = logs.filter((l) => l.is_liked && l.game_igdb_id !== game.id).length;
-      if (likeCount >= 5) {
-        throw new Error("You already have 5 liked games. Unlike one first.");
-      }
-    }
-
     const log = await logGame(game.id, status, rating, review, (game.genres ?? []).map((g) => g.id));
-    try {
-      await toggleLike(supabase, userId, game.id, existingLog?.is_liked ?? false);
-    } catch {
-      // is_liked may not be migrated yet
-    }
-    setExistingLog({ ...log, is_liked: existingLog?.is_liked ?? false });
+    setExistingLog(log);
     setWantToPlay(false);
   };
 

@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import type { UserRow, TopGameRow, GameLogRow, IGDBGame, ActivityRow } from "@gameboxd/lib";
+import type { UserRow, TopGameRow, GameLogRow, IGDBGame, ActivityRow, UserProfileTagsRow } from "@gameboxd/lib";
 import {
   getProfile, getTopGames, getUserGameLogs, updateProfile, setTopGame,
-  removeTopGame, getCoverUrl, sendFriendRequest, getUserActivity, getFriendshipStatus,
+  removeTopGame, getCoverUrl, sendFriendRequest, getUserActivity, getFriendshipStatus, getProfileTags,
 } from "@gameboxd/lib";
 import { supabase } from "../lib/supabase";
 import { useAuthStore } from "../store/auth";
@@ -14,6 +14,7 @@ import Spinner from "../components/Spinner";
 import GameCover from "../components/GameCover";
 import ShelfLibrary from "../components/ShelfLibrary";
 import UserLists from "../components/UserLists";
+import TasteTags from "../components/TasteTags";
 import { useIsMobile } from "../hooks/useIsMobile";
 
 type ProfileTab = "logs" | "reviews" | "lists";
@@ -38,12 +39,13 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 export default function ProfilePage() {
   const { userId: paramUserId } = useParams<{ userId: string }>();
-  const { userId: myUserId, profile: myProfile, setProfile } = useAuthStore();
+  const { userId: myUserId, profile: myProfile, setProfile, profileTags: myTags } = useAuthStore();
   const isOwn = paramUserId === myUserId;
   const isMobile = useIsMobile();
   const navigate = useNavigate();
 
   const [profile, setPageProfile] = useState<UserRow | null>(null);
+  const [profileTags, setProfileTags] = useState<UserProfileTagsRow | null>(null);
   const [topGames, setTopGames] = useState<TopGameRow[]>([]);
   const [topGameData, setTopGameData] = useState<Map<number, IGDBGame>>(new Map());
   const [topGameHovered, setTopGameHovered] = useState<number | null>(null);
@@ -80,14 +82,16 @@ export default function ProfilePage() {
       setLoading(true);
       setError(null);
       try {
-        const [prof, tops, gameLogs] = await Promise.all([
+        const [prof, tops, gameLogs, tags] = await Promise.all([
           getProfile(supabase, paramUserId!),
           getTopGames(supabase, paramUserId!),
           getUserGameLogs(supabase, paramUserId!),
+          getProfileTags(supabase, paramUserId!),
         ]);
         setPageProfile(prof);
         setTopGames(tops);
         setLogs(gameLogs);
+        setProfileTags(tags);
 
         // Fetch IGDB data for top games
         if (tops.length > 0) {
@@ -659,6 +663,14 @@ export default function ProfilePage() {
                 </button>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Taste — archetypes + favourite genres (plus shared-taste on others) */}
+        {((profileTags?.archetypes.length ?? 0) > 0 || (profileTags?.genres.length ?? 0) > 0 || isOwn) && (
+          <div style={{ marginTop: "var(--space-5)" }}>
+            <SectionLabel>Taste</SectionLabel>
+            <TasteTags tags={profileTags} viewerTags={myTags} isOwn={isOwn} />
           </div>
         )}
       </div>

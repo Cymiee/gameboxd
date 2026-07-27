@@ -1,5 +1,5 @@
 import type { GameStatus } from "@gameboxd/lib";
-import { STATUS_META, FAVORITE_META, font } from "../theme";
+import { STATUS_META, font } from "../theme";
 
 interface Props {
   status: GameStatus;
@@ -13,17 +13,6 @@ interface Props {
 export default function StatusChip({ status, size = "md" }: Props) {
   const meta = STATUS_META[status];
   return <Chip label={meta.label} color={meta.color} dim={meta.dim} size={size} pulse={status === "playing"} />;
-}
-
-export function FavoriteChip({ size = "md" }: { size?: "sm" | "md" }) {
-  return (
-    <Chip
-      label={FAVORITE_META.label}
-      color={FAVORITE_META.color}
-      dim={FAVORITE_META.dim}
-      size={size}
-    />
-  );
 }
 
 function Chip({

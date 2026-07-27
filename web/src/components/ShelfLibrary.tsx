@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import type { GameLogRow, IGDBGame } from "@gameboxd/lib";
 import Shelf from "./Shelf";
 import GameCover from "./GameCover";
-import { STATUS_META, STATUS_ORDER, FAVORITE_META } from "../theme";
+import { STATUS_META, STATUS_ORDER } from "../theme";
 
 interface Props {
   logs: GameLogRow[];
@@ -21,8 +21,6 @@ export default function ShelfLibrary({ logs, games, emptyMessage = "No games log
   if (logs.length === 0) {
     return <p style={{ color: "var(--text-muted)", fontSize: "var(--text-sm)" }}>{emptyMessage}</p>;
   }
-
-  const favourites = logs.filter((l) => l.is_liked);
 
   const renderCovers = (shelfLogs: GameLogRow[]) =>
     shelfLogs.map((log) => {
@@ -63,18 +61,6 @@ export default function ShelfLibrary({ logs, games, emptyMessage = "No games log
 
   return (
     <>
-      {favourites.length > 0 && (
-        <Shelf
-          title={`${FAVORITE_META.label}s`}
-          count={favourites.length}
-          accent={FAVORITE_META.color}
-          layout="grid"
-          itemWidth={116}
-        >
-          {renderCovers(favourites)}
-        </Shelf>
-      )}
-
       {STATUS_ORDER.map((status) => {
         const shelfLogs = logs.filter((l) => l.status === status);
         if (shelfLogs.length === 0) return null;

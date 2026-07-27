@@ -281,11 +281,11 @@ export default function Navbar() {
               Log in
             </Link>
             <Link
-              className="press"
+              className="btn-pop"
               to="/auth?mode=signup"
               style={{
-                padding: isMobile ? "0.4rem 0.8rem" : "0.4rem 0.9rem",
-                background: "var(--grad-brand)",
+                padding: isMobile ? "0.4rem 0.9rem" : "0.45rem 1rem",
+                background: "var(--accent)",
                 border: "none",
                 color: "var(--on-accent)",
                 borderRadius: "var(--radius-sm)",
@@ -294,11 +294,7 @@ export default function Navbar() {
                 textDecoration: "none",
                 whiteSpace: "nowrap",
                 fontFamily: "var(--font-body)",
-                boxShadow: "var(--glow-soft)",
-                transition: "box-shadow var(--transition), filter var(--transition)",
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.filter = "brightness(1.08)"; e.currentTarget.style.boxShadow = "var(--glow-accent)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; e.currentTarget.style.boxShadow = "var(--glow-soft)"; }}
             >
               Sign up
             </Link>

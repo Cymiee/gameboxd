@@ -25,7 +25,6 @@ export {
   getTopGames,
   setTopGame,
   removeTopGame,
-  toggleLike,
 } from "./supabase/games.js";
 
 // Friends helpers
@@ -70,7 +69,7 @@ export {
 export type { ListWithMeta, ListWithGames } from "./supabase/lists.js";
 
 // Profile tags (onboarding: avatar, genres, archetypes)
-export { getProfileTags, upsertProfileTags } from "./supabase/profileTags.js";
+export { getProfileTags, getProfileTagsByIds, upsertProfileTags } from "./supabase/profileTags.js";
 export type { ProfileTagsUpdate } from "./supabase/profileTags.js";
 
 // Onboarding constants
