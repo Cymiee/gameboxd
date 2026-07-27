@@ -16,6 +16,24 @@ export default function LogGameModal({ game, existingLog, onClose, onSave }: Pro
   const [review, setReview] = useState(existingLog?.review ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Track whether the user picked a status themselves, so we only auto-assume.
+  const [statusTouched, setStatusTouched] = useState(false);
+
+  const pickStatus = (value: GameStatus) => {
+    setStatus(value);
+    setStatusTouched(true);
+  };
+
+  const pickRating = (n: number) => {
+    const next = rating === n ? null : n;
+    setRating(next);
+    // Rating a game implies you've played it — assume "completed" so users
+    // back-logging past games don't have to set status every time. Only when
+    // logging fresh and the user hasn't chosen a status themselves.
+    if (next != null && !statusTouched && !existingLog) {
+      setStatus("completed");
+    }
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -99,7 +117,7 @@ export default function LogGameModal({ game, existingLog, onClose, onSave }: Pro
               return (
                 <button
                   key={value}
-                  onClick={() => setStatus(value)}
+                  onClick={() => pickStatus(value)}
                   style={{
                     padding: "0.4rem 0.95rem",
                     borderRadius: "var(--radius-full)",
@@ -128,7 +146,7 @@ export default function LogGameModal({ game, existingLog, onClose, onSave }: Pro
             {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
               <button
                 key={n}
-                onClick={() => setRating(rating === n ? null : n)}
+                onClick={() => pickRating(n)}
                 aria-label={`Rate ${n} out of 10`}
                 style={{
                   width: 36,
