@@ -221,14 +221,14 @@ export default function Navbar() {
         {profile && (
           <button
             type="button"
-            className="press"
+            className="btn-pop"
             onClick={() => setLogOpen(true)}
             style={{
               display: "flex",
               alignItems: "center",
               gap: "0.35rem",
               padding: isMobile ? "0.5rem 0.85rem" : "0.5rem 1.05rem",
-              background: "var(--grad-brand)",
+              background: "var(--accent)",
               border: "none",
               color: "var(--on-accent)",
               borderRadius: "var(--radius-sm)",
@@ -238,11 +238,7 @@ export default function Navbar() {
               cursor: "pointer",
               flexShrink: 0,
               fontFamily: "var(--font-body)",
-              boxShadow: "var(--glow-soft)",
-              transition: "box-shadow var(--transition), filter var(--transition)",
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.filter = "brightness(1.08)"; e.currentTarget.style.boxShadow = "var(--glow-accent)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; e.currentTarget.style.boxShadow = "var(--glow-soft)"; }}
           >
             <PlusIcon size={15} /> LOG
           </button>

@@ -196,6 +196,14 @@ button, [role="button"], a, label[for], summary { touch-action: manipulation; }
 .press { transition: transform var(--transition-fast); }
 .press:active { transform: scale(0.96); }
 
+/* Solid button that lifts crisply on hover; its icon rotates for a bit of
+   character. Works over any inline background (uses filter, not bg swap). */
+.btn-pop { transition: transform var(--transition-slow), box-shadow var(--transition-slow), filter var(--transition-slow); }
+.btn-pop:hover { transform: translateY(-2px); box-shadow: var(--shadow-lift); filter: brightness(1.05); }
+.btn-pop:active { transform: translateY(0) scale(0.96); }
+.btn-pop svg { transition: transform var(--transition-slow); }
+.btn-pop:hover svg { transform: rotate(90deg); }
+
 /* Card that lifts, glows, and gives press feedback in one class. */
 .card-interactive {
   cursor: pointer;
