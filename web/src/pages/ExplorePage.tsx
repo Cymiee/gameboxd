@@ -4,6 +4,7 @@ import type { IGDBGame } from "@gameboxd/lib";
 import { searchGames, getBrowseGames } from "../lib/igdb";
 import type { SortMode } from "../lib/igdb";
 import GameCard from "../components/GameCard";
+import { SearchIcon } from "../components/icons";
 import { useIsMobile } from "../hooks/useIsMobile";
 
 // ── Static filter data ────────────────────────────────────────────────────────
@@ -90,30 +91,29 @@ function FilterPill({
   active: boolean;
   onClick: () => void;
 }) {
-  const [hovered, setHovered] = useState(false);
-
-  const bg     = active ? "var(--accent)" : hovered ? "var(--bg-card)" : "transparent";
-  const color  = active ? "var(--on-accent)" : hovered ? "var(--text-primary)" : "var(--text-muted)";
-  const border = active ? "1px solid var(--accent)" : hovered ? "1px solid var(--border-strong)" : "1px solid var(--border)";
-
+  // Soft filled chips: inactive chips read as one quiet group instead of a
+  // wall of outlines; the active one lights up in accent.
   return (
     <button
       onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      className="press"
+      aria-pressed={active}
       style={{
-        padding: "4px 12px",
+        padding: "6px 14px",
         borderRadius: "var(--radius-full)",
-        border,
-        background: bg,
-        color,
+        border: `1px solid ${active ? "var(--accent-ring)" : "transparent"}`,
+        background: active ? "var(--accent-dim)" : "var(--bg-inset)",
+        color: active ? "var(--accent)" : "var(--text-secondary)",
         cursor: "pointer",
         fontSize: 13,
+        fontWeight: active ? 600 : 500,
         fontFamily: "var(--font-body)",
         whiteSpace: "nowrap",
         lineHeight: 1.5,
-        transition: "border-color 0.12s, background 0.12s, color 0.12s",
+        transition: "background var(--transition), color var(--transition), border-color var(--transition)",
       }}
+      onMouseEnter={(e) => { if (!active) { e.currentTarget.style.background = "var(--bg-card)"; e.currentTarget.style.color = "var(--text-primary)"; } }}
+      onMouseLeave={(e) => { if (!active) { e.currentTarget.style.background = "var(--bg-inset)"; e.currentTarget.style.color = "var(--text-secondary)"; } }}
     >
       {label}
     </button>
@@ -243,10 +243,14 @@ export default function ExplorePage() {
     ? { display: "flex", gap: "0.35rem", overflowX: "auto", paddingBottom: "0.35rem", scrollbarWidth: "none" }
     : { display: "flex", flexWrap: "wrap", gap: "0.35rem" };
 
+  // Auto-fill so wide screens pack more, smaller cards instead of four giant
+  // ones — feels denser and more premium.
   const gridStyle: React.CSSProperties = {
     display: "grid",
-    gridTemplateColumns: isMobile ? "repeat(3, minmax(0, 1fr))" : "repeat(4, minmax(0, 1fr))",
-    gap: isMobile ? 12 : 24,
+    gridTemplateColumns: isMobile
+      ? "repeat(auto-fill, minmax(100px, 1fr))"
+      : "repeat(auto-fill, minmax(158px, 1fr))",
+    gap: isMobile ? 12 : 20,
   };
 
   return (
@@ -408,7 +412,7 @@ export default function ExplorePage() {
           {/* Grid — skeleton / empty / results */}
           {loading ? (
             <div style={gridStyle}>
-              {Array.from({ length: isMobile ? 6 : 4 }).map((_, i) => (
+              {Array.from({ length: isMobile ? 9 : 12 }).map((_, i) => (
                 <SkeletonCard key={i} />
               ))}
             </div>
@@ -419,10 +423,17 @@ export default function ExplorePage() {
                 flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
+                gap: "0.85rem",
                 padding: "5rem 2rem",
                 textAlign: "center",
+                background: "var(--bg-card)",
+                border: "1px solid var(--border)",
+                borderRadius: "var(--radius-lg)",
               }}
             >
+              <div style={{ color: "var(--text-muted)", opacity: 0.7 }}>
+                <SearchIcon size={40} strokeWidth={1.6} />
+              </div>
               <p
                 style={{
                   fontFamily: "var(--font-display)",
@@ -434,19 +445,36 @@ export default function ExplorePage() {
               >
                 No games found
               </p>
-              <p
-                style={{
-                  fontFamily: "var(--font-body)",
-                  fontSize: 14,
-                  color: "var(--text-muted)",
-                  marginTop: "0.5rem",
-                }}
-              >
-                Try a different genre or theme
+              <p style={{ fontFamily: "var(--font-body)", fontSize: 14, color: "var(--text-muted)", margin: 0 }}>
+                {q ? `Nothing matched "${q}".` : "Try a different genre or theme."}
               </p>
+              {hasFilters && (
+                <button
+                  onClick={clearFilters}
+                  className="press"
+                  style={{
+                    marginTop: "0.35rem",
+                    padding: "0.5rem 1.1rem",
+                    background: "var(--accent-dim)",
+                    border: "1px solid var(--accent-ring)",
+                    color: "var(--accent)",
+                    borderRadius: "var(--radius-sm)",
+                    cursor: "pointer",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    fontFamily: "var(--font-body)",
+                  }}
+                >
+                  Clear filters
+                </button>
+              )}
             </div>
           ) : (
-            <div style={gridStyle}>
+            <div
+              key={`${sort}-${selectedGenre}-${selectedTheme}-${q}`}
+              className="stagger"
+              style={gridStyle}
+            >
               {results.map((game) => (
                 <GameCard
                   key={game.id}

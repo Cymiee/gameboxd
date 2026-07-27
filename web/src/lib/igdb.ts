@@ -28,6 +28,13 @@ const cache = new Map<string, CacheEntry>();
 /** Identical concurrent calls share one request instead of racing. */
 const inFlight = new Map<string, Promise<IGDBGame[]>>();
 
+// A request that never settles (edge-function cold start, dropped connection)
+// would otherwise hang forever — and because it's stored in `inFlight`, every
+// retry gets handed the same stuck promise until a full page reload clears the
+// map. Aborting after a timeout lets the promise reject so `inFlight` clears
+// and the next attempt makes a fresh request.
+const REQUEST_TIMEOUT_MS = 15_000;
+
 async function callProxy(endpoint: string, body: string): Promise<IGDBGame[]> {
   const key = `${endpoint}\n${body}`;
 
@@ -38,18 +45,30 @@ async function callProxy(endpoint: string, body: string): Promise<IGDBGame[]> {
   if (pending) return pending;
 
   const request = (async () => {
-    const res = await fetch(PROXY_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-      },
-      body: JSON.stringify({ endpoint, body }),
-    });
-    if (!res.ok) throw new Error(`IGDB proxy error: ${res.statusText}`);
-    const games = (await res.json()) as IGDBGame[];
-    cache.set(key, { at: Date.now(), games });
-    return games;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    try {
+      const res = await fetch(PROXY_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ endpoint, body }),
+        signal: controller.signal,
+      });
+      if (!res.ok) throw new Error(`IGDB proxy error: ${res.statusText}`);
+      const games = (await res.json()) as IGDBGame[];
+      cache.set(key, { at: Date.now(), games });
+      return games;
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        throw new Error("IGDB request timed out — please try again.");
+      }
+      throw err;
+    } finally {
+      clearTimeout(timer);
+    }
   })();
 
   inFlight.set(key, request);
