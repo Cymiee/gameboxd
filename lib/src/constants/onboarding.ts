@@ -143,25 +143,41 @@ export const ARCHETYPES: ArchetypeMeta[] = [
 export const MAX_ARCHETYPES = 3;
 
 // ── Avatar presets ───────────────────────────────────────────────────────────
-// No upload/storage — a fixed set of icon+color combos, referenced by id.
+// A fixed selection of DiceBear "Bottts" robot avatars, referenced by id.
+// Rendered from the DiceBear HTTP API — no upload/storage. `color` is the
+// avatar's background (also the fallback tint while the SVG loads).
+
+/** DiceBear collection used for preset avatars. */
+export const AVATAR_STYLE = "bottts";
 
 export interface AvatarPreset {
   id: string;
-  emoji: string;
+  /** DiceBear seed — deterministic; changing it changes the robot. */
+  seed: string;
+  /** Background colour for the avatar (hex, with leading #). */
   color: string;
 }
 
 export const AVATAR_PRESETS: AvatarPreset[] = [
-  { id: "controller", emoji: "🎮", color: "#e4ff1a" },
-  { id: "sword", emoji: "⚔️", color: "#5b8cff" },
-  { id: "shield", emoji: "🛡️", color: "#7c4dff" },
-  { id: "dragon", emoji: "🐉", color: "#ff6b6b" },
-  { id: "ghost", emoji: "👻", color: "#a78bfa" },
-  { id: "rocket", emoji: "🚀", color: "#38bdf8" },
-  { id: "skull", emoji: "💀", color: "#94a3b8" },
-  { id: "crown", emoji: "👑", color: "#fbbf24" },
-  { id: "fire", emoji: "🔥", color: "#fb7185" },
-  { id: "star", emoji: "⭐", color: "#facc15" },
-  { id: "alien", emoji: "👽", color: "#4ade80" },
-  { id: "robot", emoji: "🤖", color: "#60a5fa" },
+  { id: "nova",    seed: "Nova",    color: "#e0a82e" },
+  { id: "bolt",    seed: "Bolt",    color: "#f0736a" },
+  { id: "glitch",  seed: "Glitch",  color: "#a98cd9" },
+  { id: "circuit", seed: "Circuit", color: "#5b9dd9" },
+  { id: "volt",    seed: "Volt",    color: "#4ca97e" },
+  { id: "byte",    seed: "Byte",    color: "#c9788c" },
+  { id: "quark",   seed: "Quark",   color: "#5bc0be" },
+  { id: "turbo",   seed: "Turbo",   color: "#efbb47" },
+  { id: "zap",     seed: "Zap",     color: "#7c8cff" },
+  { id: "rogue",   seed: "Rogue",   color: "#ff9f57" },
+  { id: "pixel",   seed: "Pixel",   color: "#6ec1e4" },
+  { id: "jinx",    seed: "Jinx",    color: "#b8d84a" },
+  { id: "nyx",     seed: "Nyx",     color: "#d98cae" },
+  { id: "echo",    seed: "Echo",    color: "#8ad6b5" },
+  { id: "flux",    seed: "Flux",    color: "#9b8cff" },
 ];
+
+/** Build the DiceBear SVG URL for a preset avatar. */
+export function dicebearAvatarUrl(preset: AvatarPreset): string {
+  const bg = preset.color.replace("#", "");
+  return `https://api.dicebear.com/9.x/${AVATAR_STYLE}/svg?seed=${encodeURIComponent(preset.seed)}&backgroundColor=${bg}&radius=50`;
+}

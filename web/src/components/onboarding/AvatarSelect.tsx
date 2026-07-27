@@ -1,11 +1,11 @@
-import { AVATAR_PRESETS } from "@gameboxd/lib";
+import { AVATAR_PRESETS, dicebearAvatarUrl } from "@gameboxd/lib";
 
 interface AvatarSelectProps {
   value: string | null;
   onChange: (avatarId: string) => void;
 }
 
-/** Single-select grid of preset avatars. Reused in onboarding and settings. */
+/** Single-select grid of preset DiceBear avatars. Reused in onboarding and settings. */
 export default function AvatarSelect({ value, onChange }: AvatarSelectProps) {
   return (
     <div
@@ -25,24 +25,28 @@ export default function AvatarSelect({ value, onChange }: AvatarSelectProps) {
             type="button"
             role="radio"
             aria-checked={selected}
-            aria-label={preset.id}
+            aria-label={`Avatar ${preset.id}`}
             onClick={() => onChange(preset.id)}
+            className="press"
             style={{
               aspectRatio: "1 / 1",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "1.75rem",
-              background: `${preset.color}22`,
-              border: `2px solid ${selected ? preset.color : "var(--border)"}`,
+              padding: 0,
+              overflow: "hidden",
+              background: preset.color,
+              border: `2px solid ${selected ? "var(--accent)" : "var(--border)"}`,
               borderRadius: "var(--radius-md)",
               cursor: "pointer",
-              transition: "border-color 0.12s, transform 0.12s",
+              transition: "border-color 0.12s, transform 0.12s, box-shadow 0.12s",
               transform: selected ? "scale(1.04)" : "none",
-              boxShadow: selected ? `0 0 0 3px ${preset.color}33` : "none",
+              boxShadow: selected ? "var(--glow-accent)" : "none",
             }}
           >
-            <span aria-hidden>{preset.emoji}</span>
+            <img
+              src={dicebearAvatarUrl(preset)}
+              alt=""
+              loading="lazy"
+              style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+            />
           </button>
         );
       })}

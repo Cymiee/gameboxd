@@ -84,6 +84,8 @@ export {
   ARCHETYPES,
   MAX_ARCHETYPES,
   AVATAR_PRESETS,
+  AVATAR_STYLE,
+  dicebearAvatarUrl,
 } from "./constants/onboarding.js";
 export type { GenreTag, ArchetypeTag, ArchetypeMeta, AvatarPreset } from "./constants/onboarding.js";
 

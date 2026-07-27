@@ -1,4 +1,4 @@
-import { AVATAR_PRESETS } from "@gameboxd/lib";
+import { AVATAR_PRESETS, dicebearAvatarUrl } from "@gameboxd/lib";
 
 const PRESET_PREFIX = "preset:";
 
@@ -43,25 +43,21 @@ export default function Avatar({ username, avatarUrl, size, variant = "dim" }: A
   };
 
   const presetId = presetIdFromUrl(avatarUrl);
-  const preset = presetId ? AVATAR_PRESETS.find((p) => p.id === presetId) : undefined;
 
-  if (preset) {
-    return (
-      <div
-        style={{
-          ...base,
-          background: `${preset.color}22`,
-          border: `1px solid ${preset.color}`,
-          fontSize: size * 0.52,
-          lineHeight: 1,
-        }}
-      >
-        <span aria-hidden>{preset.emoji}</span>
-      </div>
-    );
-  }
-
-  if (avatarUrl) {
+  if (presetId) {
+    const preset = AVATAR_PRESETS.find((p) => p.id === presetId);
+    if (preset) {
+      return (
+        <img
+          src={dicebearAvatarUrl(preset)}
+          alt={username}
+          loading="lazy"
+          style={{ ...base, background: preset.color, objectFit: "cover" }}
+        />
+      );
+    }
+    // Unknown/legacy preset id (e.g. the old emoji set) → fall through to initial.
+  } else if (avatarUrl) {
     return (
       <img
         src={avatarUrl}
