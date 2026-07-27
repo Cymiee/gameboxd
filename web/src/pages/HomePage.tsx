@@ -381,8 +381,10 @@ export default function HomePage() {
       {featured && (
         <FeaturedHero
           game={featured}
-          ctaLabel={userId ? "Learn More" : "Start your shelf"}
-          ctaTo={userId ? `/game/${featured.id}` : "/auth"}
+          secondaryLabel={userId ? "＋ Want to Play" : "Start your shelf"}
+          {...(userId
+            ? { onSecondary: () => { void logGame(featured.id, "want_to_play", undefined, undefined, (featured.genres ?? []).map((g) => g.id)); } }
+            : { secondaryTo: "/auth" })}
         />
       )}
 

@@ -1,11 +1,16 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import type { IGDBGame } from "@gameboxd/lib";
 import { useIsMobile } from "../hooks/useIsMobile";
 
 interface Props {
   game: IGDBGame;
-  ctaLabel: string;
-  ctaTo: string;
+  /** Secondary CTA label (differs by auth state). */
+  secondaryLabel: string;
+  /** Logged-in: an action (e.g. add to wishlist). Mutually exclusive with secondaryTo. */
+  onSecondary?: () => void;
+  /** Logged-out: a link target (e.g. /auth). Mutually exclusive with onSecondary. */
+  secondaryTo?: string;
 }
 
 /** First sentence of a summary, trimmed to a tagline length. */
@@ -19,12 +24,24 @@ function tagline(summary: string | null): string | null {
  * Netflix-style featured hero: large artwork that fades into the page, with
  * minimal overlaid UI — game name, one-line tagline, and a single CTA.
  */
-export default function FeaturedHero({ game, ctaLabel, ctaTo }: Props) {
+export default function FeaturedHero({ game, secondaryLabel, onSecondary, secondaryTo }: Props) {
   const isMobile = useIsMobile();
+  const [added, setAdded] = useState(false);
 
   const artId = game.artworks?.[0]?.image_id ?? game.screenshots?.[0]?.image_id ?? game.cover?.image_id;
   const bg = artId ? `https://images.igdb.com/igdb/image/upload/t_1080p/${artId}.jpg` : null;
   const line = tagline(game.summary);
+
+  const secondaryStyle: React.CSSProperties = {
+    display: "inline-flex",
+    alignItems: "center",
+    padding: "0.8rem 1.6rem",
+    borderRadius: "var(--radius-sm)",
+    fontWeight: 600,
+    fontSize: "var(--text-base)",
+    fontFamily: "var(--font-body)",
+    textDecoration: "none",
+  };
 
   return (
     <section
@@ -110,9 +127,10 @@ export default function FeaturedHero({ game, ctaLabel, ctaTo }: Props) {
           </p>
         )}
         <div style={{ marginTop: "var(--space-6)", display: "flex", gap: "var(--space-3)", flexWrap: "wrap" }}>
+          {/* Primary — view the game */}
           <Link
             className="press"
-            to={ctaTo}
+            to={`/game/${game.id}`}
             style={{
               display: "inline-flex",
               alignItems: "center",
@@ -130,32 +148,25 @@ export default function FeaturedHero({ game, ctaLabel, ctaTo }: Props) {
             onMouseEnter={(e) => (e.currentTarget.style.filter = "brightness(0.92)")}
             onMouseLeave={(e) => (e.currentTarget.style.filter = "none")}
           >
-            {ctaLabel}
+            Learn More
           </Link>
-          <Link
-            className="press"
-            to={`/game/${game.id}`}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              padding: "0.8rem 1.6rem",
-              background: "rgba(255,255,255,0.08)",
-              color: "#fff",
-              border: "1px solid rgba(255,255,255,0.35)",
-              borderRadius: "var(--radius-sm)",
-              fontWeight: 600,
-              fontSize: "var(--text-base)",
-              fontFamily: "var(--font-body)",
-              textDecoration: "none",
-              backdropFilter: "blur(4px)",
-              WebkitBackdropFilter: "blur(4px)",
-              transition: "background var(--transition), border-color var(--transition)",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.16)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.6)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.35)"; }}
-          >
-            More Info
-          </Link>
+
+          {/* Secondary — a distinct action, not a duplicate link */}
+          {secondaryTo ? (
+            <Link className="press btn-ghost-light" to={secondaryTo} style={secondaryStyle}>
+              {secondaryLabel}
+            </Link>
+          ) : (
+            <button
+              type="button"
+              className="press btn-ghost-light"
+              disabled={added}
+              onClick={() => { onSecondary?.(); setAdded(true); }}
+              style={{ ...secondaryStyle, cursor: added ? "default" : "pointer", opacity: added ? 0.85 : 1 }}
+            >
+              {added ? "✓ On your list" : secondaryLabel}
+            </button>
+          )}
         </div>
       </div>
     </section>

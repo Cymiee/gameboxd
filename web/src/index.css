@@ -204,6 +204,20 @@ button, [role="button"], a, label[for], summary { touch-action: manipulation; }
 .btn-pop svg { transition: transform var(--transition-slow); }
 .btn-pop:hover svg { transform: rotate(90deg); }
 
+/* Translucent light button — for use over imagery (e.g. the featured hero). */
+.btn-ghost-light {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.35);
+  color: #fff;
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  transition: background var(--transition), border-color var(--transition);
+}
+.btn-ghost-light:hover:not(:disabled) {
+  background: rgba(255,255,255,0.16);
+  border-color: rgba(255,255,255,0.6);
+}
+
 /* Card that lifts, glows, and gives press feedback in one class. */
 .card-interactive {
   cursor: pointer;
