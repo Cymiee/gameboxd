@@ -124,7 +124,7 @@ export default function GamePage() {
       }
     }
 
-    const log = await logGame(game.id, status, rating, review);
+    const log = await logGame(game.id, status, rating, review, (game.genres ?? []).map((g) => g.id));
     try {
       await toggleLike(supabase, userId, game.id, existingLog?.is_liked ?? false);
     } catch {

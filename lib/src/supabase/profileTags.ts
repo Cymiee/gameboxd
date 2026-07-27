@@ -3,7 +3,7 @@ import type { Database } from "./client.js";
 import type { UserProfileTagsRow } from "../types/index.js";
 
 export type ProfileTagsUpdate = Partial<
-  Pick<UserProfileTagsRow, "avatar_id" | "genres" | "archetypes" | "onboarding_completed">
+  Pick<UserProfileTagsRow, "avatar_id" | "genres" | "played_genres" | "archetypes" | "onboarding_completed">
 >;
 
 export async function getProfileTags(

@@ -77,6 +77,8 @@ export type { ProfileTagsUpdate } from "./supabase/profileTags.js";
 export {
   GENRE_TAGS,
   GENRE_LABELS,
+  GENRE_IGDB_MAP,
+  tagsFromIgdbGenres,
   MIN_GENRES,
   MAX_GENRES,
   ARCHETYPE_TAGS,

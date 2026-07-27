@@ -92,6 +92,27 @@ export async function getGamesByGenre(genreId: number, excludeIds: number[]): Pr
   return callProxy("/games", body);
 }
 
+/**
+ * Games matching ANY of the given IGDB genre/theme ids — the OR semantics we
+ * want for "based on your genres" recommendations. Sorted by popularity, with
+ * the user's already-logged games excluded so suggestions stay fresh.
+ */
+export async function getGamesByTags(
+  genreIds: number[],
+  themeIds: number[],
+  excludeIds: number[] = [],
+  limit = 20,
+): Promise<IGDBGame[]> {
+  const ors = [
+    ...genreIds.map((id) => `genres = ${id}`),
+    ...themeIds.map((id) => `themes = ${id}`),
+  ];
+  if (ors.length === 0) return [];
+  const exclude = excludeIds.length > 0 ? ` & id != (${excludeIds.join(",")})` : "";
+  const body = `${GAME_FIELDS} where (${ors.join(" | ")}) & rating_count > 30${exclude}; sort rating_count desc; limit ${limit};`;
+  return callProxy("/games", body);
+}
+
 export async function getNewReleases(limit = 7): Promise<IGDBGame[]> {
   const now = Math.floor(Date.now() / 1000);
   const fourteenDaysAgo = now - 14 * 24 * 3600;

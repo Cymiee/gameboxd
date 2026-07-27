@@ -39,6 +39,41 @@ export const GENRE_LABELS: Record<GenreTag, string> = {
 export const MIN_GENRES = 1;
 export const MAX_GENRES = 6;
 
+/**
+ * Reverse lookup: given the IGDB genre ids of a game, return the onboarding
+ * genre tags that game matches. Used to accumulate "played genres" from the
+ * games a user rates highly. (Theme-only tags like horror/sandbox can't be
+ * derived here since client game data carries genres, not themes.)
+ */
+export function tagsFromIgdbGenres(genreIds: number[]): GenreTag[] {
+  const ids = new Set(genreIds);
+  return GENRE_TAGS.filter((tag) => GENRE_IGDB_MAP[tag].genres.some((id) => ids.has(id)));
+}
+
+/**
+ * Maps each onboarding genre tag to IGDB genre and/or theme ids, so the
+ * genres a user selects can drive game recommendations. IGDB splits some of
+ * our tags across genres (e.g. Shooter) and themes (e.g. Horror, Sandbox),
+ * hence both lists. Best-effort — a few tags (roguelike) have no exact IGDB
+ * equivalent and use the closest proxy.
+ */
+export const GENRE_IGDB_MAP: Record<GenreTag, { genres: number[]; themes: number[] }> = {
+  fps:              { genres: [5],         themes: [] },     // Shooter
+  rpg:              { genres: [12],        themes: [] },     // Role-playing
+  moba:             { genres: [36],        themes: [] },     // MOBA
+  battle_royale:    { genres: [5],         themes: [21] },   // Shooter + Survival
+  strategy:         { genres: [15, 11, 16], themes: [] },    // Strategy, RTS, TBS
+  sports:           { genres: [14],        themes: [] },     // Sport
+  simulation:       { genres: [13],        themes: [] },     // Simulator
+  horror:           { genres: [],          themes: [19] },   // Horror (theme)
+  platformer:       { genres: [8],         themes: [] },     // Platform
+  roguelike:        { genres: [12, 33],    themes: [] },     // RPG + Arcade (proxy)
+  action_adventure: { genres: [31, 25],    themes: [1] },    // Adventure, Hack & Slash + Action
+  puzzle:           { genres: [9],         themes: [] },     // Puzzle
+  racing:           { genres: [10],        themes: [] },     // Racing
+  sandbox:          { genres: [],          themes: [33, 38] }, // Sandbox + Open World (themes)
+};
+
 // ── Gamer archetypes ─────────────────────────────────────────────────────────
 
 export const ARCHETYPE_TAGS = [

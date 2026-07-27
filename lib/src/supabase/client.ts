@@ -174,6 +174,7 @@ export interface Database {
           user_id: string;
           avatar_id: string | null;
           genres: string[];
+          played_genres: string[];
           archetypes: string[];
           onboarding_completed: boolean;
           created_at: string;
@@ -183,6 +184,7 @@ export interface Database {
           user_id: string;
           avatar_id?: string | null;
           genres?: string[];
+          played_genres?: string[];
           archetypes?: string[];
           onboarding_completed?: boolean;
           created_at?: string;
@@ -191,6 +193,7 @@ export interface Database {
         Update: {
           avatar_id?: string | null;
           genres?: string[];
+          played_genres?: string[];
           archetypes?: string[];
           onboarding_completed?: boolean;
           updated_at?: string;

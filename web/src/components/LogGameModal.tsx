@@ -194,11 +194,12 @@ export default function LogGameModal({ game, existingLog, onClose, onSave }: Pro
             Cancel
           </button>
           <button
+            className="press"
             onClick={handleSave}
             disabled={saving}
             style={{
               padding: "0.6rem 1.5rem",
-              background: "var(--accent)",
+              background: "var(--grad-brand)",
               border: "none",
               color: "var(--on-accent)",
               borderRadius: "var(--radius-sm)",
@@ -207,6 +208,7 @@ export default function LogGameModal({ game, existingLog, onClose, onSave }: Pro
               fontWeight: 600,
               opacity: saving ? 0.7 : 1,
               fontFamily: "var(--font-body)",
+              boxShadow: saving ? "none" : "var(--glow-soft)",
             }}
           >
             {saving ? "Saving..." : existingLog ? "Update log" : "Save to log"}

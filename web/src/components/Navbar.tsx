@@ -5,6 +5,8 @@ import { useNotificationsStore } from "../store/notifications";
 import { useIsMobile } from "../hooks/useIsMobile";
 import NotificationBadge from "./NotificationBadge";
 import Avatar from "./Avatar";
+import LogSearchModal from "./LogSearchModal";
+import { SearchIcon, CloseIcon, PlusIcon } from "./icons";
 
 export default function Navbar() {
   const { profile, logout } = useAuthStore();
@@ -13,15 +15,25 @@ export default function Navbar() {
   const isMobile = useIsMobile();
   const [loggingOut, setLoggingOut] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [logOpen, setLogOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 8);
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // Focus the field the moment the search expands.
+  useEffect(() => {
+    if (searchOpen) searchInputRef.current?.focus();
+  }, [searchOpen]);
+
+  const closeSearch = () => { setSearchOpen(false); setSearchQuery(""); };
 
   const handleLogout = async () => {
     setDropdownOpen(false);
@@ -39,6 +51,7 @@ export default function Navbar() {
     const q = searchQuery.trim();
     if (!q) return;
     navigate(`/explore?q=${encodeURIComponent(q)}`);
+    closeSearch();
   };
 
   const openDropdown = () => {
@@ -63,6 +76,8 @@ export default function Navbar() {
   });
 
   return (
+    <>
+    {logOpen && <LogSearchModal onClose={() => setLogOpen(false)} />}
     <nav
       style={{
         background: scrolled ? "rgba(14, 13, 12, 0.82)" : "var(--bg-base)",
@@ -127,19 +142,37 @@ export default function Navbar() {
           />
         </Link>
 
-        {/* Search — full-width second row on mobile */}
+        {/* Primary nav — desktop only; mobile uses the fixed BottomNav */}
+        {!isMobile && (
+          <>
+            <NavLink to="/" end style={navLinkStyle}>Home</NavLink>
+            <NavLink to="/explore" style={navLinkStyle}>Explore</NavLink>
+            {profile && <NavLink to="/shelf" style={navLinkStyle}>My Shelf</NavLink>}
+            {profile && (
+              <NavLink to={`/profile/${profile.id}`} style={navLinkStyle}>Profile</NavLink>
+            )}
+          </>
+        )}
+
+        {/* Collapsible search — expands from the icon; full-width row on mobile */}
         <form
           onSubmit={handleSearchSubmit}
-          style={
-            isMobile
-              ? { order: 10, flexBasis: "100%", margin: 0 }
-              : { flex: 1, maxWidth: 480, margin: "0 auto" }
-          }
+          style={{
+            display: "flex",
+            overflow: "hidden",
+            marginLeft: isMobile ? 0 : "auto",
+            opacity: searchOpen ? 1 : 0,
+            width: isMobile ? (searchOpen ? "100%" : 0) : (searchOpen ? 240 : 0),
+            transition: "width var(--transition-slow), opacity var(--transition-slow)",
+            ...(isMobile && searchOpen ? { order: 10, flexBasis: "100%" } : {}),
+          }}
         >
           <input
+            ref={searchInputRef}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search games..."
+            tabIndex={searchOpen ? 0 : -1}
             style={{
               width: "100%",
               padding: "0.5rem 1rem",
@@ -157,16 +190,62 @@ export default function Navbar() {
           />
         </form>
 
-        {/* Primary nav — desktop only; mobile uses the fixed BottomNav */}
-        {!isMobile && (
-          <>
-            <NavLink to="/" end style={navLinkStyle}>Home</NavLink>
-            <NavLink to="/explore" style={navLinkStyle}>Explore</NavLink>
-            {profile && <NavLink to="/shelf" style={navLinkStyle}>My Shelf</NavLink>}
-            {profile && (
-              <NavLink to={`/profile/${profile.id}`} style={navLinkStyle}>Profile</NavLink>
-            )}
-          </>
+        {/* Search toggle */}
+        <button
+          type="button"
+          className="press"
+          aria-label={searchOpen ? "Close search" : "Search"}
+          onClick={() => (searchOpen ? closeSearch() : setSearchOpen(true))}
+          style={{
+            marginLeft: isMobile ? "auto" : 0,
+            width: 40,
+            height: 40,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "transparent",
+            border: "1px solid var(--border)",
+            borderRadius: "var(--radius-full)",
+            color: "var(--text-secondary)",
+            cursor: "pointer",
+            flexShrink: 0,
+            transition: "border-color var(--transition), color var(--transition)",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--border-strong)"; e.currentTarget.style.color = "var(--text-primary)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text-secondary)"; }}
+        >
+          {searchOpen ? <CloseIcon size={18} /> : <SearchIcon size={18} />}
+        </button>
+
+        {/* + LOG — the primary CTA; opens a search-to-log flow */}
+        {profile && (
+          <button
+            type="button"
+            className="press"
+            onClick={() => setLogOpen(true)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.35rem",
+              padding: isMobile ? "0.5rem 0.85rem" : "0.5rem 1.05rem",
+              background: "var(--grad-brand)",
+              border: "none",
+              color: "var(--on-accent)",
+              borderRadius: "var(--radius-sm)",
+              fontSize: "var(--text-sm)",
+              fontWeight: 700,
+              letterSpacing: "0.03em",
+              cursor: "pointer",
+              flexShrink: 0,
+              fontFamily: "var(--font-body)",
+              boxShadow: "var(--glow-soft)",
+              transition: "box-shadow var(--transition), filter var(--transition)",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.filter = "brightness(1.08)"; e.currentTarget.style.boxShadow = "var(--glow-accent)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; e.currentTarget.style.boxShadow = "var(--glow-soft)"; }}
+          >
+            <PlusIcon size={15} /> LOG
+          </button>
         )}
 
         {/* Auth buttons (logged out).
@@ -179,7 +258,6 @@ export default function Navbar() {
               alignItems: "center",
               gap: isMobile ? "0.6rem" : "0.5rem",
               flexShrink: 0,
-              marginLeft: "auto",
             }}
           >
             <Link
@@ -236,7 +314,7 @@ export default function Navbar() {
           <div
             onMouseEnter={openDropdown}
             onMouseLeave={closeDropdown}
-            style={{ position: "relative", flexShrink: 0, marginLeft: isMobile ? "auto" : 0 }}
+            style={{ position: "relative", flexShrink: 0 }}
           >
             <div
               // Hover alone doesn't work on touch screens — tap toggles too
@@ -351,5 +429,6 @@ export default function Navbar() {
         )}
       </div>
     </nav>
+    </>
   );
 }

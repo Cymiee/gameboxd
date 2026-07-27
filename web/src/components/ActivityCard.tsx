@@ -20,47 +20,36 @@ function timeAgo(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString();
 }
 
+/** Natural-language verb for a "logged" activity, based on its status. */
+function loggedVerb(status: string): string {
+  switch (status) {
+    case "completed":    return "finished";
+    case "dropped":      return "dropped";
+    case "playing":      return "started playing";
+    case "want_to_play": return "wants to play";
+    default:             return "logged";
+  }
+}
+
 function activityText(
   activity: ActivityRow,
   username: string,
   gameName: string
 ): React.ReactNode {
   const meta = activity.metadata;
+  const who = <strong>{username}</strong>;
+  const what = <strong>{gameName}</strong>;
   switch (activity.type) {
     case "rated":
-      return (
-        <>
-          <strong>{username}</strong> rated <strong>{gameName}</strong>{" "}
-          {String(meta.rating)}/10
-        </>
-      );
+      return <>{who} rated {what} {String(meta.rating)}/10</>;
     case "reviewed":
-      return (
-        <>
-          <strong>{username}</strong> reviewed <strong>{gameName}</strong>
-        </>
-      );
-    case "logged":
-      return (
-        <>
-          <strong>{username}</strong> logged <strong>{gameName}</strong>{" "}
-          <span style={{ color: "var(--text-muted)", textTransform: "capitalize" }}>
-            ({String(meta.status).replace("_", " ")})
-          </span>
-        </>
-      );
+      return <>{who} reviewed {what}</>;
     case "topped":
-      return (
-        <>
-          <strong>{username}</strong> added <strong>{gameName}</strong> to their top games
-        </>
-      );
+      return <>{who} added {what} to their favourites</>;
+    case "logged":
+      return <>{who} {loggedVerb(String(meta.status))} {what}</>;
     default:
-      return (
-        <>
-          <strong>{username}</strong> logged <strong>{gameName}</strong>
-        </>
-      );
+      return <>{who} logged {what}</>;
   }
 }
 

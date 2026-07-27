@@ -71,6 +71,8 @@ export interface UserProfileTagsRow {
   user_id: string;
   avatar_id: string | null;
   genres: string[];
+  /** Auto-accumulated from highly-rated logs; distinct from curated `genres`. */
+  played_genres: string[];
   archetypes: string[];
   onboarding_completed: boolean;
   created_at: string;

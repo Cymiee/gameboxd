@@ -1,12 +1,14 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import type { IGDBGame, ActivityRow, UserRow } from "@gameboxd/lib";
-import { getFriendsActivityFeed, getPopularAmongFriends, getUsersByIds } from "@gameboxd/lib";
+import { getFriendsActivityFeed, getPopularAmongFriends, getUsersByIds, GENRE_IGDB_MAP } from "@gameboxd/lib";
+import type { GenreTag } from "@gameboxd/lib";
 import { supabase } from "../lib/supabase";
 import { useAuthStore } from "../store/auth";
-import { getTrendingGames, getGames, getNewReleases } from "../lib/igdb";
+import { getTrendingGames, getGames, getNewReleases, getGamesByTags } from "../lib/igdb";
 import GameCard from "../components/GameCard";
 import ActivityCard from "../components/ActivityCard";
+import RecommendationRow from "../components/RecommendationRow";
 import LogGameModal from "../components/LogGameModal";
 import Spinner from "../components/Spinner";
 import Shelf, { ShelfHeader } from "../components/Shelf";
@@ -186,24 +188,26 @@ interface FeedItem {
   game: Pick<IGDBGame, "id" | "name" | "cover">;
 }
 
-/** Full activity list — merged in from the former standalone /feed page. */
+/** Recent friend activity — a single horizontally-scrollable row of cards. */
 function FriendsActivity({ items }: { items: FeedItem[] }) {
   return (
     <div
+      className="no-scrollbar stagger"
       style={{
-        display: "grid",
-        // min(100%, …) keeps single-column on narrow screens instead of overflowing
-        gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 380px), 1fr))",
+        display: "flex",
         gap: space[3],
+        overflowX: "auto",
+        paddingBottom: space[2],
+        scrollSnapType: "x proximity",
       }}
     >
       {items.map((item) => (
-        <ActivityCard
+        <div
           key={item.activity.id}
-          activity={item.activity}
-          user={item.user}
-          game={item.game}
-        />
+          style={{ flex: "0 0 300px", minWidth: 0, scrollSnapAlign: "start" }}
+        >
+          <ActivityCard activity={item.activity} user={item.user} game={item.game} />
+        </div>
       ))}
     </div>
   );
@@ -217,10 +221,17 @@ const HOME_ACTIVITY_FETCH = 12;
 // ── HomePage ─────────────────────────────────────────────────────────────────
 
 export default function HomePage() {
-  const { userId, profile } = useAuthStore();
+  const { userId, profile, profileTags } = useAuthStore();
   const { logGame, logs, fetchLogs } = useGamesStore();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+
+  const [recommended, setRecommended] = useState<IGDBGame[]>([]);
+  const [recommendedLoading, setRecommendedLoading] = useState(false);
+
+  // "Because you loved X" — seeded by the user's highest-rated logged game.
+  const [seedGame, setSeedGame] = useState<IGDBGame | null>(null);
+  const [seedRecs, setSeedRecs] = useState<IGDBGame[]>([]);
 
   const [trending, setTrending] = useState<IGDBGame[]>([]);
   const [trendingLoading, setTrendingLoading] = useState(true);
@@ -257,6 +268,24 @@ export default function HomePage() {
       .catch(() => {})
       .finally(() => setNewReleasesLoading(false));
   }, []);
+
+  // Genre-based suggestions — driven by onboarding picks PLUS genres learned
+  // from games the user has rated highly.
+  const suggestionGenres = [...new Set([...(profileTags?.genres ?? []), ...(profileTags?.played_genres ?? [])])];
+  const genresKey = suggestionGenres.join(",");
+  useEffect(() => {
+    if (!userId || suggestionGenres.length === 0) { setRecommended([]); return; }
+
+    const genreIds = [...new Set(suggestionGenres.flatMap((g) => GENRE_IGDB_MAP[g as GenreTag]?.genres ?? []))];
+    const themeIds = [...new Set(suggestionGenres.flatMap((g) => GENRE_IGDB_MAP[g as GenreTag]?.themes ?? []))];
+
+    setRecommendedLoading(true);
+    getGamesByTags(genreIds, themeIds, [], 24)
+      .then(setRecommended)
+      .catch(() => {})
+      .finally(() => setRecommendedLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, genresKey]);
 
   // Friends feed & popular (logged-in only)
   useEffect(() => {
@@ -314,6 +343,11 @@ export default function HomePage() {
 
   const handleQuickLog = (game: IGDBGame) => setQuickLogGame(game);
   const hasActivity = friendsFeed.length > 0;
+
+  // Don't suggest games the user has already logged.
+  const loggedIds = new Set(logs.map((l) => l.game_igdb_id));
+  const recommendedFresh = recommended.filter((g) => !loggedIds.has(g.id));
+  const hasGenres = suggestionGenres.length > 0;
 
   return (
     <div style={{ paddingBottom: "4rem" }}>
@@ -429,6 +463,16 @@ export default function HomePage() {
           </section>
         )}
 
+        {/* Personalised — leads the discovery shelves when the user has genres. */}
+        {userId && hasGenres && (recommendedLoading || recommendedFresh.length > 0) && (
+          <GameShelf
+            title="Based on Your Genres"
+            games={recommendedFresh}
+            loading={recommendedLoading}
+            onQuickLog={handleQuickLog}
+          />
+        )}
+
         <GameShelf
           title="Trending Now"
           games={trending}
@@ -464,7 +508,13 @@ export default function HomePage() {
           game={quickLogGame}
           onClose={() => setQuickLogGame(null)}
           onSave={async (status, rating, review) => {
-            await logGame(quickLogGame.id, status, rating ?? undefined, review ?? undefined);
+            await logGame(
+              quickLogGame.id,
+              status,
+              rating ?? undefined,
+              review ?? undefined,
+              (quickLogGame.genres ?? []).map((g) => g.id),
+            );
             navigate(`/game/${quickLogGame.id}`);
           }}
         />
