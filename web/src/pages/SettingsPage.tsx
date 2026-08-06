@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { updateProfile, upsertProfileTags, unlinkSteam, importSteamLogs, MIN_GENRES } from "@gameboxd/lib";
 import { supabase } from "../lib/supabase";
 import { useAuthStore } from "../store/auth";
+import { useGamesStore } from "../store/games";
 import { startSteamLink, syncSteam } from "../lib/steam";
 import { presetAvatarUrl, isPresetAvatar } from "../components/Avatar";
 import AvatarSelect from "../components/onboarding/AvatarSelect";
@@ -26,7 +27,7 @@ export default function SettingsPage() {
 
   const [steamMsg, setSteamMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [steamBusy, setSteamBusy] = useState(false);
-  const [importConfirming, setImportConfirming] = useState(false);
+  const fetchLogs = useGamesStore((s) => s.fetchLogs);
 
   // Surface the result of a Steam link round-trip (?steam=linked|error).
   useEffect(() => {
@@ -66,34 +67,20 @@ export default function SettingsPage() {
     }
   };
 
+  // One click: refresh the Steam library, add played games to logs, and
+  // refresh the in-app logs so they appear without a reload.
   const handleSyncSteam = async () => {
     setSteamBusy(true);
     setSteamMsg(null);
     try {
-      const { owned, matched } = await syncSteam();
+      const { owned } = await syncSteam();
+      const { imported, updated } = await importSteamLogs(supabase);
+      await fetchLogs();
       if (profile) setProfile({ ...profile, steam_synced_at: new Date().toISOString() });
-      setSteamMsg({ type: "ok", text: `Synced ${owned} games (${matched} matched to Shelved).` });
+      const extra = updated ? `, updated ${updated} with hours` : "";
+      setSteamMsg({ type: "ok", text: `Synced ${owned} games · added ${imported} to your shelf${extra}.` });
     } catch (e) {
       setSteamMsg({ type: "err", text: e instanceof Error ? e.message : "Sync failed." });
-    } finally {
-      setSteamBusy(false);
-    }
-  };
-
-  const handleImportSteam = async () => {
-    setSteamBusy(true);
-    setSteamMsg(null);
-    try {
-      const { imported, updated } = await importSteamLogs(supabase);
-      setImportConfirming(false);
-      setSteamMsg({
-        type: "ok",
-        text: imported || updated
-          ? `Added ${imported} games as Played · updated ${updated} with hours.`
-          : "Nothing to import — try Sync now first.",
-      });
-    } catch (e) {
-      setSteamMsg({ type: "err", text: e instanceof Error ? e.message : "Import failed." });
     } finally {
       setSteamBusy(false);
     }
@@ -451,72 +438,10 @@ export default function SettingsPage() {
                   </p>
                 )}
 
-                {/* Opt-in import into curated logs */}
-                <div style={{ borderTop: "1px solid var(--border)", paddingTop: "0.85rem", marginTop: "0.15rem" }}>
-                  {importConfirming ? (
-                    <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
-                      <p style={{ fontSize: "0.82rem", color: "var(--text-secondary)", margin: 0, lineHeight: 1.5 }}>
-                        This adds your played Steam games to your logs as <strong>Played</strong> and fills in hours.
-                        Games you've already logged keep their status &amp; rating.
-                      </p>
-                      <div style={{ display: "flex", gap: "0.5rem" }}>
-                        <button
-                          onClick={handleImportSteam}
-                          disabled={steamBusy}
-                          className="btn-pop"
-                          style={{
-                            padding: "0.45rem 1rem",
-                            background: "var(--accent)",
-                            border: "none",
-                            color: "var(--on-accent)",
-                            borderRadius: "var(--radius-sm)",
-                            cursor: steamBusy ? "not-allowed" : "pointer",
-                            fontSize: "0.85rem",
-                            fontWeight: 600,
-                            fontFamily: "var(--font-body)",
-                            opacity: steamBusy ? 0.7 : 1,
-                          }}
-                        >
-                          {steamBusy ? "Importing…" : "Import"}
-                        </button>
-                        <button
-                          onClick={() => setImportConfirming(false)}
-                          disabled={steamBusy}
-                          style={{
-                            padding: "0.45rem 1rem",
-                            background: "transparent",
-                            border: "1px solid var(--border)",
-                            color: "var(--text-secondary)",
-                            borderRadius: "var(--radius-sm)",
-                            cursor: "pointer",
-                            fontSize: "0.85rem",
-                            fontFamily: "var(--font-body)",
-                          }}
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => { setImportConfirming(true); setSteamMsg(null); }}
-                      disabled={steamBusy}
-                      style={{
-                        padding: "0.45rem 1rem",
-                        background: "transparent",
-                        border: "1px solid var(--border-strong)",
-                        color: "var(--text-primary)",
-                        borderRadius: "var(--radius-sm)",
-                        cursor: "pointer",
-                        fontSize: "0.85rem",
-                        fontWeight: 600,
-                        fontFamily: "var(--font-body)",
-                      }}
-                    >
-                      Add played games to my logs
-                    </button>
-                  )}
-                </div>
+                <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", margin: 0, lineHeight: 1.5 }}>
+                  Syncing refreshes your library and adds played games to your shelf as “Played”.
+                  Games you've already logged keep their status &amp; rating.
+                </p>
               </div>
             ) : (
               <button
