@@ -26,7 +26,8 @@ export interface GameLogRow {
   rating: number | null; // 1–10
   review: string | null;
   is_liked: boolean;
-  playtime_min: number | null; // merged from Steam
+  playtime_min: number | null; // merged from Steam or set manually
+  playtime_manual: boolean;    // true = user-set; protected from Steam re-sync
   created_at: string;
   updated_at: string;
 }

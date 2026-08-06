@@ -64,6 +64,7 @@ export interface Database {
           review: string | null;
           is_liked: boolean;
           playtime_min: number | null;
+          playtime_manual: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -76,6 +77,7 @@ export interface Database {
           review?: string | null;
           is_liked?: boolean;
           playtime_min?: number | null;
+          playtime_manual?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -85,6 +87,7 @@ export interface Database {
           review?: string | null;
           is_liked?: boolean;
           playtime_min?: number | null;
+          playtime_manual?: boolean;
           updated_at?: string;
         };
         Relationships: [];

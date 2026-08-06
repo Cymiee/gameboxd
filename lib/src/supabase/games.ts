@@ -8,8 +8,16 @@ export async function upsertGameLog(
   gameIgdbId: number,
   status: GameStatus,
   rating?: number | null,
-  review?: string | null
+  review?: string | null,
+  /** Manual hours in minutes. undefined = leave unchanged; null = clear. */
+  playtimeMin?: number | null
 ): Promise<GameLogRow> {
+  // Only touch playtime when the caller explicitly passed it — otherwise an
+  // ordinary edit would clobber Steam-imported hours. Setting it manually also
+  // flags the log so a Steam re-sync won't overwrite it.
+  const playtimeFields =
+    playtimeMin !== undefined ? { playtime_min: playtimeMin, playtime_manual: true } : {};
+
   // Check for existing log to decide insert vs update
   const { data: existing } = await client
     .from("game_logs")
@@ -23,7 +31,7 @@ export async function upsertGameLog(
   if (existing) {
     const { data, error } = await client
       .from("game_logs")
-      .update({ status, rating: rating ?? null, review: review ?? null, updated_at: new Date().toISOString() })
+      .update({ status, rating: rating ?? null, review: review ?? null, updated_at: new Date().toISOString(), ...playtimeFields })
       .eq("id", existing.id)
       .select()
       .single();
@@ -32,7 +40,7 @@ export async function upsertGameLog(
   } else {
     const { data, error } = await client
       .from("game_logs")
-      .insert({ user_id: userId, game_igdb_id: gameIgdbId, status, rating: rating ?? null, review: review ?? null })
+      .insert({ user_id: userId, game_igdb_id: gameIgdbId, status, rating: rating ?? null, review: review ?? null, ...playtimeFields })
       .select()
       .single();
     if (error) throw error;

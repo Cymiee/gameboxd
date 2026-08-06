@@ -28,7 +28,9 @@ interface GamesStore {
     rating?: number | null,
     review?: string | null,
     /** IGDB genre ids of the game — enables played-genre accumulation. */
-    genreIds?: number[]
+    genreIds?: number[],
+    /** Manual hours in minutes. undefined = unchanged; null = clear. */
+    playtimeMin?: number | null
   ) => Promise<GameLogRow>;
   setTopGame: (position: 1 | 2 | 3, gameIgdbId: number) => Promise<void>;
   removeTopGame: (position: 1 | 2 | 3) => Promise<void>;
@@ -80,10 +82,10 @@ export const useGamesStore = create<GamesStore>((set) => ({
     set({ topGames });
   },
 
-  logGame: async (gameIgdbId, status, rating, review, genreIds) => {
+  logGame: async (gameIgdbId, status, rating, review, genreIds, playtimeMin) => {
     const userId = useAuthStore.getState().userId;
     if (!userId) throw new Error("Not authenticated");
-    const log = await upsertGameLog(supabase, userId, gameIgdbId, status, rating, review);
+    const log = await upsertGameLog(supabase, userId, gameIgdbId, status, rating, review, playtimeMin);
     set((state) => ({
       logs: [log, ...state.logs.filter((l) => l.game_igdb_id !== gameIgdbId)],
     }));

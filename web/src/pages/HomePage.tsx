@@ -458,13 +458,14 @@ export default function HomePage() {
         <LogGameModal
           game={quickLogGame}
           onClose={() => setQuickLogGame(null)}
-          onSave={async (status, rating, review) => {
+          onSave={async (status, rating, review, playtimeMin) => {
             await logGame(
               quickLogGame.id,
               status,
               rating ?? undefined,
               review ?? undefined,
               (quickLogGame.genres ?? []).map((g) => g.id),
+              playtimeMin,
             );
             navigate(`/game/${quickLogGame.id}`);
           }}

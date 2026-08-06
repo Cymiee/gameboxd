@@ -42,13 +42,14 @@ export default function LogSearchModal({ onClose }: { onClose: () => void }) {
       <LogGameModal
         game={selected}
         onClose={() => setSelected(null)}
-        onSave={async (status, rating, review) => {
+        onSave={async (status, rating, review, playtimeMin) => {
           await logGame(
             selected.id,
             status,
             rating ?? undefined,
             review ?? undefined,
             (selected.genres ?? []).map((g) => g.id),
+            playtimeMin,
           );
           onClose();
         }}

@@ -3,6 +3,7 @@ import type { GameLogRow, IGDBGame } from "@gameboxd/lib";
 import Shelf from "./Shelf";
 import GameCover from "./GameCover";
 import { STATUS_META, STATUS_ORDER } from "../theme";
+import { formatPlaytime } from "../lib/format";
 
 interface Props {
   logs: GameLogRow[];
@@ -55,6 +56,25 @@ export default function ShelfLibrary({ logs, games, emptyMessage = "No games log
               {log.rating}
             </span>
           )}
+          {log.playtime_min != null && log.playtime_min > 0 && (
+            <span
+              style={{
+                position: "absolute",
+                bottom: 6,
+                left: 6,
+                background: "rgba(0,0,0,0.78)",
+                color: "#fff",
+                borderRadius: "var(--radius-full)",
+                fontSize: "0.625rem",
+                fontWeight: 700,
+                padding: "1px 6px",
+                lineHeight: 1.5,
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
+              {formatPlaytime(log.playtime_min)}
+            </span>
+          )}
         </GameCover>
       );
     });
@@ -62,7 +82,9 @@ export default function ShelfLibrary({ logs, games, emptyMessage = "No games log
   return (
     <>
       {STATUS_ORDER.map((status) => {
-        const shelfLogs = logs.filter((l) => l.status === status);
+        const shelfLogs = logs
+          .filter((l) => l.status === status)
+          .sort((a, b) => (b.playtime_min ?? 0) - (a.playtime_min ?? 0));
         if (shelfLogs.length === 0) return null;
         const meta = STATUS_META[status];
 

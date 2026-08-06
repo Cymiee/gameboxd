@@ -8,6 +8,7 @@ import Avatar from "../components/Avatar";
 import StatusChip from "../components/StatusChip";
 import Shelf, { ShelfHeader } from "../components/Shelf";
 import { getGame, getGames } from "../lib/igdb";
+import { formatPlaytime } from "../lib/format";
 import { supabase } from "../lib/supabase";
 import { useAuthStore } from "../store/auth";
 import { useGamesStore } from "../store/games";
@@ -120,11 +121,11 @@ export default function GamePage() {
     }
   };
 
-  const handleSaveLog = async (status: GameStatus, rating?: number | null, review?: string | null) => {
+  const handleSaveLog = async (status: GameStatus, rating?: number | null, review?: string | null, playtimeMin?: number | null) => {
     if (!userId || !game) return;
     setSaveError(null);
 
-    const log = await logGame(game.id, status, rating, review, (game.genres ?? []).map((g) => g.id));
+    const log = await logGame(game.id, status, rating, review, (game.genres ?? []).map((g) => g.id), playtimeMin);
     setExistingLog(log);
     setWantToPlay(false);
   };
@@ -355,6 +356,13 @@ export default function GamePage() {
                   </button>
                 )}
               </div>
+
+              {existingLog?.playtime_min != null && existingLog.playtime_min > 0 && (
+                <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginTop: "0.75rem" }}>
+                  You've played <strong style={{ color: "var(--text-primary)" }}>{formatPlaytime(existingLog.playtime_min)}</strong>
+                  {!existingLog.playtime_manual && " on Steam"}
+                </p>
+              )}
 
               {saveError && <p style={{ color: "var(--danger)", fontSize: "0.8rem", marginTop: "0.5rem" }}>{saveError}</p>}
             </div>

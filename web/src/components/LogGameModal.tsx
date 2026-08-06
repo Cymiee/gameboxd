@@ -7,17 +7,23 @@ interface Props {
   game: IGDBGame;
   existingLog?: GameLogRow;
   onClose: () => void;
-  onSave: (status: GameStatus, rating?: number | null, review?: string | null) => Promise<void>;
+  onSave: (status: GameStatus, rating?: number | null, review?: string | null, playtimeMin?: number | null) => Promise<void>;
 }
 
 export default function LogGameModal({ game, existingLog, onClose, onSave }: Props) {
   const [status, setStatus] = useState<GameStatus>(existingLog?.status ?? "playing");
   const [rating, setRating] = useState<number | null>(existingLog?.rating ?? null);
   const [review, setReview] = useState(existingLog?.review ?? "");
+  const [hours, setHours] = useState(
+    existingLog?.playtime_min != null ? String(+(existingLog.playtime_min / 60).toFixed(1)) : ""
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Track whether the user picked a status themselves, so we only auto-assume.
   const [statusTouched, setStatusTouched] = useState(false);
+  // Only write hours if the user actually changed the field (preserves exact
+  // Steam minutes when they don't touch it).
+  const [hoursTouched, setHoursTouched] = useState(false);
 
   const pickStatus = (value: GameStatus) => {
     setStatus(value);
@@ -38,8 +44,18 @@ export default function LogGameModal({ game, existingLog, onClose, onSave }: Pro
   const handleSave = async () => {
     setSaving(true);
     setError(null);
+    // Convert the hours field to minutes only if the user edited it.
+    let playtimeMin: number | null | undefined = undefined;
+    if (hoursTouched) {
+      const t = hours.trim();
+      if (t === "") playtimeMin = null;
+      else {
+        const h = parseFloat(t);
+        playtimeMin = Number.isFinite(h) ? Math.max(0, Math.round(h * 60)) : undefined;
+      }
+    }
     try {
-      await onSave(status, rating, review.trim() || null);
+      await onSave(status, rating, review.trim() || null, playtimeMin);
       onClose();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to save");
@@ -166,6 +182,39 @@ export default function LogGameModal({ game, existingLog, onClose, onSave }: Pro
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Hours played */}
+        <div>
+          <label className="label" style={{ display: "block", marginBottom: "var(--space-3)" }}>
+            Hours played
+          </label>
+          <input
+            type="number"
+            inputMode="decimal"
+            min={0}
+            step={0.5}
+            value={hours}
+            onChange={(e) => { setHours(e.target.value); setHoursTouched(true); }}
+            placeholder="e.g. 42"
+            style={{
+              width: 140,
+              padding: "0.5rem 0.75rem",
+              background: "var(--bg-inset)",
+              border: "1px solid var(--border)",
+              color: "var(--text-primary)",
+              borderRadius: "var(--radius-sm)",
+              fontSize: "var(--text-sm)",
+              outline: "none",
+              fontFamily: "var(--font-body)",
+              fontVariantNumeric: "tabular-nums",
+            }}
+          />
+          {existingLog?.playtime_min != null && !existingLog.playtime_manual && (
+            <p style={{ fontSize: "var(--text-xs)", color: "var(--text-muted)", margin: "0.4rem 0 0" }}>
+              From Steam — edit to include other platforms.
+            </p>
+          )}
         </div>
 
         {/* Review */}
