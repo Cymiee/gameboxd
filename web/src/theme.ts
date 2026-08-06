@@ -99,6 +99,11 @@ export const STATUS_META: Record<GameStatus, StatusMeta> = {
     color: "var(--status-completed)",
     dim: "var(--status-completed-dim)",
   },
+  played: {
+    label: "Played",
+    color: "var(--status-played)",
+    dim: "var(--status-played-dim)",
+  },
   dropped: {
     label: "Dropped",
     color: "var(--status-dropped)",
@@ -119,4 +124,4 @@ export const FAVORITE_META: StatusMeta = {
 };
 
 /** Display order for status shelves. */
-export const STATUS_ORDER: GameStatus[] = ["playing", "completed", "want_to_play", "dropped"];
+export const STATUS_ORDER: GameStatus[] = ["playing", "completed", "played", "want_to_play", "dropped"];

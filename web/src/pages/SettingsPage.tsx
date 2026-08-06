@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { updateProfile, upsertProfileTags, unlinkSteam, MIN_GENRES } from "@gameboxd/lib";
+import { updateProfile, upsertProfileTags, unlinkSteam, importSteamLogs, MIN_GENRES } from "@gameboxd/lib";
 import { supabase } from "../lib/supabase";
 import { useAuthStore } from "../store/auth";
-import { startSteamLink } from "../lib/steam";
+import { startSteamLink, syncSteam } from "../lib/steam";
 import { presetAvatarUrl, isPresetAvatar } from "../components/Avatar";
 import AvatarSelect from "../components/onboarding/AvatarSelect";
 import GenreSelect from "../components/onboarding/GenreSelect";
@@ -26,6 +26,7 @@ export default function SettingsPage() {
 
   const [steamMsg, setSteamMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [steamBusy, setSteamBusy] = useState(false);
+  const [importConfirming, setImportConfirming] = useState(false);
 
   // Surface the result of a Steam link round-trip (?steam=linked|error).
   useEffect(() => {
@@ -60,6 +61,39 @@ export default function SettingsPage() {
       setSteamMsg({ type: "ok", text: "Steam account unlinked." });
     } catch (e) {
       setSteamMsg({ type: "err", text: e instanceof Error ? e.message : "Couldn't unlink Steam." });
+    } finally {
+      setSteamBusy(false);
+    }
+  };
+
+  const handleSyncSteam = async () => {
+    setSteamBusy(true);
+    setSteamMsg(null);
+    try {
+      const { owned, matched } = await syncSteam();
+      if (profile) setProfile({ ...profile, steam_synced_at: new Date().toISOString() });
+      setSteamMsg({ type: "ok", text: `Synced ${owned} games (${matched} matched to Shelved).` });
+    } catch (e) {
+      setSteamMsg({ type: "err", text: e instanceof Error ? e.message : "Sync failed." });
+    } finally {
+      setSteamBusy(false);
+    }
+  };
+
+  const handleImportSteam = async () => {
+    setSteamBusy(true);
+    setSteamMsg(null);
+    try {
+      const { imported, updated } = await importSteamLogs(supabase);
+      setImportConfirming(false);
+      setSteamMsg({
+        type: "ok",
+        text: imported || updated
+          ? `Added ${imported} games as Played · updated ${updated} with hours.`
+          : "Nothing to import — try Sync now first.",
+      });
+    } catch (e) {
+      setSteamMsg({ type: "err", text: e instanceof Error ? e.message : "Import failed." });
     } finally {
       setSteamBusy(false);
     }
@@ -354,42 +388,135 @@ export default function SettingsPage() {
             </p>
 
             {profile?.steam_id ? (
-              <div style={{ display: "flex", gap: "0.6rem", alignItems: "center", flexWrap: "wrap" }}>
-                <span
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "0.4rem",
-                    padding: "0.45rem 0.85rem",
-                    background: "var(--accent-dim)",
-                    border: "1px solid var(--accent-ring)",
-                    color: "var(--accent)",
-                    borderRadius: "var(--radius-sm)",
-                    fontSize: "0.85rem",
-                    fontWeight: 600,
-                    fontVariantNumeric: "tabular-nums",
-                  }}
-                >
-                  ✓ Linked · {profile.steam_id}
-                </span>
-                <button
-                  onClick={handleUnlinkSteam}
-                  disabled={steamBusy}
-                  style={{
-                    padding: "0.45rem 1rem",
-                    background: "transparent",
-                    border: "1px solid var(--border)",
-                    color: "var(--danger)",
-                    borderRadius: "var(--radius-sm)",
-                    cursor: steamBusy ? "not-allowed" : "pointer",
-                    fontSize: "0.85rem",
-                    fontWeight: 600,
-                    fontFamily: "var(--font-body)",
-                    opacity: steamBusy ? 0.6 : 1,
-                  }}
-                >
-                  Unlink
-                </button>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
+                <div style={{ display: "flex", gap: "0.6rem", alignItems: "center", flexWrap: "wrap" }}>
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "0.4rem",
+                      padding: "0.45rem 0.85rem",
+                      background: "var(--accent-dim)",
+                      border: "1px solid var(--accent-ring)",
+                      color: "var(--accent)",
+                      borderRadius: "var(--radius-sm)",
+                      fontSize: "0.85rem",
+                      fontWeight: 600,
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    ✓ Linked · {profile.steam_id}
+                  </span>
+                  <button
+                    onClick={handleSyncSteam}
+                    disabled={steamBusy}
+                    className="btn-pop"
+                    style={{
+                      padding: "0.45rem 1rem",
+                      background: "var(--accent)",
+                      border: "none",
+                      color: "var(--on-accent)",
+                      borderRadius: "var(--radius-sm)",
+                      cursor: steamBusy ? "not-allowed" : "pointer",
+                      fontSize: "0.85rem",
+                      fontWeight: 600,
+                      fontFamily: "var(--font-body)",
+                      opacity: steamBusy ? 0.7 : 1,
+                    }}
+                  >
+                    {steamBusy ? "Syncing…" : "Sync now"}
+                  </button>
+                  <button
+                    onClick={handleUnlinkSteam}
+                    disabled={steamBusy}
+                    style={{
+                      padding: "0.45rem 1rem",
+                      background: "transparent",
+                      border: "1px solid var(--border)",
+                      color: "var(--danger)",
+                      borderRadius: "var(--radius-sm)",
+                      cursor: steamBusy ? "not-allowed" : "pointer",
+                      fontSize: "0.85rem",
+                      fontWeight: 600,
+                      fontFamily: "var(--font-body)",
+                      opacity: steamBusy ? 0.6 : 1,
+                    }}
+                  >
+                    Unlink
+                  </button>
+                </div>
+                {profile.steam_synced_at && (
+                  <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", margin: 0 }}>
+                    Last synced {new Date(profile.steam_synced_at).toLocaleString()}
+                  </p>
+                )}
+
+                {/* Opt-in import into curated logs */}
+                <div style={{ borderTop: "1px solid var(--border)", paddingTop: "0.85rem", marginTop: "0.15rem" }}>
+                  {importConfirming ? (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+                      <p style={{ fontSize: "0.82rem", color: "var(--text-secondary)", margin: 0, lineHeight: 1.5 }}>
+                        This adds your played Steam games to your logs as <strong>Played</strong> and fills in hours.
+                        Games you've already logged keep their status &amp; rating.
+                      </p>
+                      <div style={{ display: "flex", gap: "0.5rem" }}>
+                        <button
+                          onClick={handleImportSteam}
+                          disabled={steamBusy}
+                          className="btn-pop"
+                          style={{
+                            padding: "0.45rem 1rem",
+                            background: "var(--accent)",
+                            border: "none",
+                            color: "var(--on-accent)",
+                            borderRadius: "var(--radius-sm)",
+                            cursor: steamBusy ? "not-allowed" : "pointer",
+                            fontSize: "0.85rem",
+                            fontWeight: 600,
+                            fontFamily: "var(--font-body)",
+                            opacity: steamBusy ? 0.7 : 1,
+                          }}
+                        >
+                          {steamBusy ? "Importing…" : "Import"}
+                        </button>
+                        <button
+                          onClick={() => setImportConfirming(false)}
+                          disabled={steamBusy}
+                          style={{
+                            padding: "0.45rem 1rem",
+                            background: "transparent",
+                            border: "1px solid var(--border)",
+                            color: "var(--text-secondary)",
+                            borderRadius: "var(--radius-sm)",
+                            cursor: "pointer",
+                            fontSize: "0.85rem",
+                            fontFamily: "var(--font-body)",
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => { setImportConfirming(true); setSteamMsg(null); }}
+                      disabled={steamBusy}
+                      style={{
+                        padding: "0.45rem 1rem",
+                        background: "transparent",
+                        border: "1px solid var(--border-strong)",
+                        color: "var(--text-primary)",
+                        borderRadius: "var(--radius-sm)",
+                        cursor: "pointer",
+                        fontSize: "0.85rem",
+                        fontWeight: 600,
+                        fontFamily: "var(--font-body)",
+                      }}
+                    >
+                      Add played games to my logs
+                    </button>
+                  )}
+                </div>
               </div>
             ) : (
               <button

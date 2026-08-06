@@ -31,6 +31,7 @@
   /* ── Status colors — SEMANTIC ONLY, never brand. ──────────────────────── */
   --status-playing:   #5B9DD9;
   --status-completed: #4CA97E;
+  --status-played:    #5BC0BE;
   --status-dropped:   #C4685F;
   --status-wishlist:  #A98CD9;
   --status-favorite:  #C9788C;
@@ -38,6 +39,7 @@
   /* Tinted backgrounds for status chips */
   --status-playing-dim:   rgba(91, 157, 217, 0.14);
   --status-completed-dim: rgba(76, 169, 126, 0.14);
+  --status-played-dim:    rgba(91, 192, 190, 0.14);
   --status-dropped-dim:   rgba(196, 104, 95, 0.14);
   --status-wishlist-dim:  rgba(169, 140, 217, 0.14);
   --status-favorite-dim:  rgba(201, 120, 140, 0.14);

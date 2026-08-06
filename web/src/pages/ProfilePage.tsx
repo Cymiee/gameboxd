@@ -15,6 +15,7 @@ import GameCover from "../components/GameCover";
 import ShelfLibrary from "../components/ShelfLibrary";
 import UserLists from "../components/UserLists";
 import TasteTags from "../components/TasteTags";
+import SteamShowcase from "../components/SteamShowcase";
 import AvatarPickerModal from "../components/AvatarPickerModal";
 import { EditIcon } from "../components/icons";
 import { useIsMobile } from "../hooks/useIsMobile";
@@ -704,6 +705,9 @@ export default function ProfilePage() {
             <TasteTags tags={profileTags} viewerTags={myTags} isOwn={isOwn} />
           </div>
         )}
+
+        {/* Steam library (if linked) */}
+        {profile.steam_id && paramUserId && <SteamShowcase userId={paramUserId} />}
       </div>
 
       {/* ── Right column ── */}

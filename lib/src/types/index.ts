@@ -16,7 +16,7 @@ export interface TopGameRow {
   position: 1 | 2 | 3;
 }
 
-export type GameStatus = "playing" | "completed" | "dropped" | "want_to_play";
+export type GameStatus = "playing" | "completed" | "played" | "dropped" | "want_to_play";
 
 export interface GameLogRow {
   id: string;
@@ -26,6 +26,7 @@ export interface GameLogRow {
   rating: number | null; // 1–10
   review: string | null;
   is_liked: boolean;
+  playtime_min: number | null; // merged from Steam
   created_at: string;
   updated_at: string;
 }
@@ -67,6 +68,15 @@ export interface ListGameRow {
   game_igdb_id: number;
   position: number;
   created_at: string;
+}
+
+export interface SteamLibraryRow {
+  user_id: string;
+  appid: number;
+  name: string;
+  playtime_min: number;
+  playtime_2wk: number;
+  game_igdb_id: number | null;
 }
 
 export interface UserProfileTagsRow {

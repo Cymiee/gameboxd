@@ -63,6 +63,7 @@ export interface Database {
           rating: number | null;
           review: string | null;
           is_liked: boolean;
+          playtime_min: number | null;
           created_at: string;
           updated_at: string;
         };
@@ -74,6 +75,7 @@ export interface Database {
           rating?: number | null;
           review?: string | null;
           is_liked?: boolean;
+          playtime_min?: number | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -82,6 +84,7 @@ export interface Database {
           rating?: number | null;
           review?: string | null;
           is_liked?: boolean;
+          playtime_min?: number | null;
           updated_at?: string;
         };
         Relationships: [];
@@ -175,6 +178,31 @@ export interface Database {
         };
         Relationships: [];
       };
+      steam_library: {
+        Row: {
+          user_id: string;
+          appid: number;
+          name: string;
+          playtime_min: number;
+          playtime_2wk: number;
+          game_igdb_id: number | null;
+        };
+        Insert: {
+          user_id: string;
+          appid: number;
+          name: string;
+          playtime_min?: number;
+          playtime_2wk?: number;
+          game_igdb_id?: number | null;
+        };
+        Update: {
+          name?: string;
+          playtime_min?: number;
+          playtime_2wk?: number;
+          game_igdb_id?: number | null;
+        };
+        Relationships: [];
+      };
       user_profile_tags: {
         Row: {
           user_id: string;
@@ -211,7 +239,10 @@ export interface Database {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      import_steam_logs: {
+        Args: Record<string, never>;
+        Returns: { imported: number; updated: number };
+      };
     };
   };
 }

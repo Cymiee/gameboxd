@@ -24,6 +24,7 @@ function timeAgo(dateStr: string): string {
 function loggedVerb(status: string): string {
   switch (status) {
     case "completed":    return "finished";
+    case "played":       return "played";
     case "dropped":      return "dropped";
     case "playing":      return "started playing";
     case "want_to_play": return "wants to play";

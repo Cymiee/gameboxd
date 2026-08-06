@@ -73,6 +73,10 @@ export type { ListWithMeta, ListWithGames } from "./supabase/lists.js";
 export { getProfileTags, getProfileTagsByIds, upsertProfileTags } from "./supabase/profileTags.js";
 export type { ProfileTagsUpdate } from "./supabase/profileTags.js";
 
+// Steam library
+export { getSteamLibrary, getSteamStats, importSteamLogs } from "./supabase/steam.js";
+export type { SteamStats } from "./supabase/steam.js";
+
 // Onboarding constants
 export {
   GENRE_TAGS,
