@@ -6,6 +6,7 @@ import { supabase } from "../lib/supabase";
 import { getGames } from "../lib/igdb";
 import { formatPlaytime } from "../lib/format";
 import GameCover from "./GameCover";
+import CountUp from "./CountUp";
 
 const TOP_N = 6;
 
@@ -87,7 +88,7 @@ export default function SteamShowcase({ userId }: { userId: string }) {
       <div className="label" style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
         <span>Steam</span>
         <span style={{ color: "var(--text-secondary)", fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>
-          {lib.length} games · {formatPlaytime(totalMin)}
+          <CountUp value={lib.length} /> games · <CountUp value={Math.round(totalMin / 60)} format={(n) => `${Math.round(n)}h`} />
         </span>
       </div>
 

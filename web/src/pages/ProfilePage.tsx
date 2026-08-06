@@ -16,6 +16,7 @@ import ShelfLibrary from "../components/ShelfLibrary";
 import UserLists from "../components/UserLists";
 import TasteTags from "../components/TasteTags";
 import SteamShowcase from "../components/SteamShowcase";
+import CountUp from "../components/CountUp";
 import AvatarPickerModal from "../components/AvatarPickerModal";
 import { EditIcon } from "../components/icons";
 import { useIsMobile } from "../hooks/useIsMobile";
@@ -317,7 +318,7 @@ export default function ProfilePage() {
           )}
 
           <p style={{ color: "var(--text-muted)", fontSize: "var(--text-xs)", fontVariantNumeric: "tabular-nums" }}>
-            {stats.logged} games
+            <CountUp value={stats.logged} /> games
             {stats.avgRating && ` · ${stats.avgRating} avg`}
             {stats.reviews > 0 && ` · ${stats.reviews} reviews`}
           </p>

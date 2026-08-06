@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import type { IGDBGame } from "@gameboxd/lib";
 import { useIsMobile } from "../hooks/useIsMobile";
@@ -27,10 +27,38 @@ function tagline(summary: string | null): string | null {
 export default function FeaturedHero({ game, secondaryLabel, onSecondary, secondaryTo }: Props) {
   const isMobile = useIsMobile();
   const [added, setAdded] = useState(false);
+  const sectionRef = useRef<HTMLElement>(null);
+  const bgRef = useRef<HTMLImageElement>(null);
 
   const artId = game.artworks?.[0]?.image_id ?? game.screenshots?.[0]?.image_id ?? game.cover?.image_id;
   const bg = artId ? `https://images.igdb.com/igdb/image/upload/t_1080p/${artId}.jpg` : null;
   const line = tagline(game.summary);
+
+  // Scroll parallax on the artwork — GSAP's job (CSS can't do scroll-driven).
+  // Lazy-loaded so GSAP stays off the initial bundle; skipped for reduced-motion.
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!bgRef.current || !sectionRef.current) return;
+    let killed = false;
+    let ctx: { revert: () => void } | undefined;
+    (async () => {
+      const [{ gsap }, { ScrollTrigger }] = await Promise.all([import("gsap"), import("gsap/ScrollTrigger")]);
+      if (killed || !bgRef.current || !sectionRef.current) return;
+      gsap.registerPlugin(ScrollTrigger);
+      ctx = gsap.context(() => {
+        gsap.fromTo(
+          bgRef.current,
+          { scale: 1.12, yPercent: 0 },
+          {
+            yPercent: 10,
+            ease: "none",
+            scrollTrigger: { trigger: sectionRef.current, start: "top top", end: "bottom top", scrub: true },
+          },
+        );
+      });
+    })();
+    return () => { killed = true; ctx?.revert(); };
+  }, [game.id]);
 
   const secondaryStyle: React.CSSProperties = {
     display: "inline-flex",
@@ -45,6 +73,7 @@ export default function FeaturedHero({ game, secondaryLabel, onSecondary, second
 
   return (
     <section
+      ref={sectionRef}
       style={{
         position: "relative",
         overflow: "hidden",
@@ -56,6 +85,7 @@ export default function FeaturedHero({ game, secondaryLabel, onSecondary, second
     >
       {bg && (
         <img
+          ref={bgRef}
           src={bg}
           alt=""
           aria-hidden
@@ -65,8 +95,7 @@ export default function FeaturedHero({ game, secondaryLabel, onSecondary, second
             width: "100%",
             height: "100%",
             objectFit: "cover",
-            // Slow drift so the still image feels alive.
-            animation: "auroraDrift 26s ease-in-out infinite",
+            transform: "scale(1.12)",
           }}
         />
       )}
